@@ -1,0 +1,20 @@
+Internet of Things Examples
+===========================
+
+The sub-directories of this directory contain example code for building apps
+that are able to connect to an Internet of Things (IoT) cloud.
+
+Build Instructions with the GNU Compiler Collection (GCC)
+=========================================================
+
+1. Ensure that make, gcc & glibc are installed
+
+2. Open a terminal window (if running from a Windows system)
+
+3. Enter into the sub-directory of the sample you would like to build
+   ```
+   cd simple_telmetry
+   ```
+
+4. Run the `make` command
+

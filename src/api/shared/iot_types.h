@@ -1,0 +1,1331 @@
+/**
+ * @file
+ * @brief declares common internal types within the api
+ *
+ * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ *
+ * @license The right to copy, distribute or otherwise make use of this software
+ * may be licensed only pursuant to the terms of an applicable Wind River
+ * license agreement.  No license to Wind River intellectual property rights is
+ * granted herein.  All rights not licensed by Wind River are reserved by Wind
+ * River.
+ */
+#ifndef IOT_TYPES_H
+#define IOT_TYPES_H
+
+#include "os.h"
+#include "iot_build.h"
+#include "iot_defs.h"
+#include "iot_plugin.h"
+
+/* Flags */
+/** @brief Run in a single thread */
+#define IOT_FLAG_SINGLE_THREAD                   0x01
+
+/**
+ * @brief Possible types for iot directories
+ */
+typedef enum {
+	/**
+	 * @brief Configuration directory (Linux default: "/etc/iot")
+	 */
+	IOT_CONFIG_DIR = 0,
+	/**
+	 * @brief Run-time directory (Linux default: "/var/lib/iot")
+	 */
+	IOT_RUNTIME_DIR,
+} iot_dir_type_t;
+
+/**
+ * @brief Raw data type structure
+ */
+struct iot_data_raw
+{
+	/** @brief Length of the raw data */
+	size_t length;
+	/** @brief Pointer to the raw data (for writing) */
+	const void *ptr;
+};
+
+/**
+ * @brief Structure representing a generic data type
+ */
+struct iot_data
+{
+	/**
+	 * @brief Holds the value of the data
+	 */
+	union
+	{
+		/** @brief boolean */
+		iot_bool_t                 boolean;
+		/** @brief 32-bit floating point number */
+		iot_float32_t              float32;
+		/** @brief 64-bit floating point number */
+		iot_float64_t              float64;
+		/** @brief 8-bit signed integer */
+		iot_int8_t                 int8;
+		/** @brief 16-bit signed integer */
+		iot_int16_t                int16;
+		/** @brief 32-bit signed integer */
+		iot_int32_t                int32;
+		/** @brief 64-bit signed integer */
+		iot_int64_t                int64;
+		/** @brief raw data */
+		struct iot_data_raw        raw;
+		/** @brief location object */
+		iot_location_t             *location;
+		/** @brief string */
+		const char                 *string;
+		/** @brief 8-bit unsigned integer */
+		iot_uint8_t                uint8;
+		/** @brief 16-bit unsigned integer */
+		iot_uint16_t               uint16;
+		/** @brief 32-bit unsigned integer */
+		iot_uint32_t               uint32;
+		/** @brief 64-bit unsigned integer */
+		iot_uint64_t               uint64;
+	} value;
+	/** @brief a value has been set for the object */
+	iot_bool_t has_value;
+	/** @brief any associated data stored on the heap */
+	void *heap_storage;
+	/** @brief type of stored data */
+	iot_type_t type;
+};
+
+/**
+ * @brief Macro to test if an @p iot_data object has a value set
+ *
+ * @param[in]      o                   object to test
+ * @param[in]      t                   type to check if value is set
+ */
+#define IOT_DATA_HAS_VALUE( o, t ) \
+	( ( o.has_value != IOT_FALSE ) && ( o.type == t ) )
+
+/**
+ * @brief parameter details for an action
+ */
+struct iot_action_parameter
+{
+	/** @brief parameter name */
+	char *name;
+	/** @brief data for the parameter */
+	struct iot_data data;
+	/** @brief type of parameter */
+	iot_parameter_type_t type;
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of name value on heap
+	 *
+	 * @note This is not to be used directly, use @p name instead
+	 */
+	char _name[ IOT_NAME_MAX_LEN + 1u ];
+#endif /* ifdef IOT_STACK_ONLY */
+};
+
+/**
+ * @brief attribute details
+ */
+struct iot_attribute
+{
+	/** @brief attribute name */
+	char *name;
+	/** @brief attribute data */
+	struct iot_data data;
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of name value on heap
+	 *
+	 * @note This is not to be used directly, use @p name instead
+	 */
+	char _name[ IOT_NAME_MAX_LEN + 1u ];
+#endif /* IOT_STACK_ONLY */
+};
+
+/**
+ * @brief action details
+ */
+struct iot_action
+{
+	/** @brief library handle */
+	struct iot *lib;
+	/** @brief action name */
+	char *name;
+	/** @brief action specific flags */
+	iot_uint8_t flags;
+	/** @brief required action */
+	enum iot_item_state state;
+	/** @brief action callback */
+	iot_action_callback_t *callback;
+	/** @brief user data to pass to action callback */
+	void *user_data;
+	/** @brief command to execute */
+	char *command;
+	/** @brief value of attributes */
+	struct iot_attribute *attribute;
+	/** @brief number of attributes */
+	iot_uint8_t attribute_count;
+	/** @brief parameter details */
+	struct iot_action_parameter *parameter;
+	/** @brief number of parameters */
+	iot_uint8_t parameter_count;
+	/** @brief maximum amount of time to wait before returning failure */
+	iot_millisecond_t time_limit;
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of attributes on the stack
+	 *
+	 * @note This is not to be used directly, use @c attribute instead
+	 */
+	struct iot_attribute _attribute[ IOT_ATTRIBUTE_MAX ];
+	/** @brief storage of the command to execute on the stack
+	 *
+	 * @note This is not to be used directly, use @c command instead
+	 */
+	char _command[PATH_MAX + 1u];
+	/** @brief storage of name value on the stack
+	 *
+	 * @note This is not to be used directly, use @c name instead
+	 */
+	char _name[ IOT_NAME_MAX_LEN + 1u ];
+	/** @brief storage of parameters on the stack
+	 *
+	 * @note This is not to be used directly, use @c parameter instead
+	 */
+	struct iot_action_parameter _parameter[ IOT_PARAMETER_MAX ];
+#else
+	/** @brief location of the action, heap or stack */
+	iot_bool_t is_in_heap;
+#endif /* IOT_STACK_ONLY */
+};
+
+/**
+ * @brief an action request from the cloud
+ */
+struct iot_action_request
+{
+	/** @brief library handle */
+	struct iot *lib;
+	/** @brief value of attributes */
+	struct iot_attribute *attribute;
+	/** @brief number of attributes */
+	iot_uint8_t attribute_count;
+	/** @brief detailed error message (may be null) */
+	char *error;
+	/** @brief Name of the action */
+	char *name;
+	/** @brief action specific flags */
+	iot_uint8_t flags;
+	/** @brief Request source */
+	char *source;
+	/** @brief Array of parameters for the action */
+	struct iot_action_parameter *parameter;
+	/** @brief number of parameters */
+	iot_uint8_t parameter_count;
+	/** @brief maximum amount of time to wait before returning failure */
+	iot_millisecond_t time_limit;
+	/** @brief result of the action */
+	iot_status_t result;
+#ifdef IOT_STACK_ONLY
+	/** @brief holds value of attributes */
+	struct iot_attribute _attribute[ IOT_ATTRIBUTE_MAX ];
+	/** @brief error message details */
+	char _error[ IOT_NAME_MAX_LEN + 1u ];
+	/** @brief storage of name value on heap
+	 *
+	 * @note This is not to be used directly, use @c name instead
+	 */
+	char _name[ IOT_NAME_MAX_LEN + 1u ];
+	/** @brief parameter details */
+	struct iot_action_parameter _parameter[ IOT_PARAMETER_MAX ];
+	/** @brief Request source from the cloud */
+	char _source[ IOT_ID_MAX_LEN + 1u];
+#endif /* IOT_STACK_ONLY */
+};
+
+/**
+ * @brief Location information
+ */
+struct iot_location
+{
+	/** @brief Accuracy of latitude & longitude in metres */
+	iot_float64_t accuracy;
+	/** @brief Altitude in metres */
+	iot_float64_t altitude;
+	/** @brief Range of the altitude in metres */
+	iot_float64_t altitude_accuracy;
+	/** @brief Direction heading */
+	iot_float64_t heading;
+	/** @brief Flags for optional fields */
+	iot_uint32_t flags;
+	/** @brief Latitude in degrees */
+	iot_float64_t latitude;
+	/** @brief Longitude in degrees */
+	iot_float64_t longitude;
+	/** @brief Location source type */
+	iot_uint32_t source;
+	/** @brief Speed being currently traveled in metres/second */
+	iot_float64_t speed;
+	/** @brief Location tag */
+	char *tag;
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of the location tag value on stack
+	 *
+	 * @note This is not to be used directly, use @c tag instead
+	 */
+	char _tag[ IOT_NAME_MAX_LEN + 1u ];
+#endif /* ifdef IOT_STACK_ONLY */
+};
+
+#if 0
+struct iot_property
+{
+	/** @brief library handle */
+	struct iot *lib;
+	/** @brief property flags (permissions, visibility, etc.) */
+	iot_property_flags_t flags;
+	/** @brief last time property was updated (0=never updated) */
+	iot_timestamp_t last_update;
+	/** @brief property name */
+	char *name;
+	/** @brief who first registered the property ("" indicates cloud owner) */
+	char *owner;
+	/** @brief last updater of the property ("" indicates cloud source) */
+	char *source;
+	/** @brief property value */
+	struct iot_data data;
+
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of name value on heap
+	 *
+	 * @note This is not to be used directly, use @c name instead
+	 */
+	char _name[ IOT_NAME_MAX_LEN + 1u ];
+	/** @brief storage of owner value on heap
+	 *
+	 * @note This is not to be used directly, use @c owner instead
+	 */
+	char _owner[ IOT_ID_MAX_LEN + 1u ];
+	/** @brief storage of source value on heap
+	 *
+	 * @note This is not to be used directly, use @c source instead
+	 */
+	char _source[ IOT_ID_MAX_LEN + 1u ];
+#else /* ifdef IOT_STACK_ONLY */
+	/** @brief location of the property, heap or stack */
+	iot_bool_t is_in_heap;
+#endif /* else IOT_STACK_ONLY */
+};
+#endif
+
+/**
+ * @brief telemetry details
+ */
+struct iot_telemetry
+{
+	/** @brief library handle */
+	struct iot *lib;
+	/** @brief telemetry is registered */
+	enum iot_item_state state;
+	/** @brief name of telemetry */
+	char *name;
+	/** @brief holds value of attributes */
+	struct iot_attribute *attribute;
+	/** @brief number of attributes */
+	iot_uint8_t attribute_count;
+	/** @brief sample time stamp */
+	iot_timestamp_t time_stamp;
+	/** @brief telemetry type */
+	iot_type_t type;
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of attributes on the stack
+	 *
+	 * @note This is not to be used directly, use @c attribute instead
+	 */
+	struct iot_attribute _attribute[ IOT_ATTRIBUTE_MAX ];
+	/** @brief storage of name value on the stack
+	 *
+	 * @note This is not to be used directly, use @c name instead
+	 */
+	char _name[ IOT_NAME_MAX_LEN + 1u ];
+#else /* ifdef IOT_STACK_ONLY */
+	/** @brief location of the telemetry, heap or stack */
+	iot_bool_t is_in_heap;
+#endif /* else IOT_STACK_ONLY */
+};
+
+#if 0
+/**
+ * @brief information about a transaction status for later querying
+ */
+struct iot_transaction
+{
+	/** @brief indicates status */
+	iot_status_t status[IOT_PROTOCOL_STACKS];
+};
+
+/**
+ * @brief information for passing data between two (or more) clients
+ */
+struct iot_message
+{
+	/** @brief source for the data */
+	const char *source_id;
+	/** @brief data destination */
+	const char *dest_id;
+	/** @brief data payload */
+	struct iot_data payload;
+};
+#endif
+
+/**
+ * @brief structure holding data for eanble plug-ins
+ */
+struct iot_plugin_enabled
+{
+	/** @brief plug-in order index */
+	int                         order;
+	/** @brief pointer to the plug-in data */
+	iot_plugin_t                *ptr;
+};
+
+/**
+ * @brief library connection details
+ */
+struct iot
+{
+	/** @brief registered actions stored on the stack */
+	struct iot_action           action[ IOT_ACTION_STACK_MAX ];
+	/** @brief number of registered actions */
+	iot_uint8_t                 action_count;
+	/**
+	 * @brief Pointer to which action objects are used or available
+	 *
+	 * @note if the index is < action_count are used.
+	 *       if the index is >= action_count are available for use.
+	 */
+	struct iot_action           *action_ptr[ IOT_ACTION_MAX ];
+
+	/** @brief value of attributes */
+	struct iot_attribute        *attribute;
+	/** @brief number of attributes */
+	iot_uint8_t                 attribute_count;
+
+	/** @brief path to the configuration file */
+	char                        *cfg_file_path;
+	/** @brief unique id of the device */
+	char                        *device_id;
+	/** @brief unique id of the client or application */
+	char                        *id;
+	/** @brief initialization flags */
+	iot_uint8_t                 flags;
+
+	/** @brief holds plug-ins that are currently loaded */
+	iot_plugin_t                plugin[ IOT_PLUGIN_MAX ];
+	/** @brief holds pointer to used and avaiable plug-in slots */
+	iot_plugin_t                *plugin_ptr[ IOT_PLUGIN_MAX ];
+	/** @brief number of plug-ins loaded */
+	unsigned int                plugin_count;
+	/** @brief holds pointer to plugs-ins that are currently enabled */
+	struct iot_plugin_enabled   plugin_enabled[ IOT_PLUGIN_MAX ];
+	/** @brief number of plug-ins enabled */
+	unsigned int                plugin_enabled_count;
+
+	/** @brief registered telemetry stored on the stack */
+	struct iot_telemetry        telemetry[ IOT_TELEMETRY_STACK_MAX ];
+	/** @brief number of registered telemetry */
+	iot_uint8_t                 telemetry_count;
+	/**
+	 * @brief Pointer to which telemetry objects are used or available
+	 *
+	 * @note if the index is < telemetry_count are used.
+	 *       if the index is >= telemetry_count are available for use.
+	 */
+	struct iot_telemetry        *telemetry_ptr[ IOT_TELEMETRY_MAX ];
+
+	/** @brief about to disconnect & quit */
+	iot_bool_t                  to_quit;
+
+	/* incoming actions to execute */
+	/**
+	 * @brief Storage of action requests queued to execute or in progress
+	 */
+	struct iot_action_request   request_queue[IOT_ACTION_QUEUE_MAX];
+	/** @brief Pointer of free to locations to store action requests */
+	struct iot_action_request   *request_queue_free[IOT_ACTION_QUEUE_MAX];
+	/** @brief Number of spaces available to queue action requests */
+	iot_uint8_t                 request_queue_free_count;
+	/** @brief Index of requests waiting for a slot for processing */
+	struct iot_action_request   *request_queue_wait[IOT_ACTION_QUEUE_MAX];
+	/** @brief Number of action requests waiting to be processed */
+	iot_uint8_t                 request_queue_wait_count;
+
+	/* log support */
+	/** @brief Function to call to log a message */
+	iot_log_callback_t          *logger;
+	/** @brief log level to filter logger output */
+	iot_log_level_t             logger_level;
+	/** @brief user data to pass to log callback */
+	void                        *logger_user_data;
+
+#ifndef IOT_NO_THREAD_SUPPORT
+	/** @brief handle to a mutex to allow log correctly with multiple
+	 * threads */
+	os_thread_mutex_t           log_mutex;
+	/** @brief handle to the main thread */
+	os_thread_t                 main_thread;
+	/** @brief Mutex to protect telemetry samples */
+	os_thread_mutex_t           telemetry_mutex;
+
+	/* worker threads */
+	/** @brief Array of all worker threads for handling commands */
+	os_thread_t                 worker_thread[IOT_WORKER_THREADS];
+	/** @brief Mutex to protect signal condition variable */
+	os_thread_mutex_t           worker_mutex;
+	/** @brief Signal for waking up waiting threads */
+	os_thread_condition_t       worker_signal;
+	/** @brief Lock for commands which cannot run concurrently */
+	os_thread_rwlock_t          worker_thread_exclusive_lock;
+#endif /* ifndef IOT_NO_THREAD_SUPPORT */
+
+#ifdef IOT_STACK_ONLY
+	/** @brief storage on the stack for the device id (use 'device_id' instead) */
+	char                        _device_id[ IOT_ID_MAX_LEN + 1u ];
+	/** @brief storage on the stack for the app id (use 'id' instead) */
+	char                        _id[ IOT_ID_MAX_LEN + 1u ];
+	/** @brief storage of connect configuration filename
+	 *
+	 * @note This is not to be used directly, use @c connect_cfg_file_path instead
+	 */
+	char                        _cfg_file_path[PATH_MAX + 1u];
+	/** @brief storage on the stack for the connect configuration
+	 * @note This is not to be used directly, use @c connect_setting instead
+	 */
+	struct iot_connect_setting  _connect_setting;
+#endif /* ifdef IOT_STACK_ONLY */
+};
+
+/**
+ * @brief Returns the value of a attribute
+ *
+ * @param[in]      handle              library handle
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to type, if possible
+ * @param[in]      type                type of data to return
+ * @param[in,out]  ...                 pointer to a variable of the type
+ *                                     specified
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_action_attribute_set_raw
+ * @see iot_action_attribute_set
+ */
+IOT_API IOT_SECTION iot_status_t iot_attribute_get(
+	const iot_t *handle,
+	const char *name,
+	iot_bool_t convert,
+	iot_type_t type,
+	... );
+
+/**
+ * @brief Returns a raw value
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to raw, if possible
+ * @param[out]     length              amount of raw data
+ * @param[in,out]  data                pointer to the raw data
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_attribute_get
+ * @see iot_attribute_set_raw
+ */
+IOT_API IOT_SECTION iot_status_t iot_attribute_get_raw(
+	const iot_t *lib,
+	const char *name,
+	iot_bool_t convert,
+	size_t *length,
+	const void **data );
+
+/**
+ * @brief Sets an attribute value
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      name                attribute name
+ * @param[in]      type                type of attribute data
+ * @param[in]      ...                 value of attribute data in the type
+ *                                     specified
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_attribute_set_raw
+ */
+IOT_API IOT_SECTION iot_status_t iot_attribute_set(
+	iot_t *lib,
+	const char *name,
+	iot_type_t type,
+	... );
+
+/**
+ * @brief Sets a raw attribute value
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      name                attribute name
+ * @param[in]      length              length of attribute data
+ * @param[in]      ptr                 pointer to attribute data
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_attribute_set
+ */
+IOT_API IOT_SECTION iot_status_t iot_attribute_set_raw(
+	iot_t *lib,
+	const char *name,
+	size_t length,
+	const void *ptr );
+
+#ifndef iot_EXPORTS
+#ifndef __clang__
+/**
+ * @brief Sets an attribute value
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      name                attribute name
+ * @param[in]      type                attribute type
+ * @param[in]      data                attribute value
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ */
+#	define iot_attribute_set( lib, name, type, data ) \
+		iot_attribute_set( lib, name, type, data )
+
+/**
+ * @brief Returns the value of an attribute
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to type, if possible
+ * @param[in]      type                type of data to return
+ * @param[in,out]  data                pointer to a variable of the type
+ *                                     specified
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+#	define iot_attribute_get( lib, name, convert, type, data ) \
+		iot_attribute_get( lib, name, convert, type, data )
+#endif /* ifndef __clang__ */
+#endif /* ifndef iot_EXPORTS */
+
+/**
+ * @brief Returns the value of a action attribute
+ *
+ * @param[in]      action              action object to get value from
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to type, if possible
+ * @param[in]      type                type of data to return
+ * @param[in,out]  ...                 pointer to a variable of the type
+ *                                     specified
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_action_attribute_set_raw
+ * @see iot_action_attribute_set
+ */
+IOT_API IOT_SECTION iot_status_t iot_action_attribute_get(
+	const iot_action_t *action,
+	const char *name,
+	iot_bool_t convert,
+	iot_type_t type,
+	... );
+
+#ifndef iot_EXPORTS
+#ifndef __clang__
+/**
+ * @brief Gets an attribute for a action object
+ *
+ * @param[in,out]  action              object to set attribute for
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to type, if possible
+ * @param[in]      type                attribute type
+ * @param[in]      data                attribute value
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+#	define iot_action_attribute_get( action, name, convert, type, data ) \
+		iot_action_attribute_get( action, name, convert, type, data )
+#endif /* ifndef __clang__ */
+#endif /* ifndef iot_EXPORTS */
+
+/**
+ * @brief Processes a request if one is waiting for processing
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      max_time_out        maximum time to wait in milliseconds for
+ *                                     request to process
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to function
+ * @retval IOT_STATUS_SUCCESS          request successfully completed
+ * @retval IOT_STATUS_TIMED_OUT        timed out while waiting for request to be
+ *                                     processed
+ */
+IOT_API IOT_SECTION iot_status_t iot_action_process( iot_t *lib,
+	iot_millisecond_t max_time_out );
+
+/**
+ * @brief Internal function to handle action registration
+ *
+ * @param[in,out]  action              action to register
+ * @param[out]     txn                 transaction status (optional)
+ * @param[in]      max_time_out        maximum time to wait in milliseconds
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
+ * @retval IOT_STATUS_FAILURE          on failure
+ * @retval IOT_STATUS_SUCCESS          pointer was successfully set
+ * @retval IOT_STATUS_TIMED_OUT        timed out while waiting for registration
+ *
+ * @see iot_action_register_callback
+ * @see iot_action_register_command
+ */
+IOT_API IOT_SECTION iot_status_t iot_action_register(
+	iot_action_t *action,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out );
+
+/**
+ * @brief Returns the value of a telemetry attribute
+ *
+ * @param[in,out]  telemetry           telemetry object to set
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to type, if possible
+ * @param[in]      type                type of data to return
+ * @param[in,out]  ...                 pointer to a variable of the type
+ *                                     specified
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_telemetry_attribute_set_raw
+ * @see iot_telemetry_attribute_set
+ */
+IOT_API IOT_SECTION iot_status_t iot_telemetry_attribute_get(
+	const iot_telemetry_t *telemetry,
+	const char *name,
+	iot_bool_t convert,
+	iot_type_t type,
+	... );
+
+#ifndef iot_EXPORTS
+#ifndef __clang__
+/**
+ * @brief Gets an attribute for a telemetry object
+ *
+ * @param[in,out]  telemetry           object to set attribute for
+ * @param[in]      name                attribute name
+ * @param[in]      convert             convert to type, if possible
+ * @param[in]      type                attribute type
+ * @param[in]      data                attribute value
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
+ *                                     (and not convertible, if set)
+ * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+#	define iot_telemetry_attribute_get( telemetry, name, convert, type, data ) \
+		iot_telemetry_attribute_get( telemetry, name, convert, type, data )
+#endif /* ifndef__clang__ */
+#endif /* ifndef iot_EXPORTS */
+
+/**
+ * @brief Copies data stored in one object to another
+ *
+ * @param[in,out]  to                  destination to object
+ * @param[in]      from                source object
+ * @param[in]      copy_dynamic_data   whether to copy dynamic data into a new
+ *                                     heap allocated buffer to point to data
+ *                                     in the original structure
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_NO_MEMORY        unable to allocate memory on the heap
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_API IOT_SECTION iot_status_t iot_common_data_copy( struct iot_data *to,
+	const struct iot_data *from, iot_bool_t copy_dynamic_data );
+
+#if 0
+/* TODO ITEMS */
+
+/** @brief Type representing an unexpected periodic event */
+typedef struct iot_alarm                         iot_alarm_t;
+/** @brief Type representing an expected periodic event */
+typedef struct iot_event                         iot_event_t;
+/** @brief Type repseenting client to client communication */
+typedef struct iot_message                       iot_message_t;
+
+/**
+ * @brief Type for a callback function called when a message is received from
+ * another iot device
+ *
+ * @param[in]      message             message received
+ * @param[in]      user_data           pointer to user specific data
+ */
+typedef void (iot_message_callback_t)(
+	iot_message_t *message,
+	void *user_data );
+
+/**
+ * @brief Type for a callback function called when the agent state changes
+ *
+ * @param[in]      new_state           new state the agent just changed to
+ * @param[in]      old_state           previous state the agent was in
+ * @param[in]      user_data           pointer to user specific data
+ */
+typedef void (iot_state_callback_t)(
+	iot_state_t new_state,
+	iot_state_t old_state,
+	void *user_data );
+#endif
+
+/* actions */
+/**
+ * @defgroup action_flags Flags for actions
+ *
+ * @see iot_actions_flags_set
+ */
+/** @brief Function will not return (fire and forget) */
+#define IOT_ACTION_NO_RETURN           0x01
+/** @brief Local exclusive lock */
+#define IOT_ACTION_EXCLUSIVE_APP       0x02
+/** @brief Remote exclusive lock */
+#define IOT_ACTION_EXCLUSIVE_DEVICE    (0x04 | IOT_ACTION_EXCLUSIVE_APP)
+/** @brief Truncate the service when being sent to client */
+#define IOT_ACTION_TRUNCATE_SERVICE    0x08
+/** @brief Ignore the time limit */
+#define IOT_ACTION_NO_TIME_LIMIT       0x10
+/** @} */
+
+/**
+ * @brief Sets flags on actions
+ *
+ * @param[in,out]  action              action to set exclusive flag
+ * @param[in]      flags               flags to set
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to function
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_API IOT_SECTION iot_status_t iot_action_flags_set(
+	iot_action_t *action,
+	iot_uint8_t flags );
+
+/**
+ * @brief Gets directory name upon type
+ *
+ * @param[in]      type                directory type
+ * @param[in]      buf                 buffer to write directory path to
+ * @param[in]      buf_len             length of buffer
+ *
+ * @return the size of the path (not including the null-terminator)
+ */
+IOT_API IOT_SECTION size_t iot_directory_name_get(
+	iot_dir_type_t type,
+	char *buf,
+	size_t buf_len );
+
+/**
+ * @brief Copies an action request object
+ *
+ * @param[in]      dest                copy destination
+ * @param[in]      request             request to copy
+ * @param[in]      var_data            start location to play variable data
+ * @param[in]      var_data_size       size of variable location data buffer
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
+ * @retval IOT_STATUS_NO_MEMORY        variable memory size was not large enough
+ * @retval IOT_STATUS_SUCCESS          copy was successful
+ *
+ * @see iot_action_request_copy_size
+ */
+IOT_API IOT_SECTION iot_status_t iot_action_request_copy(
+	iot_action_request_t *dest,
+	const iot_action_request_t *request,
+	void *var_data,
+	size_t var_data_size );
+
+/**
+ * @brief Determines the amount of variable data size required to copy
+ * an action request
+ *
+ * @param[in]      request             request object to calculate the
+ *                                     amount variable data required
+ *
+ * @return the amount of variable data required to copy the request
+ *
+ * @see iot_action_request_copy
+ */
+size_t iot_action_request_copy_size(
+	const iot_action_request_t *request );
+
+#if 0
+/* alarms (high priority events) */
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_alarm_deregister(
+	iot_alarm_t *alarm,
+	iot_millisecond_t max_time_out );
+
+/** @todo provide implementation */
+IOT_SECTION iot_alarm_t *iot_alarm_register(
+	iot_alarm_t *alarm,
+	iot_millisecond_t max_time_out );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_alarm_raise(
+	iot_alarm_t *alarm );
+
+/* events */
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_event_deregister(
+	const iot_event_t *event,
+	iot_millisecond_t max_time_out );
+
+/** @todo provide implementation */
+IOT_SECTION iot_event_t *iot_event_register(
+	const iot_event_t *event,
+	iot_millisecond_t max_time_out );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_event_raise(
+	const iot_event_t *event );
+
+/* file */
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_file_send(
+	iot_t *lib,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	const char *file_path );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_file_receive(
+	iot_t *lib,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	const char *file_path );
+
+/* messaging */
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_message_callback_set(
+	iot_t *lib,
+	iot_message_callback_t *func,
+	void *user_data );
+
+/** @todo provide implementation */
+IOT_SECTION const char *iot_message_get_source(
+	const iot_message_t *message );
+
+/** @todo provide implementation */
+IOT_SECTION const char *iot_message_get_destination(
+	const iot_message_t *message );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_message_get(
+	const iot_message_t *message,
+	iot_type_t type,
+	... );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_message_get_raw(
+	const iot_message_t *message,
+	size_t *length,
+	const void **ptr );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_message_publish(
+	iot_t *lib,
+	const char *dest,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	iot_type_t type,
+	... );
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_message_publish_raw(
+	iot_t *lib,
+	const char *dest,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	size_t length,
+	const void *ptr );
+
+#ifndef iot_EXPORTS
+#ifndef __clang__
+/**
+ * @brief Retreives data from an incoming message
+ *
+ * @param[in]      message             message to retreive value from
+ * @param[in]      type                data type to receive
+ * @param[out]     data_ptr            location to store value
+ */
+#	define iot_message_get( message, type, data_ptr ) \
+		iot_message_get( message, type, data_ptr )
+
+/**
+ * @brief Publishes a message for other clients
+ *
+ * @param[in]      lib                 library handle
+ * @param[in]      dest                destination client
+ * @param[out]     txn                 transaction status (optional)
+ * @param[in]      max_time_out        maximum time to wait for publishing
+ * @param[in]      type                type of data being sent
+ * @param[in]      data                data to send
+ */
+#	define iot_message_publish( lib, dest, txn, max_time_out, type, data ) \
+		iot_message_publish( lib, dest, txn, max_time_out, type, data )
+#endif /* ifndef __clang__ */
+#endif /* ifndef iot_EXPORTS */
+
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_state_get(
+	iot_t *lib,
+	iot_state_t *state,
+	iot_millisecond_t max_time_out );
+/** @todo provide implementation */
+IOT_SECTION iot_status_t iot_state_callback_set(
+	iot_t *lib,
+	iot_state_callback_t *state_callback,
+	void *user_data );
+
+/* telemetry */
+/**
+ * @brief Determine the number of samples
+ *
+ * @param[in,out]  telemetry           telemetry object to check
+ * @param[in,out]  first_sample_idx    first sample's index
+ *
+ * @retval size_t                      number of samples
+ */
+IOT_API IOT_SECTION size_t iot_telemetry_sample_count (
+	const iot_telemetry_t *telemetry,
+	size_t *first_sample_idx );
+
+/**
+ * @brief Determine the next sample array index
+ *
+ * @param[in,out]  idx                 current sample's index
+ *
+ * @retval size_t                      next sample's index
+ */
+IOT_API IOT_SECTION size_t iot_telemetry_sample_idx_next ( size_t idx );
+
+/**
+ * @brief Determine the previous sample array index
+ *
+ * @param[in,out]  idx                 current sample's index
+ *
+ * @retval size_t                      previous sample's index
+ */
+IOT_API IOT_SECTION size_t iot_telemetry_sample_idx_prev ( size_t idx );
+
+/* transaction */
+/**
+ * @brief Determine the status of a transaction
+ *
+ * @param[in,out]  txn                 transaction to query
+ * @param[in]      max_time_out        maximum time to wait for query to be
+ *                                     performed
+ *
+ * @retval IOT_TRUE                    entire transaction was successful
+ * @retval IOT_FALSE                   transaction did not succeed
+ */
+IOT_SECTION iot_bool_t iot_transaction_status(
+	const iot_transaction_t *txn,
+	iot_millisecond_t max_time_out );
+#endif
+
+/* loop */
+/**
+ * @brief Performs one main loop iteration for the library
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      max_time_out        maximum time to wait for the iteration to
+ *                                     complete
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ * @retval IOT_STATUS_TIMED_OUT        timed out while waiting for loop
+ *                                     iteration
+ *
+ * @see iot_loop_forever
+ * @see iot_loop_start
+ * @see iot_loop_stop
+ */
+IOT_SECTION iot_status_t iot_loop_iteration(
+	iot_t *lib,
+	iot_millisecond_t max_time_out );
+
+/**
+ * @brief Performs main loop indefinitely in the current thread for the library
+ *
+ * @param[in,out]  lib                 library handle
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_SUCCESS          on success, after quit flag set
+ *
+ * @see iot_loop_iteration
+ */
+IOT_SECTION iot_status_t iot_loop_forever(
+	iot_t *lib );
+
+/**
+ * @brief Starts a new thread to perform the main loop for the library
+ *
+ * @param[in,out]  lib                 library handle
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ * @retval IOT_STATUS_NOT_SUPPORTED    library is either not compiled and/or not
+ *                                     initialized with thread support
+ *
+ * @see iot_loop_start
+ */
+IOT_SECTION iot_status_t iot_loop_start(
+	iot_t *lib );
+
+/**
+ * @brief Stops the main thread for the library
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      force               force kill thread if required
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ * @retval IOT_STATUS_NOT_SUPPORTED    library is either not compiled and/or not
+ *                                     initialized with thread support
+ *
+ * @see iot_loop_start
+ */
+IOT_SECTION iot_status_t iot_loop_stop(
+	iot_t *lib,
+	iot_bool_t force );
+
+/* helper function for log level setting */
+/**
+ * @brief Sets a log level for the service based on a string
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      log_level_str       string filter for the service
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_NOT_FOUND        log_level string not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_log
+ * @see IOT_LOG
+ */
+IOT_API IOT_SECTION iot_status_t iot_log_level_set_string(
+	iot_t *lib,
+	const char *log_level_str );
+
+/**
+ * @brief Loads any built-in plugins
+ *
+ * @param[in,out]  lib                 library to load plug-ins into
+ * @param[in]      max                 maximum number of plug-ins allowed
+ *
+ * @return The number of built-in plugins loaded
+ */
+IOT_SECTION unsigned int iot_plugin_builtin_load(
+	iot_t* lib,
+	unsigned int max );
+
+/**
+ * @brief Enables built-in plugins that are to be initially enabled on startup
+ *
+ * @param[in]      lib                 library containing plug-ins to enable
+ *
+ * @retval IOT_TRUE                    on success
+ * @retval IOT_FALSE                   on failure (at least 1 failed to load)
+ */
+IOT_SECTION iot_bool_t iot_plugin_builtin_enable(
+	iot_t *lib );
+
+/**
+ * @brief Disables an enabled plug-in by it's given name
+ *
+ * @param[in]      lib                 library containing loaded plug-ins
+ * @param[in]      name                name of the plug-in to disable
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_NOT_FOUND        plug-in not found or not enabled
+ * @retval IOT_STATUS_SUCCESS          on success
+ * @retval ...                         status returned by the disable callback
+ */
+IOT_SECTION iot_status_t iot_plugin_disable(
+	iot_t *lib,
+	const char *name );
+
+/**
+ * @brief Disables all enabled plug-in
+ *
+ * @param[in]      lib                 library containing loaded plug-ins
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_NOT_FOUND        plug-in not found or not enabled
+ * @retval IOT_STATUS_SUCCESS          on success
+ * @retval ...                         status returned by the disable callback
+ */
+IOT_SECTION iot_status_t iot_plugin_disable_all(
+	iot_t *lib );
+
+/**
+ * @brief enables a plug-in
+ *
+ * @param[in]      lib                 library holding plug-ins
+ * @param[in]      name                name of plug-in to load
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_EXISTS           plug-in already enabled
+ * @retval IOT_STATUS_FULL             maximum number already enabled
+ * @retval IOT_STATUS_NOT_EXECUTABLE   enable routine of plug-in failed
+ * @retval IOT_STATUS_NOT_FOUND        plug-in not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_SECTION IOT_API iot_status_t iot_plugin_enable(
+	iot_t *lib,
+	const char *name );
+
+/**
+ * @brief initializes a loaded plug-in
+ *
+ * @param[in]      lib                 library loading plug-in
+ * @param[in,out]  p                   plug-in to initialize
+ */
+IOT_SECTION void iot_plugin_initialize(
+	iot_t * lib,
+	iot_plugin_t *p );
+
+/**
+ * @brief loads an external plug-in
+ *
+ * @param[in]      lib                 library to load plug-in into
+ * @param[in]      file                path to plug-in file
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          operating system failure to load plug-in
+ * @retval IOT_STATUS_FULL             maximum number already enabled
+ * @retval IOT_STATUS_NOT_EXECUTABLE   not a vaild plug-in file
+ * @retval IOT_STATUS_NOT_FOUND        plug-in not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_SECTION iot_status_t iot_plugin_load(
+	iot_t * lib,
+	const char *file );
+
+/**
+ * @brief triggers all the plug-ins to perform an operation
+ *
+ * @param[in]      lib                 library holding plug-ins
+ * @param[out]     txn                 transaction status (optional)
+ * @param[in]      op                  operation to perform
+ * @param[in,out]  max_time_out        maximum time to wait in milliseconds
+ *                                     (0 = wait indefinitely) (optional),
+ *                                     returns amount of time remaining
+ * @param[in]      item                item operating is being performed on
+ *                                     (optional)
+ * @param[in]      new_value           new value for item, type is based on
+ *                                     @p op (optional)
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_SUCCESS          on success
+ * @retval ...                         status returned by the perform callback
+ */
+IOT_SECTION iot_status_t iot_plugin_perform(
+	iot_t *lib,
+	iot_transaction_t *txn,
+	iot_millisecond_t *max_time_out,
+	iot_operation_t op,
+	const void *item,
+	const void *new_value );
+
+/**
+ * @brief terminates a loaded plug-in
+ *
+ * @param[in]      lib                 library holding plug-in
+ * @param[in,out]  p                   plug-in to terminate
+ */
+IOT_SECTION void iot_plugin_terminate(
+	iot_t *lib,
+	iot_plugin_t *p );
+
+/**
+ * @brief unloads a loaded plug-in
+ *
+ * @param[in]      lib                 library to load plug-in into
+ * @param[in]      name                name of plug-in to unload
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_NOT_FOUND        plug-in not found
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_SECTION iot_status_t iot_plugin_unload(
+	iot_t *lib,
+	const char *name );
+
+/**
+ * @brief Sets the path to the customized configuration file
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      file_path           connect configuration file path
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_NO_MEMORY        failure due to out of memory
+ * @retval IOT_STATUS_NO_MEMORY        no memory to store configration filename
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_API IOT_SECTION iot_status_t iot_configuration_file_set(
+	iot_t *lib,
+	const char *file_path );
+
+/**
+ * @brief returns the name for a telemetry object
+ *
+ * @param[in]      t                   telemetry object to get name from
+ *
+ * @return the name of the telemetry item
+ */
+IOT_SECTION IOT_API const char *iot_telemetry_name_get(
+	const iot_telemetry_t *t );
+
+#endif /* ifndef IOT_TYPES_H */
+

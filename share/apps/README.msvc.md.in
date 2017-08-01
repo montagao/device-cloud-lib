@@ -1,0 +1,23 @@
+Internet of Things Examples
+===========================
+
+The sub-directories of this directory contain example code for building apps
+that are able to connect to an Internet of Things (IoT) cloud.
+
+Build Instructions with Microsoft Visual Studio
+===============================================
+
+1. Download and install both Visual C++ Redistributable Packages
+   For Visual Studio 2010 and 2013, use the following links:
+   - (https://www.microsoft.com/en-gb/download/details.aspx?id=5555)
+   - (https://www.microsoft.com/en-us/download/details.aspx?id=40784)
+
+2. Open a terminal window (possibly as an administrator)
+
+3. Enter into the sub-directory of the sample you would like to build
+   ```
+   cd simple_telmetry
+   ```
+
+4. Run the `nmake` command
+

@@ -1,0 +1,60 @@
+/**
+ * @file
+ * @brief Header file defining internal variables
+ *
+ * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ *
+ * @license The right to copy, distribute or otherwise make use of this software
+ * may be licensed only pursuant to the terms of an applicable Wind River
+ * license agreement.  No license to Wind River intellectual property rights is
+ * granted herein.  All rights not licensed by Wind River are reserved by Wind
+ * River.
+ */
+#ifndef IOT_BUILD_H
+#define IOT_BUILD_H
+
+/** @brief GIT sha of the project */
+#define IOT_GIT_SHA                    "@IOT_GIT_SHA@"
+
+/** @brief project version as string */
+#define IOT_VERSION                    "@IOT_VERSION@"
+/** @brief project major version number */
+#define IOT_VERSION_MAJOR              @IOT_VERSION_MAJOR@
+/** @brief project minor version number */
+#define IOT_VERSION_MINOR              @IOT_VERSION_MINOR@
+/** @brief project patch version number */
+#define IOT_VERSION_PATCH              @IOT_VERSION_PATCH@
+/** @brief project tweak version number */
+#define IOT_VERSION_TWEAK              @IOT_VERSION_TWEAK@
+
+
+/** @brief Maximum number of supported actions */
+#define IOT_ACTION_MAX                 @IOT_ACTION_MAX@
+/** @brief Maximum number of actions that can be queued */
+#define IOT_ACTION_QUEUE_MAX           @IOT_ACTION_QUEUE_MAX@
+/** @brief Maximum number of actions in stack */
+#define IOT_ACTION_STACK_MAX           @IOT_ACTION_STACK_MAX@
+/** @brief Maximum number of attributes */
+#define IOT_ATTRIBUTE_MAX              @IOT_ATTRIBUTE_MAX@
+/** @brief Maximum number of parameters per action */
+#define IOT_PARAMETER_MAX              @IOT_PARAMETER_MAX@
+/** @brief maximum number of samples per telemetry item */
+#define IOT_SAMPLE_MAX                 @IOT_SAMPLE_MAX@
+/** @brief maximum number of telemetry items reserved on the stack */
+#define IOT_TELEMETRY_STACK_MAX        @IOT_TELEMETRY_STACK_MAX@
+/** @brief maximum number of telemetry items allowed in an application */
+#define IOT_TELEMETRY_MAX              @IOT_TELEMETRY_MAX@
+/** @brief Number of "worker" threads */
+#define IOT_WORKER_THREADS             @IOT_WORKER_THREADS@
+
+
+/** @brief maximum number of plug-ins that can be loaded */
+#define IOT_PLUGIN_MAX                 @IOT_PLUGIN_MAX@
+
+/** @brief default configuration directory */
+#define IOT_CONFIG_DIR_DEFAULT         "@IOT_CONFIG_DIR_DEFAULT@"
+
+/** @brief default runtime directory */
+#define IOT_RUNTIME_DIR_DEFAULT        "@IOT_RUNTIME_DIR_DEFAULT@"
+
+#endif /* ifndef IOT_BUILD_H */
