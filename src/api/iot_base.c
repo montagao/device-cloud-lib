@@ -804,7 +804,8 @@ iot_status_t iot_base_device_id_set(
 				device_id[device_id_len - 1u] = '\0';
 				IOT_LOG( NULL, IOT_LOG_INFO,
 					"Generated device id: %s", device_id );
-				fd = os_file_open( file_path, OS_WRITE );
+				fd = os_file_open( file_path,
+					OS_WRITE | OS_CREATE );
 				if ( fd  != OS_FILE_INVALID )
 				{
 					device_id_len = os_file_write(
