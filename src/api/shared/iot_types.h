@@ -18,6 +18,8 @@
 #include "iot_defs.h"
 #include "iot_plugin.h"
 
+#include <curl/curl.h>
+
 /* Flags */
 /** @brief Run in a single thread */
 #define IOT_FLAG_SINGLE_THREAD                   0x01
@@ -350,6 +352,52 @@ struct iot_telemetry
 	/** @brief location of the telemetry, heap or stack */
 	iot_bool_t is_in_heap;
 #endif /* else IOT_STACK_ONLY */
+};
+
+struct iot_file_transfer
+{
+	/** @brief pointer to plugin data */
+	void *plugin_data;
+	/** @brief curl handle */
+	CURL *lib_curl;
+	/** @brief message id */
+	unsigned int msg_id;
+	/** @brief cloud's file name */
+	char name[ PATH_MAX + 1u ];
+	/** @brief local file path */
+	char path[ PATH_MAX + 1u ];
+	/** @brief url of cloud's file */
+	char url[ PATH_MAX + 1u ];
+	/** @brief crc32 checksum */
+	iot_uint64_t crc32;
+	/** @brief file size */
+	iot_uint64_t size;
+	/** @brief file operation (get/put) */
+	iot_operation_t op;
+	/** @brief flag to cancel transfer */
+	iot_bool_t cancel;
+	/** @brief last time progress was sent */
+	double last_update_time;
+	/** @brief total byte transfered in previous session(s) */
+	long prev_byte;
+	/** @brief next time transfer is retried */
+	iot_timestamp_t retry_time;
+	/** @brief time when transfer expired */
+	iot_timestamp_t expiry_time;
+	/** @brief progress function callback */
+	iot_file_progress_callback_t *callback;
+	/** @brief callback's user data */
+	void *user_data;
+};
+
+struct iot_file_progress
+{
+	/** @brief flag for transfer completion */
+	iot_bool_t completed;
+	/** @brief transfer's percentage done */
+	iot_float32_t percentage;
+	/** @brief transfer's status */
+	iot_status_t status;
 };
 
 #if 0

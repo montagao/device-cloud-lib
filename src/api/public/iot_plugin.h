@@ -51,6 +51,10 @@ enum iot_operation
 	IOT_OPERATION_CLIENT_HEARTBEAT,
 	/** @brief ( up ) client-2-client message */
 	IOT_OPERATION_CLIENT_MESSAGE,
+	/** @brief (up) get url to download a file from */
+	IOT_OPERATION_FILE_GET,
+	/** @brief (up) get url to upload a file to */
+	IOT_OPERATION_FILE_PUT,
 	/** @brief ( up ) iteration */
 	IOT_OPERATION_ITERATION,
 	/** @brief ( up ) property publish */

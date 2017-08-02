@@ -11,6 +11,7 @@ find_package( Threads )
 if ( MQTT_SSL_SUPPORT )
 	find_package( OpenSSL )
 endif()
+find_package( LibArchive REQUIRED )
 
 set( API_HDRS_C "" CACHE INTERNAL "api header files" FORCE )
 set( API_SRCS_C "" CACHE INTERNAL "api source files" FORCE )
@@ -25,6 +26,7 @@ set( API_SRCS_C ${API_SRCS_C}
 	"iot_base.c"
 	"iot_base64.c"
 	"iot_common.c"
+	"iot_file.c"
 	"iot_location.c"
 	"iot_mqtt.c"
 	"iot_plugin.c"
@@ -64,6 +66,7 @@ include_directories( SYSTEM
 	"${JSON_INCLUDE_DIR}"
 	"${MQTT_INCLUDE_DIR}"
 	"${OSAL_INCLUDE_DIR}"
+	"${LibArchive_INCLUDE_DIRS}"
 )
 if( JSON_DEFINES )
 	foreach( JSON_DEFINE ${JSON_DEFINES} )
@@ -95,6 +98,7 @@ target_link_libraries( "${IOT_LIBRARY_NAME}" "dl"
 	${OSAL_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	${PLUGIN_BUILTIN_LIBS}
+	${LibArchive_LIBRARIES}
 )
 
 if ( MQTT_SSL_SUPPORT )

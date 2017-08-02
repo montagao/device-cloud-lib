@@ -13,6 +13,8 @@
 
 #include "../../shared/iot_base64.h"
 #include "../../shared/iot_defs.h"
+
+#include <iot_checksum.h>
 #include <iot_json.h>
 #include <iot_mqtt.h>
 #include <iot_plugin.h>
@@ -21,11 +23,34 @@
 #include "../../shared/iot_types.h"
 
 /** @brief Maximum length for a "thingkey" */
-#define TR50_THING_KEY_MAX_LEN         ( IOT_ID_MAX_LEN * 2 ) + 1u
+#define TR50_THING_KEY_MAX_LEN               ( IOT_ID_MAX_LEN * 2 ) + 1u
 /** @brief default QOS level */
 #define TR50_MQTT_QOS                  1
 /** @brief number of seconds to show "Connection loss message" */
 #define TR50_SHOW_CONNECTION_LOSS_MSG  20u
+#define TR50_MQTT_QOS                        1
+/** @brief Maximum concurrent file transfers */
+#define TR50_FILE_TRANSFER_MAX               10u
+/** @brief Default value for ssl verify host */
+#define TR50_DEFAULT_SSL_VERIFY_HOST         2u
+/** @brief Default value for ssl verify peer */
+#define TR50_DEFAULT_SSL_VERIFY_PEER         1u
+/** @brief File transfer progress interval in seconds */
+#define TR50_FILE_TRANSFER_PROGRESS_INTERVAL 5.0
+/** @brief Extension for temporary downloaded file */
+#define TR50_DOWNLOAD_EXTENSION              ".part"
+/** @brief Time interval in seconds to check file
+ *         transfer queue */
+#define TR50_FILE_QUEUE_CHECK_INTERVAL       30 * IOT_MILLISECONDS_IN_SECOND /* 30 seconds */
+/** @brief Time interval in seconds for retrying
+ *         file transfer upon failure */
+#define TR50_FILE_TRANSFER_RETRY_INTERVAL    1 * IOT_SECONDS_IN_MINUTE * \
+                                             IOT_MILLISECONDS_IN_SECOND /* 1 minute */
+/** @brief Time interval in seconds for a file
+ *         transfer to expire if it keeps failing */
+#define TR50_FILE_TRANSFER_EXPIRY_TIME       1 * IOT_MINUTES_IN_HOUR * \
+                                             IOT_SECONDS_IN_MINUTE * \
+                                             IOT_MILLISECONDS_IN_SECOND /* 1 hour */
 
 /** @brief internal data required for the plug-in */
 struct tr50_data
@@ -40,6 +65,12 @@ struct tr50_data
 	char thing_key[ TR50_THING_KEY_MAX_LEN + 1u ];
 	/** @brief time_stamp of when connection loss is reported */
 	iot_timestamp_t time_stamp_connetion_loss_reported;
+	/** @brief file transfer queue */
+	iot_file_transfer_t file_transfer_queue[ TR50_FILE_TRANSFER_MAX ];
+	/** @brief number of ongoing file transfer */
+	iot_uint8_t file_transfer_count;
+	/** @brief timestamp of when file transfer queue is last checked */
+	iot_timestamp_t file_queue_last_checked;
 };
 
 /**
@@ -282,6 +313,74 @@ iot_status_t tr50_terminate(
 	iot_t *lib,
 	void *plugin_data );
 
+/**
+ * @brief sends file.get or file.put rest api to tr50 requesting
+ *        for file id, file size and crc
+ *
+ * @param[in]      data                plug-in specific data
+ * @param[in]      transfer            info required to transfer file
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad params
+ * @retval IOT_STATUS_FAILURE          on failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+static IOT_SECTION iot_status_t tr50_file_request_send(
+	struct tr50_data *data,
+	const iot_file_transfer_t* transfer );
+
+/**
+ * @brief a thread to perform file transfer
+ *
+ * @param[in]      arg                 info required to transfer file
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad params
+ * @retval IOT_STATUS_FAILURE          on failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+static IOT_SECTION OS_THREAD_DECL tr50_file_transfer(
+	void* arg );
+
+/**
+ * @brief Callback called for progress updates (and to cancel transfers)
+ *
+ * @param[in]      user_data           pointer to information about the transfer
+ * @param[in]      down_total          total number of bytes to download
+ * @param[in]      down_now            current number of bytes downloaded
+ * @param[in]      up_total            total number of bytes to upload
+ * @param[in]      up_now              current number of bytes uploaded
+ *
+ * @retval 0 continue the transfer
+ * @retval 1 cancel the transfer
+ */
+static IOT_SECTION int tr50_file_progress( void *user_data,
+	curl_off_t down_total, curl_off_t down_now,
+	curl_off_t up_total, curl_off_t up_now );
+
+/**
+ * @brief Callback called for progress updates (and to cancel transfers)
+ *        for older versions of libcurl
+ *
+ * @param[in]      user_data           pointer to information about the transfer
+ * @param[in]      down_total          total number of bytes to download
+ * @param[in]      down_now            current number of bytes downloaded
+ * @param[in]      up_total            total number of bytes to upload
+ * @param[in]      up_now              current number of bytes uploaded
+ *
+ * @retval 0 continue the transfer
+ * @retval 1 cancel the transfer
+ */
+static IOT_SECTION int tr50_file_progress_old(
+	void *user_data,
+	double down_total, double down_now,
+	double up_total, double up_now );
+
+/**
+ * @brief checks file transfer queue and execute those which need retrying
+ *
+ * @param[in]      data                plug-in specific data
+ */
+static void tr50_file_queue_check(
+	struct tr50_data *data );
 
 iot_status_t tr50_action_complete(
 	struct tr50_data *data,
@@ -774,10 +873,18 @@ iot_status_t tr50_execute(
 			case IOT_OPERATION_CLIENT_DISCONNECT:
 				result = tr50_disconnect( lib, data );
 				break;
+			case IOT_OPERATION_FILE_GET:
+			case IOT_OPERATION_FILE_PUT:
+				result = tr50_file_request_send( data,
+					(const iot_file_transfer_t*)item );
+				break;
 			case IOT_OPERATION_TELEMETRY_PUBLISH:
 				result = tr50_telemetry_publish( data,
 					(const iot_telemetry_t*)item,
 					(const struct iot_data*)value );
+				break;
+			case IOT_OPERATION_ITERATION:
+				tr50_file_queue_check( data );
 				break;
 			case IOT_OPERATION_ACTION_COMPLETE:
 				result = tr50_action_complete( data,
@@ -804,6 +911,7 @@ iot_status_t tr50_initialize(
 		data->lib = lib;
 		*plugin_data = data;
 
+		curl_global_init( CURL_GLOBAL_ALL );
 		result = iot_mqtt_initialize();
 	}
 	return result;
@@ -818,6 +926,7 @@ iot_status_t tr50_terminate(
 	IOT_LOG( lib, IOT_LOG_TRACE, "tr50: %s", "terminate" );
 	os_free_null( (void**)&data );
 	iot_mqtt_terminate();
+	curl_global_cleanup();
 	return result;
 }
 
@@ -870,125 +979,232 @@ void tr50_on_message(
 		}
 		else if ( os_strcmp( topic, "reply" ) == 0 )
 		{
-			iot_json_item_t *j_obj = iot_json_decode_object_find(
-				json, root, "cmd" );
-			if ( j_obj )
+			iot_json_object_iterator_t *root_iter =
+				iot_json_decode_object_iterator( json, root );
+			if ( root_iter )
 			{
-				j_obj = iot_json_decode_object_find( json,
-					j_obj, "params" );
-				j_obj = iot_json_decode_object_find( json,
-					j_obj, "messages" );
-				if ( j_obj && iot_json_decode_type( json, j_obj )
-					== IOT_JSON_TYPE_ARRAY )
+				char name[ IOT_NAME_MAX_LEN + 1u ];
+				const char *v = NULL;
+				size_t v_len = 0u;
+				iot_bool_t is_cmd = IOT_FALSE;
+				iot_json_item_t *j_obj = NULL;
+				unsigned int msg_id = 0u;
+
+				iot_json_decode_object_iterator_key(
+					json, root, root_iter,
+					&v, &v_len );
+				os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
+
+				if ( os_strncmp( name, "cmd", IOT_NAME_MAX_LEN ) == 0 )
+					is_cmd = IOT_TRUE;
+				else
+					msg_id = os_atoi( name );
+
+				iot_json_decode_object_iterator_value(
+					json, root, root_iter, &j_obj );
+
+				if ( j_obj )
 				{
-					const char *v = NULL;
-					size_t v_len = 0u;
-					size_t i;
-					const size_t msg_count =
-						iot_json_decode_array_size( json, j_obj );
-					for ( i = 0u; i < msg_count; ++i )
+					iot_json_item_t *j_success;
+					iot_bool_t is_success;
+
+					j_success = iot_json_decode_object_find( json,
+						j_obj, "success" );
+					if ( j_success )
 					{
-						iot_json_item_t *j_item;
-						if ( iot_json_decode_array_at( json,
-							j_obj, i, &j_item ) == IOT_STATUS_SUCCESS )
+						iot_json_decode_bool( json, j_success, &is_success );
+
+						if ( is_success )
 						{
-							iot_json_item_t *j_id;
 							iot_json_item_t *j_params;
 							j_id = iot_json_decode_object_find(
 								json, j_item, "id" );
 							j_params = iot_json_decode_object_find(
 								json, j_item, "params" );
 
-							if ( j_id && j_params )
+							if ( is_cmd )
 							{
-								iot_json_item_t *j_method;
-								iot_json_object_iterator_t *iter;
-								iot_action_request_t *req = NULL;
-
-								j_method = iot_json_decode_object_find(
-									json, j_params, "method" );
-								if ( j_method )
+								/* actions/methods parsing */
+								j_obj = iot_json_decode_object_find( json,
+									j_params, "messages" );
+								if ( j_obj && iot_json_decode_type( json, j_obj )
+									== IOT_JSON_TYPE_ARRAY )
 								{
-									char id[ IOT_ID_MAX_LEN + 1u ];
-									char name[ IOT_NAME_MAX_LEN + 1u ];
-									*id = '\0';
-
-									iot_json_decode_string( json, j_id, &v, &v_len );
-									os_snprintf( id, IOT_ID_MAX_LEN, "%.*s", (int)v_len, v );
-									id[ IOT_ID_MAX_LEN ] = '\0';
-
-									iot_json_decode_string( json, j_method, &v, &v_len );
-									os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
-									name[ IOT_NAME_MAX_LEN ] = '\0';
-									req = iot_action_request_allocate( data->lib, name, "tr50" );
-									iot_action_request_attribute_set( req, "id", IOT_TYPE_STRING, id );
-								}
-
-								/* for each parameter */
-								j_params = iot_json_decode_object_find(
-									json, j_params, "params" );
-								iter = iot_json_decode_object_iterator(
-									json, j_params );
-								while ( iter )
-								{
-									char name[ IOT_NAME_MAX_LEN + 1u ];
-									iot_json_item_t *j_value = NULL;
-									iot_json_decode_object_iterator_key(
-										json, j_params, iter,
-										&v, &v_len );
-									iot_json_decode_object_iterator_value(
-										json, j_params, iter,
-										&j_value );
-									os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
-									name[ IOT_NAME_MAX_LEN ] = '\0';
-									iter = iot_json_decode_object_iterator_next(
-										json, j_params, iter );
-									switch ( iot_json_decode_type( json,
-										j_value ) )
+									size_t i;
+									const size_t msg_count =
+										iot_json_decode_array_size( json, j_obj );
+									for ( i = 0u; i < msg_count; ++i )
 									{
-									case IOT_JSON_TYPE_BOOL:
+										iot_json_item_t *j_item;
+										if ( iot_json_decode_array_at( json,
+											j_obj, i, &j_item ) == IOT_STATUS_SUCCESS )
 										{
-										iot_bool_t value;
-										iot_json_decode_bool( json, j_value, &value );
-										iot_action_request_parameter_set( req, name, IOT_TYPE_BOOL, value );
+											iot_json_item_t *j_id;
+											j_id = iot_json_decode_object_find(
+												json, j_item, "id" );
+											if ( !j_id )
+												os_printf( "\"id\" not found!\n" );
+
+											j_params = iot_json_decode_object_find(
+												json, j_item, "params" );
+											if ( !j_params )
+												os_printf( "\"params\" not found!\n" );
+
+											if ( j_id && j_params )
+											{
+												iot_json_item_t *j_method;
+												iot_json_object_iterator_t *iter;
+												iot_action_request_t *req = NULL;
+
+												j_method = iot_json_decode_object_find(
+													json, j_params, "method" );
+												if ( j_method )
+												{
+													char id[ IOT_ID_MAX_LEN + 1u ];
+													*id = '\0';
+
+													iot_json_decode_string( json, j_id, &v, &v_len );
+													os_snprintf( id, IOT_ID_MAX_LEN, "%.*s", (int)v_len, v );
+													id[ IOT_ID_MAX_LEN ] = '\0';
+
+													iot_json_decode_string( json, j_method, &v, &v_len );
+													os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
+													name[ IOT_NAME_MAX_LEN ] = '\0';
+													req = iot_action_request_allocate( data->lib, name, "tr50" );
+													iot_action_request_attribute_set( req, "id", IOT_TYPE_STRING, id );
+												}
+
+												/* for each parameter */
+												j_params = iot_json_decode_object_find(
+													json, j_params, "params" );
+												iter = iot_json_decode_object_iterator(
+													json, j_params );
+												while ( iter )
+												{
+													iot_json_item_t *j_value = NULL;
+													iot_json_decode_object_iterator_key(
+														json, j_params, iter,
+														&v, &v_len );
+													iot_json_decode_object_iterator_value(
+														json, j_params, iter,
+														&j_value );
+													os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
+													name[ IOT_NAME_MAX_LEN ] = '\0';
+													iter = iot_json_decode_object_iterator_next(
+														json, j_params, iter );
+													switch ( iot_json_decode_type( json,
+														j_value ) )
+													{
+													case IOT_JSON_TYPE_BOOL:
+														{
+														iot_bool_t value;
+														iot_json_decode_bool( json, j_value, &value );
+														iot_action_request_parameter_set( req, name, IOT_TYPE_BOOL, value );
+														}
+													case IOT_JSON_TYPE_INTEGER:
+														{
+														iot_int64_t value;
+														iot_json_decode_integer( json, j_value, &value );
+														iot_action_request_parameter_set( req, name, IOT_TYPE_INT64, value );
+														}
+														break;
+													case IOT_JSON_TYPE_REAL:
+														{
+														iot_float64_t value;
+														iot_json_decode_real( json, j_value, &value );
+														iot_action_request_parameter_set( req, name, IOT_TYPE_FLOAT64, value );
+														}
+														break;
+													case IOT_JSON_TYPE_STRING:
+														{
+														char *value;
+														iot_json_decode_string( json, j_value, &v, &v_len );
+														value = os_malloc( v_len + 1u );
+														if( value )
+														{
+															os_strncpy( value, v, v_len );
+															value[v_len] = '\0';
+															iot_action_request_parameter_set( req, name, IOT_TYPE_STRING, value );
+															os_free( value );
+														}
+														}
+													case IOT_JSON_TYPE_ARRAY:
+													case IOT_JSON_TYPE_OBJECT:
+													case IOT_JSON_TYPE_NULL:
+													default:
+														break;
+													}
+												}
+
+												if ( req )
+													iot_action_request_execute( req, 0u );
+											}
 										}
-									case IOT_JSON_TYPE_INTEGER:
-										{
-										iot_int64_t value;
-										iot_json_decode_integer( json, j_value, &value );
-										iot_action_request_parameter_set( req, name, IOT_TYPE_INT64, value );
-										}
-										break;
-									case IOT_JSON_TYPE_REAL:
-										{
-										iot_float64_t value;
-										iot_json_decode_real( json, j_value, &value );
-										iot_action_request_parameter_set( req, name, IOT_TYPE_FLOAT64, value );
-										}
-										break;
-									case IOT_JSON_TYPE_STRING:
-										{
-										char *value;
-										iot_json_decode_string( json, j_value, &v, &v_len );
-										value = os_malloc( v_len + 1u );
-										if( value )
-										{
-											os_strncpy( value, v, v_len );
-											value[v_len] = '\0';
-											iot_action_request_parameter_set( req, name, IOT_TYPE_STRING, value );
-											os_free( value );
-										}
-										}
-									case IOT_JSON_TYPE_ARRAY:
-									case IOT_JSON_TYPE_OBJECT:
-									case IOT_JSON_TYPE_NULL:
-									default:
-										break;
 									}
 								}
+							}
+							else
+							{
+								j_obj = iot_json_decode_object_find( json,
+									j_params, "fileId" );
+								if ( j_obj && iot_json_decode_type( json, j_obj )
+									== IOT_JSON_TYPE_STRING )
+								{
+									/* file transfer request parsing */
+									iot_uint8_t i = 0u;
+									iot_bool_t found_transfer = IOT_FALSE;
+									iot_file_transfer_t *transfer = NULL;
+									char fileId[ 32u ];
+									iot_int64_t crc32 = 0u;
+									iot_int64_t fileSize = 0u;
 
-								if ( req )
-									iot_action_request_execute( req, 0u );
+									iot_json_decode_string( json, j_obj, &v, &v_len );
+									os_strncpy( fileId, v, v_len );
+									fileId[ v_len ] = '\0';
+
+									j_obj = iot_json_decode_object_find( json,
+										j_params, "crc32" );
+									if ( j_obj && iot_json_decode_type( json, j_obj )
+										== IOT_JSON_TYPE_INTEGER )
+										iot_json_decode_integer( json, j_obj, &crc32 );
+
+									j_obj = iot_json_decode_object_find( json,
+										j_params, "fileSize" );
+									if ( j_obj && iot_json_decode_type( json, j_obj )
+										== IOT_JSON_TYPE_INTEGER )
+										iot_json_decode_integer( json, j_obj, &fileSize );
+
+									for ( i= 0u;
+										i < data->file_transfer_count &&
+										found_transfer == IOT_FALSE;
+										i++ )
+									{
+										transfer = &data->file_transfer_queue[i];
+										if ( transfer->path &&
+											transfer->msg_id == msg_id )
+										{
+											os_snprintf( transfer->url, PATH_MAX,
+												"https://api.devicewise.com/file/%s", fileId );
+											transfer->crc32 = crc32;
+											transfer->size = fileSize;
+											transfer->retry_time = 0u;
+											transfer->expiry_time =
+												iot_timestamp_now() +
+												TR50_FILE_TRANSFER_EXPIRY_TIME;
+											found_transfer = IOT_TRUE;
+										}
+									}
+
+									if ( found_transfer )
+									{
+										os_thread_t thread;
+
+										/* Create a thread to do the file transfer */
+										if ( os_thread_create( &thread, tr50_file_transfer, transfer ) )
+											os_printf( "Error: Failed to create a thread to transfer "
+												"file for message #%u\n", msg_id );
+									}
+								}
 							}
 						}
 					}
@@ -1153,6 +1369,425 @@ iot_status_t tr50_telemetry_publish(
 		++data->msg_id;
 	}
 	return result;
+}
+
+iot_status_t tr50_file_request_send(
+	struct tr50_data *data,
+	const iot_file_transfer_t* transfer )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( data && transfer )
+	{
+		result = IOT_STATUS_FULL;
+		if ( data->file_transfer_count < TR50_FILE_TRANSFER_MAX )
+		{
+			char buf[ 512u ];
+			char id[ 6u ];
+			const char *msg;
+			iot_json_encoder_t *json =
+				iot_json_encode_initialize( buf, sizeof( buf ), 0u);
+
+			result = IOT_STATUS_FAILURE;
+			if ( json )
+			{
+				/* create json string request for file.get/file.put */
+				os_snprintf( id, 5u, "%d", data->msg_id );
+				id[5u] = '\0';
+
+				iot_json_encode_object_start( json, id );
+				iot_json_encode_string( json, "command",
+					(transfer->op == IOT_OPERATION_FILE_PUT)?
+						"file.put" : "file.get" );
+
+				iot_json_encode_object_start( json, "params" );
+				iot_json_encode_string( json, "fileName", transfer->name );
+				iot_json_encode_string( json, "thingKey", data->thing_key );
+				if ( transfer->op == IOT_OPERATION_FILE_PUT )
+					iot_json_encode_bool( json, "public", IOT_FALSE );
+
+				iot_json_encode_object_end( json );
+				iot_json_encode_object_end( json );
+
+				msg = iot_json_encode_dump( json );
+				os_printf( "-->%s\n", msg );
+
+				/* publish */
+				result = iot_mqtt_publish( data->mqtt, "api",
+					msg, os_strlen( msg ), 0, IOT_FALSE, NULL );
+				if ( result == IOT_STATUS_SUCCESS )
+				{
+					/* add it to the queue */
+					os_memcpy(
+						&data->file_transfer_queue[ data->file_transfer_count ],
+						transfer, sizeof( iot_file_transfer_t ) );
+					data->file_transfer_queue[ data->file_transfer_count ].msg_id =
+						data->msg_id;
+					data->file_transfer_queue[ data->file_transfer_count ].plugin_data =
+						(void*)data;
+					++data->file_transfer_count;
+				}
+				else
+					os_printf( "Error: Failed send file request\n" );
+
+				iot_json_encode_terminate( json );
+				++data->msg_id;
+			}
+			else
+				os_printf( "Error: Failed to encode json\n" );
+		}
+		else
+			os_printf( "Error: Maximum file transfer reached\n" );
+	}
+	return result;
+}
+
+OS_THREAD_DECL tr50_file_transfer(
+	void* arg )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	iot_bool_t remove_from_queue = IOT_FALSE;
+	iot_file_transfer_t *transfer =
+		(iot_file_transfer_t*)arg;
+	if ( transfer )
+	{
+		char file_path[ PATH_MAX +1u ];
+
+		transfer->lib_curl = curl_easy_init();
+		if ( transfer->lib_curl )
+		{
+			CURLcode curl_result = CURLE_FAILED_INIT;
+			os_file_t file_handle;
+
+			if ( transfer->op == IOT_OPERATION_FILE_PUT )
+				os_strncpy( file_path, transfer->path, PATH_MAX );
+			else
+				os_snprintf( file_path, PATH_MAX, "%s%s",
+					transfer->path, TR50_DOWNLOAD_EXTENSION );
+
+			file_handle = os_fopen( file_path,
+				(transfer->op == IOT_OPERATION_FILE_PUT)? "rb" : "wb" );
+
+			if ( file_handle )
+			{
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_URL, transfer->url );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_VERBOSE, 1L );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_NOSIGNAL, 1L );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_FAILONERROR, 1L);
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_ACCEPT_ENCODING, "" );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_NOPROGRESS, 0L );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_PROGRESSFUNCTION,
+					tr50_file_progress_old );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_PROGRESSDATA, transfer );
+#if LIBCURL_VERSION_NUM >= 0x072000
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_XFERINFOFUNCTION,
+					tr50_file_progress );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_XFERINFODATA, transfer );
+#endif /* LIBCURL_VERSION_NUM >= 0x072000 */
+
+				/* SSL verification */
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_SSL_VERIFYHOST,
+					TR50_DEFAULT_SSL_VERIFY_HOST );
+				curl_easy_setopt( transfer->lib_curl,
+					CURLOPT_SSL_VERIFYPEER,
+					TR50_DEFAULT_SSL_VERIFY_PEER);
+
+				/* In some OSs libcurl cannot access the default CAs
+				 * and it has to be added in the fs */
+				curl_easy_setopt( transfer->lib_curl, CURLOPT_CAINFO, NULL );
+
+#if PROXY_SUPPORT
+				/* Proxy settings */
+				if ( proxy_host[0] != '\0' &&
+					proxy_type_str[0] != '\0' &&
+					proxy_port != 0 )
+				{
+					long proxy_type = CURLPROXY_HTTP;
+					if ( iot_os_strncmp( proxy_type_str, "SOCKS5",
+						IOT_PROXY_TYPE_MAX_LEN ) == 0 )
+						proxy_type = CURLPROXY_SOCKS5_HOSTNAME;
+
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_PROXY, proxy_host );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_PROXYPORT, proxy_port );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_PROXYTYPE, proxy_type );
+
+					if ( proxy_username && proxy_username[0] != '\0' )
+						curl_easy_setopt( transfer->lib_curl,
+							CURLOPT_PROXYUSERNAME, proxy_username );
+					if ( proxy_password && proxy_password[0] != '\0' )
+						curl_easy_setopt( transfer->lib_curl,
+							CURLOPT_PROXYPASSWORD, proxy_password );
+				}
+#endif
+
+				if ( transfer->op == IOT_OPERATION_FILE_PUT )
+				{
+					transfer->size =
+						os_file_size( transfer->path );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_POST, 1L );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_READDATA, file_handle );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_READFUNCTION, os_fread );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_POSTFIELDSIZE,
+						transfer->size );
+				}
+				else
+				{
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_WRITEFUNCTION, os_fwrite );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_WRITEDATA, file_handle );
+				}
+
+				curl_result = curl_easy_perform( transfer->lib_curl );
+				if ( curl_result == CURLE_OK )
+					result = IOT_STATUS_SUCCESS;
+				else
+					os_printf( "Error: File transfer failed: %s\n",
+						curl_easy_strerror( curl_result ) );
+
+				os_fclose( file_handle );
+			}
+			else
+				os_printf( "Error: Failed to open %s\n", transfer->path );
+
+			curl_easy_cleanup( transfer->lib_curl );
+		}
+		else
+			os_printf( "Error: Failed to initialize libcurl\n" );
+
+		/* final checks and cleanup */
+		if ( result == IOT_STATUS_SUCCESS )
+		{
+			if ( transfer->op == IOT_OPERATION_FILE_GET )
+			{
+				os_file_t file_handle = os_fopen( file_path, "rb" );
+				if ( file_handle )
+				{
+					iot_uint64_t crc32 = 0u;
+
+					result = iot_checksum_file_get(
+						file_handle, IOT_CHECKSUM_TYPE_CRC32, &crc32 );
+					if ( result == IOT_STATUS_SUCCESS &&
+						crc32 != transfer->crc32 )
+					{
+						os_printf( "Error: Checksum for %s does not match. "
+							"Expected: 0x%lX, calculated: 0x%lX\n",
+							transfer->path, transfer->crc32, crc32);
+						os_file_delete( file_path );
+						result = IOT_STATUS_FAILURE;
+					}
+					os_fclose( file_handle );
+
+					if ( result == IOT_STATUS_SUCCESS )
+						os_rename( file_path, transfer->path );
+				}
+			}
+			else
+			{
+				if ( os_strlen( transfer->path ) > 4u  &&
+					os_strncmp(
+						transfer->path +
+						os_strlen( transfer->path ) - 4u,
+						".tar", 4u ) == 0 )
+					os_file_delete( transfer->path );
+			}
+
+			if ( result == IOT_STATUS_SUCCESS )
+			{
+				remove_from_queue = IOT_TRUE;
+
+				if ( transfer->callback )
+				{
+					iot_file_progress_t transfer_progress;
+					os_memzero( &transfer_progress, sizeof(transfer_progress) );
+					transfer_progress.percentage = (result == IOT_STATUS_SUCCESS)?
+						100.0 : 100.0 * transfer->prev_byte / transfer->size;
+					transfer_progress.status = result;
+					transfer_progress.completed = IOT_TRUE;
+
+					transfer->callback( &transfer_progress, transfer->user_data );
+				}
+			}
+		}
+		else
+		{
+			iot_timestamp_t now = iot_timestamp_now();
+			if ( now < transfer->expiry_time )
+			{
+				transfer->retry_time =
+					now + TR50_FILE_TRANSFER_RETRY_INTERVAL;
+			}
+			else
+			{
+				remove_from_queue = IOT_TRUE;
+			}
+		}
+
+		if ( remove_from_queue )
+		{
+			struct tr50_data *tr50 =
+				(struct tr50_data *)transfer->plugin_data;
+
+			if ( tr50 )
+			{
+				iot_uint8_t i = 0u;
+				for ( i= 0u;
+					i < tr50->file_transfer_count &&
+					result != IOT_STATUS_SUCCESS;
+					i++ )
+				{
+					if ( transfer->msg_id ==
+						tr50->file_transfer_queue[i].msg_id )
+					{
+						os_memmove(
+							&tr50->file_transfer_queue[i],
+							&tr50->file_transfer_queue[i+1u],
+							( tr50->file_transfer_count - i -1u ) *
+							sizeof( iot_file_transfer_t ) );
+						os_memzero(
+							&tr50->file_transfer_queue[ tr50->file_transfer_count - 1u ],
+							sizeof( iot_file_transfer_t ) );
+						--tr50->file_transfer_count;
+						result = IOT_STATUS_SUCCESS;
+					}
+				}
+			}
+			else
+			{
+				os_printf( "Error: Cannot find plugin data\n" );
+				result = IOT_STATUS_FAILURE;
+			}
+		}
+	}
+
+	return (OS_THREAD_RETURN)result;
+}
+
+int tr50_file_progress( void *user_data,
+	curl_off_t UNUSED(down_total), curl_off_t down_now,
+	curl_off_t up_total, curl_off_t up_now )
+{
+	int result = 0;
+	iot_file_transfer_t *transfer =
+		(iot_file_transfer_t*)user_data;
+
+	if ( transfer )
+	{
+		if ( transfer->cancel )
+			result = 1;
+		else
+		{
+			/* Get the total transfer time and compare it to the last time the
+			 * progress is updated. This is done to minimize printing in the logs.
+			 * The end of the transfer will still be printed to show some
+			 * progress for small files. */
+			double cur_time = 0, int_time = 0;
+			long now = 0, total = 0;
+			const char *transfer_type = NULL;
+
+			curl_easy_getinfo(
+				transfer->lib_curl, CURLINFO_TOTAL_TIME, &cur_time);
+			int_time = cur_time - transfer->last_update_time;
+
+			if ( transfer->op == IOT_OPERATION_FILE_PUT )
+			{
+				now = (long)up_now + transfer->prev_byte;
+				total = (long)up_total + transfer->prev_byte;
+				transfer_type = "Upload";
+			}
+			else
+			{
+				/* For larger files, cloud does not specify total
+				 * size, so use the file size given in the beginning */
+				now = (long)down_now + transfer->prev_byte;
+				total = transfer->size ;
+				transfer_type = "Download";
+			}
+
+			if ( total > 0 && (now == total ||
+				int_time > TR50_FILE_TRANSFER_PROGRESS_INTERVAL) )
+			{
+				iot_float32_t progress = 100.0 * now / total;
+				transfer->last_update_time = cur_time;
+
+				if ( transfer->callback )
+				{
+					iot_file_progress_t transfer_progress;
+					os_memzero( &transfer_progress, sizeof(transfer_progress) );
+					transfer_progress.percentage = progress;
+					transfer_progress.status = IOT_STATUS_INVOKED;
+					transfer_progress.completed = IOT_FALSE;
+
+					transfer->callback( &transfer_progress, transfer->user_data );
+				}
+				else
+					os_printf( "%sing %s: %.1f%% (%ld/%ld bytes)\n",
+						transfer_type, transfer->path,
+						progress, now, total );
+			}
+		}
+	}
+	return result;
+}
+
+int tr50_file_progress_old(
+	void *user_data,
+	double down_total, double down_now,
+	double up_total, double up_now )
+{
+	return tr50_file_progress( user_data,
+		(curl_off_t)down_total, (curl_off_t)down_now,
+		(curl_off_t)up_total, (curl_off_t)up_now );
+}
+
+void tr50_file_queue_check(
+	struct tr50_data *data )
+{
+	if ( data )
+	{
+		iot_timestamp_t now = iot_timestamp_now();
+		if ( data->file_queue_last_checked == 0u ||
+			now - data->file_queue_last_checked >=
+			TR50_FILE_QUEUE_CHECK_INTERVAL )
+		{
+			iot_uint8_t i = 0u;
+			for ( i= 0u;
+				i < data->file_transfer_count;
+				i++ )
+			{
+				iot_file_transfer_t *transfer =
+					&data->file_transfer_queue[i];
+				if ( transfer &&
+					transfer->retry_time != 0u &&
+					transfer->retry_time <= now )
+				{
+					os_thread_t thread;
+
+					/* Create a thread to do the file transfer */
+					if ( os_thread_create( &thread, tr50_file_transfer, transfer ) == 0 )
+						transfer->retry_time = 0u;
+				}
+			}
+			data->file_queue_last_checked = now;
+		}
+	}
 }
 
 IOT_PLUGIN( tr50, 10, iot_version_encode(1,0,0,0),

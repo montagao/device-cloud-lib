@@ -13,3 +13,9 @@ set( TARGET_DESCRIPTION "${TARGET} api plugin" )
 add_iot_plugin( "${TARGET}" BUILTIN ENABLED
 	tr50.c
 )
+
+find_package( CURL REQUIRED )
+include_directories( SYSTEM
+	${CURL_INCLUDE_DIRS} )
+target_link_libraries( ${TARGET}
+	${CURL_LIBRARIES} )
