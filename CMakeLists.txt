@@ -143,7 +143,7 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 endif( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 
 set( CMAKE_POSITION_INDEPENDENT_CODE ON )
-include_directories( "src/api/public" "${OSAL_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}" )
+include_directories( "src/api/public" "src" "${OSAL_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}" )
 add_subdirectory( "src" )
 add_subdirectory( "share" )
 

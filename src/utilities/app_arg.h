@@ -15,6 +15,7 @@
 #define APP_ARG_H
 
 #include <stdlib.h> /* for size_t */
+#include "os.h"     /* osal functions */
 
 /** @brief Structure defining an arugment for an application */
 struct app_arg
@@ -103,6 +104,33 @@ int app_arg_parse( struct app_arg *args, int argc, char **argv,
 void app_arg_usage( const struct app_arg *args, size_t col,
 	const char *app, const char *desc, const char *pos,
 	const char *pos_desc );
+
+/**
+ * @brief Returns the status
+ *
+ * @param[in]      filename                      file name to read
+ * @param[in]      buf                           buffer to store the
+ *                                               uuid
+ * @param[in]      len                           number of bytes to
+ *                                               read
+ * @retval IOT_STATUS_SUCCESS                    function completed
+ *                                               successfully
+ * @retval IOT_STATUS_FAILURE                    function encountered
+ *                                               an error
+ * @retval IOT_STATUS_BAD_PARAMETER              Incorrect parameter
+ *                                               specified
+ */
+
+os_status_t app_get_device_uuid( const char *filename, char *buf, size_t len );
+
+
+/* FIXME missing osal functions */
+/*#define os_fclose                      fclose*/
+/*#define os_fopen                       fopen*/
+/*#define os_fread                       fread*/
+/*#define os_fwrite                      fwrite*/
+#define os_exit                        exit
+#define os_file_tell                   ftell
 
 #endif /* ifndef APP_ARG_H */
 

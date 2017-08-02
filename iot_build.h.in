@@ -57,4 +57,10 @@
 /** @brief default runtime directory */
 #define IOT_RUNTIME_DIR_DEFAULT        "@IOT_RUNTIME_DIR_DEFAULT@"
 
+/** @brief iot_update app name */
+#define IOT_UPDATE_TARGET               "@IOT_UPDATE_TARGET@"
+
+/** @brief IOT Control application */
+#define IOT_CONTROL_TARGET              "@IOT_CONTROL_TARGET@"
+
 #endif /* ifndef IOT_BUILD_H */

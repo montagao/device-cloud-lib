@@ -8,3 +8,5 @@
 #
 
 add_subdirectory( "api" )
+add_subdirectory( "utilities" )
+add_subdirectory( "software-update" )

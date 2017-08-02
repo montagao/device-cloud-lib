@@ -22,6 +22,10 @@ IOT_TELEMETRY_STACK_MAX: 3
 IOT_TELEMETRY_MAX: 255
 IOT_WORKER_THREADS: 5
 
+# Helper applications
+IOT_UPDATE_TARGET: "iot-update"
+IOT_CONTROL_TARGET: "iot-control"
+
 # Defauilt directories
 IOT_CONFIG_DIR_DEFAULT: "/etc/iot"
 IOT_RUNTIME_DIR_DEFAULT: "/var/lib/iot"

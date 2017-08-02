@@ -7,7 +7,7 @@
 # herein.  All rights not licensed by Wind River are reserved by Wind River.
 #
 
-set( TARGET "app-common" )
+set( TARGET "iotutils" )
 
 set( IOT_HDRS_C ${IOT_HDRS_C}
 	"app_arg.h"
