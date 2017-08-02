@@ -9,6 +9,7 @@
 
 set( C_HDRS ${C_HDRS}
 	"iot.h"
+	"iot_checksum.h"
 	"iot_json.h"
 	"iot_mqtt.h"
 	"iot_plugin.h"
