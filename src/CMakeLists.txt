@@ -8,5 +8,6 @@
 #
 
 add_subdirectory( "api" )
-add_subdirectory( "utilities" )
+add_subdirectory( "relay" )
 add_subdirectory( "software-update" )
+add_subdirectory( "utilities" )
