@@ -13,3 +13,11 @@ Features Included are:
 - Easier device API (reduction in api, makes easier to use for developers)
 - Agent support is provided all within a library
 
+Building
+--------
+```sh
+mkdir build
+cd build
+cmake ..
+make
+```
