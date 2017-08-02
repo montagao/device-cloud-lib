@@ -9,7 +9,6 @@
 
 find_package( Threads )
 find_package( OpenSSL )
-find_package( Libuuid REQUIRED )
 
 set( API_HDRS_C "" CACHE INTERNAL "api header files" FORCE )
 set( API_SRCS_C "" CACHE INTERNAL "api source files" FORCE )
