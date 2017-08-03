@@ -32,6 +32,17 @@ static unsigned int MQTT_INIT_COUNT = 0u;
 
 #ifdef IOT_MQTT_MOSQUITTO
 /**
+ * @brief callback called when a connection is established
+ *
+ * @param[in]      mosq                mosquitto instance calling the callback
+ * @param[in]      user_data           user data provided in <mosquitto_new>
+ * @param[in]      rc                  the reason for the connection
+ */
+static IOT_SECTION void iot_mqtt_on_connect(
+	struct mosquitto *mosq,
+	void *user_data,
+	int rc );
+/**
  * @brief callback called when a connection is terminated
  *
  * @param[in]      mosq                mosquitto instance calling the callback
@@ -132,7 +143,7 @@ static IOT_SECTION int iot_mqtt_on_message(
 #endif
 
 /** @brief number of seconds before sending a keep alive message */
-#define IOT_MQTT_KEEP_ALIVE            240
+#define IOT_MQTT_KEEP_ALIVE            60u
 /** @brief maximum length for an mqtt connection url */
 #define IOT_MQTT_URL_MAX               64u
 
@@ -145,9 +156,15 @@ struct iot_mqtt
 #else
 	/** @brief paho client instance */
 	MQTTClient client;
+#endif
 	/** @brief whether the client is expected to be connected */
 	iot_bool_t connected;
-#endif
+	/** @brief whether the client cloud connection is changed */
+	iot_bool_t connection_changed;
+	/** @brief timestamp when the client cloud connection is changed */
+	iot_timestamp_t time_stamp_connection_changed;
+	/** @brief the client cloud reconnect counter */
+	iot_uint32_t reconnect_count;
 	/** @brief callback to call when a disconnection is detected */
 	iot_mqtt_disconnect_callback_t on_disconnect;
 	/** @brief callback to call when a message is delivered */
@@ -187,6 +204,8 @@ iot_mqtt_t* iot_mqtt_connect(
 			result->mosq = mosquitto_new( client_id, true, result );
 			if ( result->mosq )
 			{
+				mosquitto_connect_callback_set( result->mosq,
+					iot_mqtt_on_connect );
 				mosquitto_disconnect_callback_set( result->mosq,
 					iot_mqtt_on_disconnect );
 				mosquitto_message_callback_set( result->mosq,
@@ -213,7 +232,11 @@ iot_mqtt_t* iot_mqtt_connect(
 
 				if ( mosquitto_connect( result->mosq,
 					host, port, IOT_MQTT_KEEP_ALIVE ) == MOSQ_ERR_SUCCESS )
+				{
 					mosquitto_loop_start( result->mosq );
+					result->connected = IOT_TRUE;
+					result->connection_changed = IOT_FALSE;
+				}
 				else
 					os_free_null( (void**)&result );
 			}
@@ -308,6 +331,27 @@ iot_status_t iot_mqtt_disconnect(
 	return result;
 }
 
+IOT_API IOT_SECTION iot_status_t iot_mqtt_get_connection_status(
+	const iot_mqtt_t* mqtt,
+	iot_bool_t *connected,
+	iot_bool_t *connection_changed,
+	iot_timestamp_t *time_stamp_connection_changed )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( mqtt )
+	{
+		if( connected )
+			*connected = mqtt->connected;
+		if( connection_changed )
+			*connection_changed = mqtt->connection_changed;
+		if ( time_stamp_connection_changed )
+			*time_stamp_connection_changed =
+				mqtt->time_stamp_connection_changed;
+		result = IOT_STATUS_SUCCESS;
+	}
+	return result;
+}
+
 iot_status_t iot_mqtt_initialize( void )
 {
 	if ( MQTT_INIT_COUNT == 0u )
@@ -321,16 +365,36 @@ iot_status_t iot_mqtt_initialize( void )
 }
 
 #ifdef IOT_MQTT_MOSQUITTO
+void iot_mqtt_on_connect(
+	struct mosquitto *UNUSED(mosq),
+	void *user_data,
+	int rc )
+{
+	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
+	(void)rc;
+	if ( mqtt )
+	{
+		mqtt->connected = IOT_TRUE;
+		mqtt->connection_changed = IOT_TRUE;
+		mqtt->time_stamp_connection_changed = iot_timestamp_now();
+	}
+}
+
 void iot_mqtt_on_disconnect(
 	struct mosquitto *UNUSED(mosq),
 	void *user_data,
 	int rc )
 {
 	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
-	if ( mqtt && mqtt->on_disconnect )
+	if ( mqtt )
 	{
 		const iot_bool_t unexpected = rc ? IOT_TRUE : IOT_FALSE;
-		mqtt->on_disconnect( mqtt->user_data, unexpected );
+		mqtt->connected = IOT_FALSE;
+		mqtt->connection_changed = IOT_TRUE;
+		mqtt->time_stamp_connection_changed = iot_timestamp_now();
+		mqtt->reconnect_count = 0u;
+		if ( mqtt->on_disconnect )
+			mqtt->on_disconnect( mqtt->user_data, unexpected );
 	}
 }
 
@@ -340,7 +404,7 @@ void iot_mqtt_on_delivery(
 	int msg_id )
 {
 	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
-	if ( mqtt && mqtt->on_disconnect )
+	if ( mqtt && mqtt->on_delivery )
 		mqtt->on_delivery( mqtt->user_data, msg_id );
 }
 
@@ -373,18 +437,21 @@ void iot_mqtt_on_log(
 {
 }
 
-
 #else /* ifdef IOT_MQTT_MOSQUITTO */
 void iot_mqtt_on_disconnect(
 	void *user_data,
 	char *UNUSED(cause) )
 {
 	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
-	if ( mqtt && mqtt->on_disconnect )
+	if ( mqtt )
 	{
 		const iot_bool_t unexpected = mqtt->connected;
 		mqtt->connected = IOT_FALSE;
-		mqtt->on_disconnect( mqtt->user_data, unexpected );
+		mqtt->connection_changed = IOT_TRUE;
+		mqtt->time_stamp_connection_changed = iot_timestamp_now();
+		mqtt->reconnect_count = 0u;
+		if( mqtt->on_disconnect )
+			mqtt->on_disconnect( mqtt->user_data, unexpected );
 	}
 }
 
@@ -452,6 +519,115 @@ iot_status_t iot_mqtt_publish(
 #endif /* else IOT_MQTT_MOSQUITTO */
 	}
 	if ( msg_id ) *msg_id = mid;
+	return result;
+}
+
+iot_status_t iot_mqtt_reconnect(
+	iot_mqtt_t *mqtt,
+	const char *client_id,
+	const char *host,
+	iot_uint16_t port,
+	iot_mqtt_ssl_t *ssl_conf,
+	const char *username,
+	const char *password,
+	iot_millisecond_t max_time_out )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+#ifdef IOT_MQTT_MOSQUITTO
+	(void)username;
+	(void)password;
+	(void)max_time_out;
+	if ( host && client_id && mqtt )
+#else
+	if ( host && client_id && mqtt && mqtt->client)
+#endif
+	{
+		result = IOT_STATUS_FAILURE;
+		if ( port == 0u )
+		{
+			if ( ssl_conf )
+				port = IOT_MQTT_PORT_SSL;
+			else
+				port = IOT_MQTT_PORT;
+		}
+
+#ifdef IOT_MQTT_MOSQUITTO
+		if ( mqtt->connection_changed == IOT_TRUE &&
+		     mqtt->connected == IOT_TRUE )
+		{
+			mqtt->connection_changed = IOT_FALSE;
+			result = IOT_STATUS_SUCCESS;
+		}
+#else /* ifdef IOT_MQTT_MOSQUITTO */
+		if ( mqtt->connected == IOT_FALSE )
+		{
+			iot_timestamp_t time_stamp_current =
+				iot_timestamp_now();
+			iot_timestamp_t time_stamp_diff =
+				time_stamp_current -
+				mqtt->time_stamp_connection_changed;
+			if ( time_stamp_diff >
+				( mqtt->reconnect_count + 0u ) *
+				IOT_MQTT_KEEP_ALIVE *
+				IOT_MILLISECONDS_IN_SECOND )
+			{ /* attempt to re-connect */
+				char url[IOT_MQTT_URL_MAX + 1u];
+				MQTTClient_connectOptions conn_opts =
+					MQTTClient_connectOptions_initializer;
+				/* ssl */
+				MQTTClient_SSLOptions ssl_opts =
+					MQTTClient_SSLOptions_initializer;
+
+				if ( ssl_conf && port != 1883u )
+					os_snprintf( url, IOT_MQTT_URL_MAX,
+						"ssl://%s:%d", host, port );
+				else
+					os_snprintf( url, IOT_MQTT_URL_MAX,
+						"tcp://%s:%d", host, port );
+				url[ IOT_MQTT_URL_MAX ] = '\0';
+
+				conn_opts.keepAliveInterval = IOT_MQTT_KEEP_ALIVE;
+				conn_opts.cleansession = 1;
+				conn_opts.username = username;
+				conn_opts.password = password;
+
+				if ( ssl_conf && port != 1883u )
+				{ /* ssl */
+					/* ssl args */
+					ssl_opts.trustStore = ssl_conf->ca_path;
+					ssl_opts.enableServerCertAuth =
+						!ssl_conf->insecure;
+
+					/* client cert and key */
+					ssl_opts.keyStore = ssl_conf->cert_file;
+					ssl_opts.privateKey = ssl_conf->key_file;
+
+					conn_opts.ssl = &ssl_opts;
+				}
+
+				if ( max_time_out > 0u )
+					conn_opts.connectTimeout =
+						(max_time_out /
+						IOT_MILLISECONDS_IN_SECOND) + 1u;
+
+				if ( MQTTClient_connect( mqtt->client, &conn_opts )
+					== MQTTCLIENT_SUCCESS )
+				{
+					mqtt->connected = IOT_TRUE;
+					mqtt->connection_changed = IOT_FALSE;
+					mqtt->time_stamp_connection_changed =
+						iot_timestamp_now();
+					mqtt->reconnect_count = 0u;
+					result = IOT_STATUS_SUCCESS;
+				}
+				else
+					++mqtt->reconnect_count;
+			}
+		}
+#endif /* else IOT_MQTT_MOSQUITTO */
+		if( result != IOT_STATUS_SUCCESS )
+			os_time_sleep( IOT_MILLISECONDS_IN_SECOND, OS_TRUE );
+	}
 	return result;
 }
 

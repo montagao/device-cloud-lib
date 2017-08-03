@@ -39,6 +39,11 @@ typedef struct iot_mqtt_ssl
  */
 typedef struct iot_mqtt iot_mqtt_t;
 
+/** @brief signature of function to be called when a connection is detected */
+typedef void (*iot_mqtt_connect_callback_t)(
+	void *user_data,
+	iot_bool_t unexpected );
+
 /** @brief signature of function to be called when a disconnection is detected */
 typedef void (*iot_mqtt_disconnect_callback_t)(
 	void *user_data,
@@ -96,6 +101,24 @@ IOT_API IOT_SECTION iot_mqtt_t* iot_mqtt_connect(
 IOT_API IOT_SECTION iot_status_t iot_mqtt_disconnect(
 	iot_mqtt_t* mqtt
 	);
+
+/**
+ * @brief gets MQTT server connection status
+ *
+ * @param[in]      mqtt                  MQTT object to disconnect
+ * @param[out]     connected             server is connected
+ * @param[out]     connection_changed    server connection is changed
+ * @param[out]     ts_connection_changed time stamp when server connection was changed
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER      invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE            operation failed
+ * @retval IOT_STATUS_SUCCESS            operation successful
+ */
+IOT_API IOT_SECTION iot_status_t iot_mqtt_get_connection_status(
+	const iot_mqtt_t* mqtt,
+	iot_bool_t *connected,
+	iot_bool_t *connection_changed,
+	iot_timestamp_t *time_stamp_connection_changed );
 
 /**
  * @brief initializes MQTT functionality
@@ -195,6 +218,33 @@ IOT_API IOT_SECTION iot_status_t iot_mqtt_set_message_callback(
 IOT_API IOT_SECTION iot_status_t iot_mqtt_set_user_data(
 	iot_mqtt_t *mqtt,
 	void *user_data );
+
+/**
+ * @brief reconnects to an MQTT server
+ *
+ * @param[in]      mqtt                MQTT object to subscribe to
+ * @param[in]      client_id           id of the client
+ * @param[in]      host                host server to connect to
+ * @param[in]      port                (optional) port to connect on
+ * @param[in]      ssl_conf            (optional) secure connection information
+ * @param[in]      username            user name to connect with
+ * @param[in]      password            password to connect with
+ * @param[in]      max_time_out        maximum time to wait
+ *                                     (0 = wait indefinitely)
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          operation failed
+ * @retval IOT_STATUS_SUCCESS          operation successful
+ */
+IOT_API IOT_SECTION iot_status_t iot_mqtt_reconnect(
+	iot_mqtt_t *mqtt,
+	const char *client_id,
+	const char *host,
+	iot_uint16_t port,
+	iot_mqtt_ssl_t *ssl_conf,
+	const char *username,
+	const char *password,
+	iot_millisecond_t max_time_out );
 
 /**
  * @brief subscribes for messages on an MQTT topic

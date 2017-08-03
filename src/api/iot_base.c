@@ -787,7 +787,9 @@ iot_status_t iot_base_device_id_set(
 					os_file_read( device_id, sizeof(char),
 						IOT_ID_MAX_LEN, fd );
 				os_file_close( fd );
-				device_id[device_id_len - 1u] = '\0';
+				if( device_id_len >= IOT_ID_MAX_LEN )
+					device_id_len = IOT_ID_MAX_LEN;
+				device_id[device_id_len] = '\0';
 				if ( device_id_len > 0u )
 					IOT_LOG( NULL, IOT_LOG_INFO,
 						"Obtained device id: %s",
