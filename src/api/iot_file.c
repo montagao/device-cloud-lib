@@ -159,7 +159,7 @@ iot_status_t iot_file_transfer(
 		{
 			/* if it's a directory, use the path's name
 			 * with dashes and tar extension */
-			if ( os_is_directory( transfer.path ) )
+			if ( os_directory_exists( transfer.path ) )
 			{
 				size_t i = 0u;
 				os_snprintf( transfer.name, PATH_MAX,
@@ -181,21 +181,10 @@ iot_status_t iot_file_transfer(
 		if ( op == IOT_OPERATION_FILE_PUT )
 		{
 			/* check if the file to upload exists and readable */
-			if ( os_file_exists( transfer.path ) )
-			{
-				if ( os_file_readable( transfer.path ) )
-				{
-					if ( os_is_directory( transfer.path ) )
-					{
-						result = iot_file_archive_directory( transfer.path, PATH_MAX );
-					}
-					else
-						result = IOT_STATUS_SUCCESS;
-				}
-				else
-					os_printf( "Error: Cannot read %s\n",
-						transfer.path );
-			}
+			if ( os_directory_exists( transfer.path ) )
+				result = iot_file_archive_directory( transfer.path, PATH_MAX );
+			else if ( os_file_exists( transfer.path ) )
+				result = IOT_STATUS_SUCCESS;
 			else
 				os_printf( "Error: %s does not exist\n",
 					transfer.path );
@@ -208,17 +197,12 @@ iot_status_t iot_file_transfer(
 			*os_strrchr( dir, OS_DIR_SEP ) = '\0';
 
 			if ( os_file_exists( dir ) )
-			{
-				if ( os_file_writable( dir ) )
-					result = IOT_STATUS_SUCCESS;
-				else
-					os_printf( "Error: Cannot write to %s\n", dir );
-			}
+				result = IOT_STATUS_SUCCESS;
 			else
 			{
 				/* Create it if it doesn't exists */
 				os_printf( "Info: Creating directory %s\n", dir );
-				result = os_directory_create( dir );
+				result = os_directory_create_nowait( dir );
 				if ( result != IOT_STATUS_SUCCESS )
 					os_printf( "Error: Failed to create dir %s\n", dir );
 			}
@@ -238,7 +222,7 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( path && len )
 	{
-		os_dir_t dir = NULL;
+		os_dir_t dir;
 		struct archive *archive;
 		char archive_path[ PATH_MAX + 1u ];
 
@@ -253,11 +237,11 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 		archive_write_set_format_pax_restricted( archive );
 		archive_write_open_filename( archive, archive_path );
 
-		if ( (dir = os_opendir( path )) != NULL )
+		if ( os_directory_open( path, &dir ) == OS_STATUS_SUCCESS)
 		{
 			char file_name[ PATH_MAX + 1u ];
 
-			while ( os_directory_next( &dir, file_name, PATH_MAX ) == IOT_STATUS_SUCCESS )
+			while ( os_directory_next( &dir, IOT_TRUE, file_name, PATH_MAX ) == OS_STATUS_SUCCESS )
 			{
 				char file_path[ PATH_MAX + 1u ];
 				os_file_t input_file;
@@ -265,7 +249,7 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 
 				os_snprintf( file_path, PATH_MAX, "%s%c%s", path, OS_DIR_SEP, file_name );
 				stat( file_path, &file_stat );
-				input_file = os_fopen( file_path, "rb" );
+				input_file = os_file_open( file_path, OS_READ );
 				if ( input_file )
 				{
 					/* create an archive of all files */
@@ -291,15 +275,15 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 					archive_entry_set_mtime( entry, file_stat.st_mtime, 0 );
 
 					archive_write_header( archive, entry );
-					while ( ( buff_len = os_fread( buff, 1, sizeof( buff ), input_file ) ) )
+					while ( ( buff_len = os_file_read( buff, 1, sizeof( buff ), input_file ) ) )
 						archive_write_data( archive, buff, buff_len );
 
 					archive_entry_free( entry );
-					os_fclose( input_file );
+					os_file_close( input_file );
 					result = IOT_STATUS_SUCCESS;
 				}
 			}
-			os_closedir( dir );
+			os_directory_close( &dir );
 		}
 
 		archive_write_close( archive );

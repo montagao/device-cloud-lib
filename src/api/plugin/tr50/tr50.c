@@ -19,7 +19,6 @@
 #include <iot_mqtt.h>
 #include <iot_plugin.h>
 #include <os.h>
-
 #include "../../shared/iot_types.h"
 
 /** @brief Maximum length for a "thingkey" */
@@ -986,7 +985,6 @@ void tr50_on_message(
 				char name[ IOT_NAME_MAX_LEN + 1u ];
 				const char *v = NULL;
 				size_t v_len = 0u;
-				iot_bool_t is_cmd = IOT_FALSE;
 				iot_json_item_t *j_obj = NULL;
 				unsigned int msg_id = 0u;
 
@@ -994,11 +992,7 @@ void tr50_on_message(
 					json, root, root_iter,
 					&v, &v_len );
 				os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
-
-				if ( os_strncmp( name, "cmd", IOT_NAME_MAX_LEN ) == 0 )
-					is_cmd = IOT_TRUE;
-				else
-					msg_id = os_atoi( name );
+				msg_id = os_atoi( name );
 
 				iot_json_decode_object_iterator_value(
 					json, root, root_iter, &j_obj );
@@ -1017,16 +1011,15 @@ void tr50_on_message(
 						if ( is_success )
 						{
 							iot_json_item_t *j_params;
-							j_id = iot_json_decode_object_find(
-								json, j_item, "id" );
+							iot_json_item_t *j_messages;
 							j_params = iot_json_decode_object_find(
-								json, j_item, "params" );
+								json, j_obj, "params" );
 
-							if ( is_cmd )
+							j_messages = iot_json_decode_object_find( json,
+								j_params, "messages" );
+							if ( j_messages )
 							{
 								/* actions/methods parsing */
-								j_obj = iot_json_decode_object_find( json,
-									j_params, "messages" );
 								if ( j_obj && iot_json_decode_type( json, j_obj )
 									== IOT_JSON_TYPE_ARRAY )
 								{
@@ -1035,18 +1028,18 @@ void tr50_on_message(
 										iot_json_decode_array_size( json, j_obj );
 									for ( i = 0u; i < msg_count; ++i )
 									{
-										iot_json_item_t *j_item;
+										iot_json_item_t *j_cmd_item;
 										if ( iot_json_decode_array_at( json,
-											j_obj, i, &j_item ) == IOT_STATUS_SUCCESS )
+											j_obj, i, &j_cmd_item ) == IOT_STATUS_SUCCESS )
 										{
 											iot_json_item_t *j_id;
 											j_id = iot_json_decode_object_find(
-												json, j_item, "id" );
+												json, j_cmd_item, "id" );
 											if ( !j_id )
 												os_printf( "\"id\" not found!\n" );
 
 											j_params = iot_json_decode_object_find(
-												json, j_item, "params" );
+												json, j_cmd_item, "params" );
 											if ( !j_params )
 												os_printf( "\"params\" not found!\n" );
 
@@ -1159,6 +1152,7 @@ void tr50_on_message(
 									iot_int64_t fileSize = 0u;
 
 									iot_json_decode_string( json, j_obj, &v, &v_len );
+									/* FIXME:  check size <=32 bytes */
 									os_strncpy( fileId, v, v_len );
 									fileId[ v_len ] = '\0';
 
@@ -1183,6 +1177,7 @@ void tr50_on_message(
 										if ( transfer->path &&
 											transfer->msg_id == msg_id )
 										{
+										/* FIXME: * should be configurable */
 											os_snprintf( transfer->url, PATH_MAX,
 												"https://api.devicewise.com/file/%s", fileId );
 											transfer->crc32 = crc32;
@@ -1464,8 +1459,8 @@ OS_THREAD_DECL tr50_file_transfer(
 				os_snprintf( file_path, PATH_MAX, "%s%s",
 					transfer->path, TR50_DOWNLOAD_EXTENSION );
 
-			file_handle = os_fopen( file_path,
-				(transfer->op == IOT_OPERATION_FILE_PUT)? "rb" : "wb" );
+			file_handle = os_file_open( file_path,
+				(transfer->op == IOT_OPERATION_FILE_PUT)? OS_READ : OS_WRITE );
 
 			if ( file_handle )
 			{
@@ -1536,13 +1531,13 @@ OS_THREAD_DECL tr50_file_transfer(
 				if ( transfer->op == IOT_OPERATION_FILE_PUT )
 				{
 					transfer->size =
-						os_file_size( transfer->path );
+						os_file_get_size( transfer->path );
 					curl_easy_setopt( transfer->lib_curl,
 						CURLOPT_POST, 1L );
 					curl_easy_setopt( transfer->lib_curl,
 						CURLOPT_READDATA, file_handle );
 					curl_easy_setopt( transfer->lib_curl,
-						CURLOPT_READFUNCTION, os_fread );
+						CURLOPT_READFUNCTION, os_file_read );
 					curl_easy_setopt( transfer->lib_curl,
 						CURLOPT_POSTFIELDSIZE,
 						transfer->size );
@@ -1550,7 +1545,7 @@ OS_THREAD_DECL tr50_file_transfer(
 				else
 				{
 					curl_easy_setopt( transfer->lib_curl,
-						CURLOPT_WRITEFUNCTION, os_fwrite );
+						CURLOPT_WRITEFUNCTION, os_file_write );
 					curl_easy_setopt( transfer->lib_curl,
 						CURLOPT_WRITEDATA, file_handle );
 				}
@@ -1562,7 +1557,7 @@ OS_THREAD_DECL tr50_file_transfer(
 					os_printf( "Error: File transfer failed: %s\n",
 						curl_easy_strerror( curl_result ) );
 
-				os_fclose( file_handle );
+				os_file_close( file_handle );
 			}
 			else
 				os_printf( "Error: Failed to open %s\n", transfer->path );
@@ -1577,7 +1572,7 @@ OS_THREAD_DECL tr50_file_transfer(
 		{
 			if ( transfer->op == IOT_OPERATION_FILE_GET )
 			{
-				os_file_t file_handle = os_fopen( file_path, "rb" );
+				os_file_t file_handle = os_file_open( file_path, OS_READ );
 				if ( file_handle )
 				{
 					iot_uint64_t crc32 = 0u;
@@ -1593,10 +1588,10 @@ OS_THREAD_DECL tr50_file_transfer(
 						os_file_delete( file_path );
 						result = IOT_STATUS_FAILURE;
 					}
-					os_fclose( file_handle );
+					os_file_close( file_handle );
 
 					if ( result == IOT_STATUS_SUCCESS )
-						os_rename( file_path, transfer->path );
+						os_file_move( file_path, transfer->path );
 				}
 			}
 			else

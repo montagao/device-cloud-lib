@@ -63,7 +63,7 @@ iot_status_t iot_checksum_crc32_file_get(
 		unsigned char data[ 1024u ];
 
 		result = IOT_STATUS_FAILURE;
-		while( ( bytes = os_fread( data, 1u, 1024u, file ) ) != 0u )
+		while( ( bytes = os_file_read( data, 1u, 1024u, file ) ) != 0u )
 			crc32 = iot_checksum_crc32_calculate( crc32, data, bytes );
 
 		if ( crc32 )
