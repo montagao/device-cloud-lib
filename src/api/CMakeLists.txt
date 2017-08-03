@@ -8,7 +8,9 @@
 #
 
 find_package( Threads )
-find_package( OpenSSL )
+if ( MQTT_SSL_SUPPORT )
+	find_package( OpenSSL )
+endif()
 
 set( API_HDRS_C "" CACHE INTERNAL "api header files" FORCE )
 set( API_SRCS_C "" CACHE INTERNAL "api source files" FORCE )
@@ -59,9 +61,12 @@ if ( IOT_API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.0" )
 endif()
 
 include_directories( SYSTEM "${JSON_INCLUDE_DIR}" "${MQTT_INCLUDE_DIR}" )
-if( JSON_DEFS )
-	add_definitions( ${JSON_DEFS} )
-endif( JSON_DEFS )
+if( JSON_DEFINES )
+	foreach( JSON_DEFINE ${JSON_DEFINES} )
+		set( JSON_DEFINES_ "-D${JSON_DEFINE}=1" )
+	endforeach( JSON_DEFINE )
+	add_definitions( ${JSON_DEFINES_} )
+endif( JSON_DEFINES )
 
 set( LIB_OPTIONS "IOT_NO_THREAD_SUPPORT" "IOT_STACK_ONLY" )
 foreach( LIB_OPTION ${LIB_OPTIONS} )
@@ -85,8 +90,11 @@ target_link_libraries( "${IOT_LIBRARY_NAME}" "dl"
 	${OSAL_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	${PLUGIN_BUILTIN_LIBS}
-	${OPENSSL_LIBRARIES}
 )
+
+if ( MQTT_SSL_SUPPORT )
+	target_link_libraries( "${IOT_LIBRARY_NAME}" ${OPENSSL_LIBRARIES} )
+endif()
 
 # Installation instructions
 # LIBRARY DESTINATION (static library for Arduino: iot.lib, iot.a);

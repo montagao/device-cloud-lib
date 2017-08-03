@@ -1,12 +1,17 @@
 #
 # Paho support
 #
+# The following variables can be set to add additional find support:
+# - PAHO_ASYNC, If true, tries to find asynchronous C library
+# - PAHO_PREFER_STATIC, If true, tries to find static library versions
+# - PAHO_ROOT_DIR, specified an explicit root path to test
+#
 # If found the following will be defined:
-# PAHO_FOUND, If false, do not try to use paho
-# PAHO_INCLUDE_DIR, path where to find paho include files
-# PAHO_LIBRARY_DIR, path where to find paho libraries
-# PAHO_LIBRARIES, the library to link against
-# PAHO_VERSION, update paho to display version
+# - PAHO_FOUND, If false, paho was not found on the system
+# - PAHO_INCLUDE_DIR, path to directory containing paho include files
+# - PAHO_SSL_SUPPORT, If true, SSL supported version of library found
+# - PAHO_LIBRARIES, the library to link against
+# - PAHO_VERSION, version of paho that was found
 #
 # Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -16,48 +21,78 @@
 # herein.  All rights not licensed by Wind River are reserved by Wind River.
 #
 
-#find_package( PkgConfig )
 include( FindPackageHandleStandardArgs )
 
-find_path( PAHO_INCLUDE_DIR
-	NAMES "MQTTClient.h"
-	DOC "paho include directory"
-)
+set( PAHO_TYPE     "MQTTClient" )
+set( PAHO_LIB_NAME "paho-mqtt3c" )
+if ( PAHO_ASYNC )
+	set( PAHO_TYPE     "MQTTAsync" )
+	set( PAHO_LIB_NAME "paho-mqtt3a" )
+endif()
 
-find_library( PAHO_LIBRARIES
-	NAMES paho-mqtt3a paho-mqtt3a-static
-	DOC "Required paho libraries"
-)
+set( PAHO_LIB_NAMES "${PAHO_LIB_NAME}" "${PAHO_LIB_NAMES}s" )
 
-get_filename_component( PAHO_LIBRARY_DIR "${PAHO_LIBRARIES}" PATH )
+# List of libraries to search for
+set( PAHO_LIBS )
+foreach( _NAME ${PAHO_LIB_NAMES} )
+	set( PAHO_LIBS ${PAHO_LIBS}
+		"${CMAKE_SHARED_LIBRARY_PREFIX}${_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
+		"${CMAKE_STATIC_LIBRARY_PREFIX}${_NAME}-static${CMAKE_STATIC_LIBRARY_SUFFIX}"
+	)
+endforeach( _NAME )
 
-# determine version
+# Reverse list if static libraries are preferred
+if( PAHO_PREFER_STATIC )
+	list( REVERSE PAHO_LIBS )
+endif()
+
+# Try and find paths
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+else()
+	set( LIB_SUFFIX "" )
+endif()
+find_path( PAHO_INCLUDE_DIR NAMES "${PAHO_TYPE}.h" DOC "paho include directory"
+	PATHS "${PAHO_ROOT_DIR}/include" )
+find_library( PAHO_LIBRARIES NAMES ${PAHO_LIBS} DOC "Required paho libraries"
+	PATHS "${PAHO_ROOT_DIR}/lib${LIB_SUFFIX}" )
+
+# If SSL version of paho then set applicable variable
+if ( PAHO_LIBRARIES AND "${PAHO_LIBRARIES}" MATCHES "${PAHO_LIB_NAME}s" )
+	set( PAHO_SSL_SUPPORT ON )
+endif()
+
+# Determine version
 if ( PAHO_INCLUDE_DIR AND PAHO_LIBRARIES )
+	set( TEST_LIBS ${PAHO_LIBRARIES} )
+	if ( PAHO_SSL_SUPPORT )
+		find_package( OpenSSL )
+		set( TEST_LIBS ${TEST_LIBS} ${OPENSSL_LIBRARIES} )
+	endif( PAHO_SSL_SUPPORT )
 	find_package( Threads )
 	set( PAHO_TEST_OUT_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/paho_test.c" )
+
 	file( WRITE "${PAHO_TEST_OUT_FILE}"
+		"#include <${PAHO_TYPE}.h>\n"
 		"#include <stdio.h>\n"
-		"#include <MQTTClient.h>\n"
 		"int main( void ) {\n"
-		"  MQTTClient_nameValue nv = MQTTClient_getVersionInfo();\n"
-		"  if ( nv ) printf( \"%s\\n\", nv->value );\n"
-		"  printf( \"test test\\n\" );\n"
-		"  return (nv != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;\n"
+		"  int i;\n"
+		"  const ${PAHO_TYPE}_nameValue *nv = ${PAHO_TYPE}_getVersionInfo();\n"
+		"  for ( i = 0; nv && nv->name; ++nv, ++i ) {\n"
+		"    if ( i == 1 ) { printf( \"%s\\n\", nv->value ); return 0; }\n"
+		"  }\n"
+		"  return 1;\n"
 		"}\n"
 	)
 	try_run( PAHO_VERSION_RUN_RESULT PAHO_VERSION_COMPILE_RESULT
 		"${CMAKE_BINARY_DIR}" "${PAHO_TEST_OUT_FILE}"
 		CMAKE_FLAGS
 			"-DINCLUDE_DIRECTORIES:STRING=${PAHO_INCLUDE_DIR}"
-			"-DLINK_LIBRARIES:STRING=${PAHO_LIBRARIES}"
-		RUN_OUTPUT_VARIABLE PAHO_VERSION_OUTPUT )
-	#message( FATAL_ERROR "-DLINK_LIBRARIES:STRING=${PAHO_LIBRARIES};${CMAKE_THREAD_LIBS_INIT}" )
-	#if( PAHO_VERSION_COMPILE_RESULT AND PAHO_VERSION_RUN_RESULT )
-	#	set( PAHO_VERSION "${PAHO_VERSION_OUTPUT}" )
-	#endif( PAHO_VERSION_COMPILE_RESULT AND PAHO_VERSION_RUN_RESULT )
-	#message( FATAL_ERROR "${PAHO_VERSION_COMPILE_RESULT}-->${PAHO_TEST_OUT_FILE}-->${PAHO_VERSION_RUN_RESULT}-->${PAHO_VERSION}" )
+			"-DLINK_LIBRARIES:STRING=${TEST_LIBS};${CMAKE_THREAD_LIBS_INIT}"
+		RUN_OUTPUT_VARIABLE PAHO_VERSION )
+	string( STRIP "${PAHO_VERSION}" PAHO_VERSION )
 endif ( PAHO_INCLUDE_DIR AND PAHO_LIBRARIES )
-
 
 find_package_handle_standard_args( paho
 	FOUND_VAR PAHO_FOUND
@@ -67,8 +102,7 @@ find_package_handle_standard_args( paho
 )
 
 mark_as_advanced(
-    PAHO_LIBRARY_DIR
-    PAHO_INCLUDE_DIR
-    PAHO_LIBRARIES
+	PAHO_INCLUDE_DIR
+	PAHO_LIBRARIES
 )
 

@@ -24,9 +24,9 @@ set( PROJECT_VENDOR                    "${IOT_VENDOR}" )
 # Determine if compiling in 64-bit mode
 get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
 if( LIB64 )
-    set( LIB_SUFFIX 64 )
+	set( LIB_SUFFIX 64 )
 else()
-    set( LIB_SUFFIX "" )
+	set( LIB_SUFFIX "" )
 endif()
 
 # Options
@@ -66,6 +66,7 @@ set( INSTALL_LIB_DIR      "lib" )
 set( INSTALL_PLUGIN_DIR   "lib" )
 
 # 3rd party libraries
+set( PAHO_PREFER_STATIC   ON )
 if ( IOT_JSON_LIBRARY STREQUAL "jansson" )
 	find_package( Jansson REQUIRED )
 	add_definitions( "-DIOT_JSON_JANSSON" )
@@ -75,7 +76,7 @@ else()
 	find_package( Jsmn REQUIRED )
 	set( JSON_INCLUDE_DIR "${JSMN_INCLUDE_DIR}" )
 	set( JSON_LIBRARIES   "${JSMN_LIBRARIES}" )
-	set( JSON_DEFS        "-DJSMN_PARENT_LINKS -DJSMN_STRICT" )
+	set( JSON_DEFINES     "${JSMN_DEFINES}" )
 endif()
 
 if ( IOT_MQTT_LIBRARY STREQUAL "mosquitto" )
@@ -83,15 +84,19 @@ if ( IOT_MQTT_LIBRARY STREQUAL "mosquitto" )
 	add_definitions( "-DIOT_MQTT_MOSQUITTO" )
 	set( MQTT_INCLUDE_DIR "${MOSQUITTO_INCLUDE_DIR}" )
 	set( MQTT_LIBRARIES "${MOSQUITTO_LIBRARIES}" )
+	set( MQTT_SSL_SUPPORT ON )
 else()
 	find_package( Paho REQUIRED )
 	set( MQTT_INCLUDE_DIR "${PAHO_INCLUDE_DIR}" )
 	set( MQTT_LIBRARIES "${PAHO_LIBRARIES}" )
+	set( MQTT_SSL_SUPPORT ${PAHO_SSL_SUPPORT} )
 endif()
 
 find_package( Osal REQUIRED )
 
 if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
+	build_command( CMAKE_BUILD_COMMAND CONFIGURATION ${CMAKE_BUILD_TYPE} )
+	separate_arguments( CMAKE_BUILD_COMMAND )
 	set( 3RDPARTY_DIR "${CMAKE_CURRENT_BINARY_DIR}/3rdparty" )
 	file( MAKE_DIRECTORY "${3RDPARTY_DIR}" )
 	execute_process( COMMAND "${CMAKE_COMMAND}" "-G${CMAKE_GENERATOR}"
@@ -103,7 +108,7 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 	if( NOT CMD_RESULT STREQUAL "0" )
 		message( FATAL_ERROR "Failed to obtain 3rd party libraries: ${CMD_ERROR}" )
 	endif( NOT CMD_RESULT STREQUAL "0" )
-	execute_process( COMMAND "make"
+	execute_process( COMMAND ${CMAKE_BUILD_COMMAND}
 		WORKING_DIRECTORY "${3RDPARTY_DIR}"
 		RESULT_VARIABLE CMD_RESULT )
 	if( NOT CMD_RESULT STREQUAL "0" )
@@ -111,15 +116,11 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 	endif( NOT CMD_RESULT STREQUAL "0" )
 
 	# jsmn
-	set( JSMN_DIR "${3RDPARTY_DIR}/jsmn/out" )
-	find_path( JSMN_INCLUDE_DIR NAMES jsmn.h
-		PATHS "${JSMN_DIR}" )
-	find_library( JSMN_LIBRARIES NAMES
-		${CMAKE_STATIC_LIBRARY_PREFIX}jsmn${CMAKE_STATIC_LIBRARY_SUFFIX}
-		PATHS "${JSMN_DIR}" )
+	set( JSMN_ROOT_DIR "${3RDPARTY_DIR}/jsmn/out" )
+	find_package( Jsmn REQUIRED )
 	set( JSON_INCLUDE_DIR "${JSMN_INCLUDE_DIR}" )
 	set( JSON_LIBRARIES   "${JSMN_LIBRARIES}" )
-	set( JSON_DEFS        "-DJSMN_PARENT_LINKS" )
+	set( JSON_DEFINES     "${JSMN_DEFINES}" )
 
 	# osal
 	set( OSAL_DIR "${3RDPARTY_DIR}/osal/out" )
@@ -131,13 +132,8 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 		PATHS "${OSAL_DIR}/lib${LIB_SUFFIX}" )
 
 	# paho
-	set( PAHO_DIR "${3RDPARTY_DIR}/paho/out" )
-	find_path( PAHO_INCLUDE_DIR NAMES MQTTClient.h
-		PATHS "${PAHO_DIR}/include" )
-	find_library( PAHO_LIBRARIES NAMES
-		"${CMAKE_STATIC_LIBRARY_PREFIX}paho-mqtt3cs-static${CMAKE_STATIC_LIBRARY_SUFFIX}"
-		"${CMAKE_SHARED_LIBRARY_PREFIX}paho-mqtt3cs${CMAKE_SHARED_LIBRARY_SUFFIX}"
-		PATHS "${PAHO_DIR}/lib${LIB_SUFFIX}" )
+	set( PAHO_ROOT_DIR "${3RDPARTY_DIR}/paho/out" )
+	find_package( Paho REQUIRED )
 	set( MQTT_INCLUDE_DIR "${PAHO_INCLUDE_DIR}" )
 	set( MQTT_LIBRARIES "${PAHO_LIBRARIES}" )
 endif( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
@@ -148,3 +144,4 @@ add_subdirectory( "src" )
 add_subdirectory( "share" )
 
 include( TestSupport )
+

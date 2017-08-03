@@ -1,12 +1,15 @@
 #
 # Operating System Abstraction Library
 #
+# The following variables can be set to add additional find support:
+# - OSAL_PREFER_STATIC, If true, tries to find static library versions
+# - OSAL_ROOT_DIR, specified an explicit root path to test
+
 # If found the following will be defined:
-# OSAL_FOUND, If false, do not try to use osal
-# OSAL_INCLUDE_DIR, path where to find osal include files
-# OSAL_LIBRARY_DIR, path where to find osal libraries
-# OSAL_LIBRARIES, the library to link against
-# OSAL_VERSION, update osal to display version
+# - OSAL_FOUND, If false, do not try to use osal
+# - OSAL_INCLUDE_DIR, path where to find osal include files
+# - OSAL_LIBRARIES, the library to link against
+# - OSAL_VERSION, update osal to display version
 #
 # Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -21,14 +24,14 @@ include( FindPackageHandleStandardArgs )
 find_path( OSAL_INCLUDE_DIR
 	NAMES "os.h"
 	DOC "osal include directory"
+	PATHS "${OSAL_ROOT_DIR}"
 )
 
 find_library( OSAL_LIBRARIES
 	NAMES osal
 	DOC "Required osal libraries"
+	PATHS "${OSAL_ROOT_DIR}"
 )
-
-get_filename_component( OSAL_LIBRARY_DIR "${OSAL_LIBRARIES}" PATH )
 
 find_package_handle_standard_args( osal
 	FOUND_VAR OSAL_FOUND

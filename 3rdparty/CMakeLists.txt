@@ -13,6 +13,8 @@ include( ExternalProject )
 set( GIT_PATCH_FLAGS "--ignore-space-change" "--ignore-whitespace" "-p1"
 	"--whitespace=nowarn" "--unsafe-paths"
 )
+build_command( CMAKE_BUILD_COMMAND CONFIGURATION ${CMAKE_BUILD_TYPE} )
+separate_arguments( CMAKE_BUILD_COMMAND )
 
 # jsmn
 set( JSMN_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/jsmn" )
@@ -32,35 +34,44 @@ ExternalProject_Add( "jsmn"
 )
 
 # paho
-set( PAHO_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/paho" )
-set( PAHO_INSTALL_DIR  "${PAHO_BUILD_DIR}/out" )
+set( PAHO_BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/paho" )
+set( PAHO_BINARY_DIR "${PAHO_BASE_DIR}/src/paho-build" )
+set( PAHO_INSTALL_DIR  "${PAHO_BASE_DIR}/out" )
+set( PAHO_SOURCE_DIR "${PAHO_BASE_DIR}/src/paho" )
+string( REPLACE ";.;" ";${PAHO_SOURCE_DIR};" PAHO_BUILD_COMMAND "${CMAKE_BUILD_COMMAND}" )
 ExternalProject_Add( "paho"
 	GIT_REPOSITORY         "https://github.com/eclipse/paho.mqtt.c.git"
 	GIT_TAG                "master" #"v1.1.0"
-	PREFIX                 "${PAHO_BUILD_DIR}"
+	PREFIX                 "${PAHO_BASE_DIR}"
 	CMAKE_ARGS             "-DCMAKE_INSTALL_PREFIX:PATH=${PAHO_INSTALL_DIR}"
 	                       "-DPAHO_WITH_SSL:BOOL=TRUE"
 	                       "-DPAHO_BUILD_STATIC:BOOL=TRUE"
 	                       "-DCMAKE_C_FLAGS:STRING=-fPIC"
-	BUILD_COMMAND          "make"
+	#BINARY_DIR             "${PAHO_BINARY_DIR}"
+	BUILD_COMMAND          ${PAHO_BUILD_COMMAND}
 	BUILD_IN_SOURCE        1
 	INSTALL_DIR            "${PAHO_INSTALL_DIR}" # creates empty directory
-	INSTALL_COMMAND        "make" "install"
+	INSTALL_COMMAND        ${CMAKE_MAKE_PROGRAM} "install"
 	#TEST_BEFORE_INSTALL    1
-	#TEST_COMMAND           "make" "test"
+	#TEST_COMMAND            ${CMAKE_MAKE_PROGRAM} "test"
 )
 
-set( OSAL_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/osal" )
-set( OSAL_INSTALL_DIR  "${OSAL_BUILD_DIR}/out" )
+set( OSAL_BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/osal" )
+set( OSAL_BINARY_DIR "${OSAL_BASE_DIR}/src/osal-build" )
+set( OSAL_INSTALL_DIR  "${OSAL_BASE_DIR}/out" )
+set( OSAL_SOURCE_DIR "${OSAL_BASE_DIR}/src/osal" )
+string( REPLACE ";.;" ";${OSAL_SOURCE_DIR};" OSAL_BUILD_COMMAND "${CMAKE_BUILD_COMMAND}" )
 ExternalProject_Add( "osal"
 	GIT_REPOSITORY         "http://stash.wrs.com/scm/hpr/wr-osal.git"
 	GIT_TAG                "master"
-	PREFIX                 "${OSAL_BUILD_DIR}"
+	PREFIX                 "${OSAL_BASE_DIR}"
 	CMAKE_ARGS             "-DCMAKE_INSTALL_PREFIX:PATH=${OSAL_INSTALL_DIR}"
-	BUILD_COMMAND          "make"
+	#BINARY_DIR             "${OSAL_BINARY_DIR}"
+	BUILD_COMMAND          ${OSAL_BUILD_COMMAND}
 	BUILD_IN_SOURCE        1
 	INSTALL_DIR            "${OSAL_INSTALL_DIR}" # creates empty directory
-	INSTALL_COMMAND        "make" "install"
+	INSTALL_COMMAND        ${CMAKE_MAKE_PROGRAM} "install"
 	#TEST_BEFORE_INSTALL    1
-	#TEST_COMMAND           "make" "test"
+	#TEST_COMMAND            ${CMAKE_MAKE_PROGRAM} "test"
 )
+

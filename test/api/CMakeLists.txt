@@ -18,6 +18,13 @@ set( TESTS
 	"iot_telemetry"
 )
 
+if( JSON_DEFINES )
+	foreach( JSON_DEFINE ${JSON_DEFINES} )
+		set( JSON_DEFINES_ "-D${JSON_DEFINE}=1" )
+	endforeach( JSON_DEFINE )
+	add_definitions( ${JSON_DEFINES_} )
+endif( JSON_DEFINES )
+
 include( "mock_api" )
 include( "mock_osal" )
 
@@ -209,7 +216,7 @@ list( REMOVE_ITEM MOCK_API_PART
 	"iot_json_decode_type"
 )
 set( TEST_IOT_JSON_DECODE_MOCK ${MOCK_API_PART} )
-set( TEST_IOT_JSON_DECODE_DEFS "${JSON_DEFS}" )
+set( TEST_IOT_JSON_DECODE_DEFS "${JSON_DEFINES_}" )
 set( TEST_IOT_JSON_DECODE_INCS "${JSON_INCLUDE_DIR}" )
 set( TEST_IOT_JSON_DECODE_SRCS ${MOCK_API_SRCS} "iot_json_decode_test.c" )
 set( TEST_IOT_JSON_DECODE_LIBS ${MOCK_API_LIBS} ${JSON_LIBRARIES} )
