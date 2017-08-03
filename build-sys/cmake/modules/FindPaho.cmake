@@ -3,6 +3,8 @@
 #
 # The following variables can be set to add additional find support:
 # - PAHO_ASYNC, If true, tries to find asynchronous C library
+# - PAHO_PREFER_STATIC, If true, only finds static library version
+# - PAHO_USE_SSL, If true, only finds ssl version
 # - PAHO_PREFER_STATIC, If true, tries to find static library versions
 # - PAHO_ROOT_DIR, specified an explicit root path to test
 #
@@ -25,16 +27,18 @@ include( FindPackageHandleStandardArgs )
 
 set( PAHO_TYPE     "MQTTClient" )
 set( PAHO_LIB_NAME "paho-mqtt3c" )
-if ( PAHO_ASYNC )
+if( PAHO_ASYNC )
 	set( PAHO_TYPE     "MQTTAsync" )
 	set( PAHO_LIB_NAME "paho-mqtt3a" )
 endif()
 
-set( PAHO_LIB_NAMES "${PAHO_LIB_NAME}" "${PAHO_LIB_NAMES}s" )
+if( PAHO_USE_SSL )
+	set( PAHO_LIB_NAME "${PAHO_LIB_NAME}s" )
+endif( PAHO_USE_SSL )
 
 # List of libraries to search for
 set( PAHO_LIBS )
-foreach( _NAME ${PAHO_LIB_NAMES} )
+foreach( _NAME ${PAHO_LIB_NAME} )
 	set( PAHO_LIBS ${PAHO_LIBS}
 		"${CMAKE_SHARED_LIBRARY_PREFIX}${_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
 		"${CMAKE_STATIC_LIBRARY_PREFIX}${_NAME}-static${CMAKE_STATIC_LIBRARY_SUFFIX}"
@@ -42,7 +46,7 @@ foreach( _NAME ${PAHO_LIB_NAMES} )
 endforeach( _NAME )
 
 # Reverse list if static libraries are preferred
-if( PAHO_PREFER_STATIC )
+if ( PAHO_PREFER_STATIC )
 	list( REVERSE PAHO_LIBS )
 endif()
 
@@ -59,8 +63,10 @@ find_library( PAHO_LIBRARIES NAMES ${PAHO_LIBS} DOC "Required paho libraries"
 	PATHS "${PAHO_ROOT_DIR}/lib${LIB_SUFFIX}" )
 
 # If SSL version of paho then set applicable variable
-if ( PAHO_LIBRARIES AND "${PAHO_LIBRARIES}" MATCHES "${PAHO_LIB_NAME}s" )
+if ( PAHO_LIBRARIES AND PAHO_USE_SSL )
 	set( PAHO_SSL_SUPPORT ON )
+else()
+	set( PAHO_SSL_SUPPORT OFF )
 endif()
 
 # Determine version

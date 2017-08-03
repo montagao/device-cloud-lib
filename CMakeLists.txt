@@ -67,6 +67,7 @@ set( INSTALL_PLUGIN_DIR   "lib" )
 
 # 3rd party libraries
 set( PAHO_PREFER_STATIC   ON )
+set( PAHO_USE_SSL         ON )
 if ( IOT_JSON_LIBRARY STREQUAL "jansson" )
 	find_package( Jansson REQUIRED )
 	add_definitions( "-DIOT_JSON_JANSSON" )

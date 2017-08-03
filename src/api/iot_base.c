@@ -946,7 +946,6 @@ iot_t *iot_initialize(
 #endif /* ifndef IOT_NO_THREAD_SUPPORT */
 
 				/*os_socket_initialize();*/
-
 #ifdef IOT_STACK_ONLY
 				result->id = result->_id;
 #else /* ifdef IOT_STACK_ONLY */
