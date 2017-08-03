@@ -44,7 +44,3 @@ include_directories( SYSTEM
 	"${CMAKE_SOURCE_DIR}/src/app-common"
 )
 
-#target_link_libraries( ${TARGET}
-	#"jsmn"
-#)
-
