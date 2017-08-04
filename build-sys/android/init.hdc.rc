@@ -1,28 +1,8 @@
-service mosquitto /system/bin/logwrapper /system/bin/mosquitto
+service iot-startup /system/bin/logwrapper /system/bin/config_hdc_android.sh
     class late_start
     user root
     group system
-
-#service iot-ccg /system/bin/logwrapper /system/bin/iot-ccg -d
-#    class late_start
-#    user root
-#    group system
-
-#service iot-service /system/bin/logwrapper /system/bin/iot-service
-#    class late_start
-#    user root
-#    group system
-
-#service iot-dev-mgr /system/bin/logwrapper /system/bin/iot-device-manager
-#    class late_start
-#    user root
-#    group system
-
-#service iot-startup /system/bin/logwrapper /system/bin/config_hdc_android.sh
-#    class late_start
-#    user root
-#    group system
-#    oneshot
+    oneshot
 
 #service iot-telemetry /system/bin/logwrapper /system/bin/iot-app-simple-telemetry test
 #    class late_start

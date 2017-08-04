@@ -78,3 +78,10 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/iot
 include $(BUILD_PREBUILT)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := config_hdc_android.sh
+LOCAL_SRC_FILES := ../../build-sys/android/config_hdc_android.sh
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_MODULE_PATH := $(TARGET_OUT_EXECUTABLES)
+include $(BUILD_PREBUILT)
+
