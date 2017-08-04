@@ -70,3 +70,11 @@ LOCAL_SRC_FILES := ca-certificates.crt
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/security/cacerts
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := buidinfo_hdc_android
+LOCAL_SRC_FILES := ../../build-sys/android/buildinfo_hdc_android
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/iot
+include $(BUILD_PREBUILT)
+
