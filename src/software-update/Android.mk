@@ -14,9 +14,22 @@
 # limitations under the License.
 #
 
-LOCAL_PATH := $(call my-dir)
-# generated iot_build.h and iot_plugin_builtin.c
-$( info ($(shell ( cd ${LOCAL_PATH}; ./build.sh && sed -i 's!\/etc\/iot!\/data\/iot\/etc!g' iot_build.h ; sed -i 's!\/var\/lib\/iot!\/data\/iot\/etc!g' iot_build.h ))))
+LOCAL_PATH:= $(call my-dir)
 
-include $(call all-subdir-makefiles)
+include $(CLEAR_VARS)
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../ \
+	$(LOCAL_PATH)/../../ \
+
+LOCAL_SHARED_LIBRARIES := libiot libdl libext2_uuid
+LOCAL_STATIC_LIBRARIES := libiotutils libosal libandroidifaddrs
+
+LOCAL_MODULE := iot-update
+
+LOCAL_SRC_FILES := \
+	./iot_update.c \
+	./iot_update_main.c \
+
+include $(BUILD_EXECUTABLE)
 

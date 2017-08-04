@@ -17,9 +17,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 iot_c_includes := $(LOCAL_PATH) \
-	$(LOCAL_PATH)/../ \
 	$(LOCAL_PATH)/../../ \
-	$(LOCAL_PATH)/../os \
 	$(LOCAL_PATH)/public \
 	$(LOCAL_PATH)/share \
 	external/e2fsprogs/lib
@@ -35,6 +33,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/public
 LOCAL_MODULE := $$(__plugin_module_name)
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $$(__plugin_module_src)
+LOCAL_STATIC_LIBRARIES := libosal libandroidifaddrs
 include $(BUILD_STATIC_LIBRARY)
 endef
 
@@ -46,7 +45,7 @@ LOCAL_C_INCLUDES := $(iot_c_includes)
 LOCAL_CFLAGS += -DIOT_PLUGIN_BUILTIN -DOPENSSL -DJSMN_PARENT_LINKS -DJSMN_STRICT
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/public
 LOCAL_SHARED_LIBRARIES := libcutils libdl libjansson libmosquitto libext2_uuid libcrypto libssl
-LOCAL_STATIC_LIBRARIES := libandroidifaddrs libtr50 libpaho-mqtt3cs libiotjsmn
+LOCAL_STATIC_LIBRARIES := libosal libandroidifaddrs libtr50 libpaho-mqtt3cs libiotjsmn
 
 LOCAL_MODULE := libiot
 LOCAL_SRC_FILES := \
