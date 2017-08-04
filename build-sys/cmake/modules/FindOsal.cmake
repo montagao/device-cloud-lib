@@ -4,7 +4,7 @@
 # The following variables can be set to add additional find support:
 # - OSAL_PREFER_STATIC, If true, tries to find static library versions
 # - OSAL_ROOT_DIR, specified an explicit root path to test
-
+#
 # If found the following will be defined:
 # - OSAL_FOUND, If false, do not try to use osal
 # - OSAL_INCLUDE_DIR, path where to find osal include files
@@ -21,16 +21,33 @@
 
 include( FindPackageHandleStandardArgs )
 
+set( OSAL_LIB_NAME "osal" )
+set( OSAL_LIBS
+	${CMAKE_SHARED_LIBRARY_PREFIX}${OSAL_LIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+	${CMAKE_STATIC_LIBRARY_PREFIX}${OSAL_LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
+
+if ( OSAL_PREFER_STATIC )
+	list( REVERSE OSAL_LIBS )
+endif( OSAL_PREFER_STATIC )
+
+# Try and find paths
+set( LIB_SUFFIX "" )
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+endif()
+
 find_path( OSAL_INCLUDE_DIR
 	NAMES "os.h"
 	DOC "osal include directory"
-	PATHS "${OSAL_ROOT_DIR}"
+	PATHS "${OSAL_ROOT_DIR}/include"
 )
 
 find_library( OSAL_LIBRARIES
-	NAMES osal
+	NAMES ${OSAL_LIBS}
 	DOC "Required osal libraries"
-	PATHS "${OSAL_ROOT_DIR}"
+	PATHS "${OSAL_ROOT_DIR}/lib${LIB_SUFFIX}"
 )
 
 find_package_handle_standard_args( osal

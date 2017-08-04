@@ -9,6 +9,13 @@
 
 cmake_minimum_required( VERSION 2.8.5 )
 
+# Determine lib output directory suffix
+set( LIB_SUFFIX "" )
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+endif()
+
 include( ExternalProject )
 set( GIT_PATCH_FLAGS "--ignore-space-change" "--ignore-whitespace" "-p1"
 	"--whitespace=nowarn" "--unsafe-paths"
@@ -44,6 +51,7 @@ ExternalProject_Add( "paho"
 	GIT_TAG                "master" #"v1.1.0"
 	PREFIX                 "${PAHO_BASE_DIR}"
 	CMAKE_ARGS             "-DCMAKE_INSTALL_PREFIX:PATH=${PAHO_INSTALL_DIR}"
+	                       "-DCMAKE_INSTALL_LIBDIR:PATH=lib${LIB_SUFFIX}"
 	                       "-DPAHO_WITH_SSL:BOOL=TRUE"
 	                       "-DPAHO_BUILD_STATIC:BOOL=TRUE"
 	                       "-DCMAKE_C_FLAGS:STRING=-fPIC"

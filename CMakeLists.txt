@@ -93,6 +93,7 @@ else()
 	set( MQTT_SSL_SUPPORT ${PAHO_SSL_SUPPORT} )
 endif()
 
+set( OSAL_PREFER_STATIC ON )
 find_package( Osal REQUIRED )
 
 if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
@@ -104,24 +105,18 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 			"${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"
 		WORKING_DIRECTORY "${3RDPARTY_DIR}"
 		RESULT_VARIABLE CMD_RESULT
-		OUTPUT_VARIABLE CMD_OUTPUT
 		ERROR_VARIABLE CMD_ERROR )
 	if( NOT CMD_RESULT STREQUAL "0" )
 		message( FATAL_ERROR "Failed to obtain 3rd party libraries "
-			"(error code: ${CMD_RESULT}):\n"
-			"error: ${CMD_ERROR}\n"
-			"output: ${CMD_OUTPUT}" )
+			"(error code: ${CMD_RESULT}): ${CMD_ERROR}" )
 	endif( NOT CMD_RESULT STREQUAL "0" )
 	execute_process( COMMAND ${CMAKE_BUILD_COMMAND}
 		WORKING_DIRECTORY "${3RDPARTY_DIR}"
 		RESULT_VARIABLE CMD_RESULT
-		OUTPUT_VARIABLE CMD_OUTPUT
 		ERROR_VARIABLE CMD_ERROR )
 	if( NOT CMD_RESULT STREQUAL "0" )
 		message( FATAL_ERROR "Failed to build 3rd party libraries "
-			"(error code: ${CMD_RESULT}):\n"
-			"error: ${CMD_ERROR}\n"
-			"output: ${CMD_OUTPUT}" )
+			"(error code: ${CMD_RESULT}): ${CMD_ERROR}" )
 	endif( NOT CMD_RESULT STREQUAL "0" )
 
 	# jsmn
@@ -132,13 +127,8 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 	set( JSON_DEFINES     "${JSMN_DEFINES}" )
 
 	# osal
-	set( OSAL_DIR "${3RDPARTY_DIR}/osal/out" )
-	find_path( OSAL_INCLUDE_DIR NAMES os.h
-		PATHS "${OSAL_DIR}/include" )
-	find_library( OSAL_LIBRARIES NAMES
-		${CMAKE_STATIC_LIBRARY_PREFIX}osal${CMAKE_STATIC_LIBRARY_SUFFIX}
-		${CMAKE_SHARED_LIBRARY_PREFIX}osal${CMAKE_SHARED_LIBRARY_SUFFIX}
-		PATHS "${OSAL_DIR}/lib${LIB_SUFFIX}" )
+	set( OSAL_ROOT_DIR "${3RDPARTY_DIR}/osal/out" )
+	find_package( Osal REQUIRED )
 
 	# paho
 	set( PAHO_ROOT_DIR "${3RDPARTY_DIR}/paho/out" )

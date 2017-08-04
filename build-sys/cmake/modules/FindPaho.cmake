@@ -51,12 +51,12 @@ if ( PAHO_PREFER_STATIC )
 endif()
 
 # Try and find paths
+set( LIB_SUFFIX "" )
 get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
 if( LIB64 )
 	set( LIB_SUFFIX 64 )
-else()
-	set( LIB_SUFFIX "" )
 endif()
+
 find_path( PAHO_INCLUDE_DIR NAMES "${PAHO_TYPE}.h" DOC "paho include directory"
 	PATHS "${PAHO_ROOT_DIR}/include" )
 find_library( PAHO_LIBRARIES NAMES ${PAHO_LIBS} DOC "Required paho libraries"

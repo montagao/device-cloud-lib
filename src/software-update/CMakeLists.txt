@@ -8,6 +8,7 @@
 #
 set( TARGET "${IOT_UPDATE_TARGET}" )
 set( TARGET_DESCRIPTION "${IOT_UPDATE_TARGET}" )
+find_package( OpenSSL )
 
 add_definitions( "-DIOT_STATIC" )
 find_package( Osal REQUIRED )
@@ -42,7 +43,7 @@ target_link_libraries( ${TARGET}
 	iotutils
 	iot
 	dl
-
+	${OPENSSL_LIBRARIES}
 )
 
 if( MSVC )
