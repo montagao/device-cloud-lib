@@ -365,7 +365,7 @@ void relay_notify_device_manager( os_status_t status, const char *file_path,
 					LOG_PREFIX, w_bytes, file_path );
 			os_file_close( file_handle );
 #		ifdef __ANDROID__
-			os_file_fsync( file_handle );
+			os_file_fsync( pass_fail_flag );
 #		endif
 		}
 		else
@@ -793,14 +793,14 @@ iot_bool_t insecure, iot_bool_t verbose,
 			else
 				relay_log( IOT_LOG_FATAL, "Failed to connect to client url: %s", url );
 
-			os_free( (void**)&web_path_heap );
+			os_free_null( (void**)&web_path_heap );
 			lws_context_destroy( context );
 		}
 		else
 			relay_log( IOT_LOG_FATAL, "Failed to parse url: %s", url );
 
 		wsd->tx_buffer_len = wsd->tx_buffer_size = 0;
-		os_free( (void **)&wsd->tx_buffer );
+		os_free_null( (void **)&wsd->tx_buffer );
 	}
 
 	/* catch any error case not caught above and only notify once */
