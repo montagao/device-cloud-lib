@@ -107,14 +107,21 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 		OUTPUT_VARIABLE CMD_OUTPUT
 		ERROR_VARIABLE CMD_ERROR )
 	if( NOT CMD_RESULT STREQUAL "0" )
-		message( FATAL_ERROR "Failed to obtain 3rd party libraries: ${CMD_ERROR}" )
+		message( FATAL_ERROR "Failed to obtain 3rd party libraries "
+			"(error code: ${CMD_RESULT}):\n"
+			"error: ${CMD_ERROR}\n"
+			"output: ${CMD_OUTPUT}" )
 	endif( NOT CMD_RESULT STREQUAL "0" )
 	execute_process( COMMAND ${CMAKE_BUILD_COMMAND}
 		WORKING_DIRECTORY "${3RDPARTY_DIR}"
 		RESULT_VARIABLE CMD_RESULT
+		OUTPUT_VARIABLE CMD_OUTPUT
 		ERROR_VARIABLE CMD_ERROR )
 	if( NOT CMD_RESULT STREQUAL "0" )
-		message( FATAL_ERROR "Failed to build 3rd party libraries: ${CMD_ERROR}" )
+		message( FATAL_ERROR "Failed to build 3rd party libraries "
+			"(error code: ${CMD_RESULT}):\n"
+			"error: ${CMD_ERROR}\n"
+			"output: ${CMD_OUTPUT}" )
 	endif( NOT CMD_RESULT STREQUAL "0" )
 
 	# jsmn
