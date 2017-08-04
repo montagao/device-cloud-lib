@@ -13,7 +13,7 @@ include( ExternalProject )
 set( GIT_PATCH_FLAGS "--ignore-space-change" "--ignore-whitespace" "-p1"
 	"--whitespace=nowarn" "--unsafe-paths"
 )
-build_command( CMAKE_BUILD_COMMAND CONFIGURATION ${CMAKE_BUILD_TYPE} )
+build_command( CMAKE_BUILD_COMMAND )
 separate_arguments( CMAKE_BUILD_COMMAND )
 
 # jsmn
