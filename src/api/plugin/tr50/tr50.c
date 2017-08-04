@@ -1395,8 +1395,26 @@ iot_status_t tr50_file_request_send(
 						"file.put" : "file.get" );
 
 				iot_json_encode_object_start( json, "params" );
+
+				/* FIXME: need to support uploading to
+				 * the global file store.  Then, check
+				 * to see if the global is set, and
+				 * prepend the thingkey to the
+				 * filename for uploads only. */
+				/*iot_json_encode_bool( json, "global", IOT_TRUE );*/
+
+				/* prepend a thing key if this is global */
+				/*if ( transfer->op == IOT_OPERATION_FILE_PUT )*/
+				/*{*/
+				/*char global_fname[PATH_MAX];*/
+				/*os_snprintf( global_fname, PATH_MAX, "%s_%s", data->thing_key, transfer->name);*/
+				/*iot_json_encode_string( json, "fileName", global_fname );*/
+				/*}*/
+				/*else*/
+
 				iot_json_encode_string( json, "fileName", transfer->name );
 				iot_json_encode_string( json, "thingKey", data->thing_key );
+
 				if ( transfer->op == IOT_OPERATION_FILE_PUT )
 					iot_json_encode_bool( json, "public", IOT_FALSE );
 

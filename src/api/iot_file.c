@@ -171,6 +171,8 @@ iot_status_t iot_file_transfer(
 						transfer.name[i] = '-';
 					++i;
 				}
+				if ( i > 0 && transfer.name[i - 1] == OS_DIR_SEP )
+					transfer.name[i - 1] = '\0';
 			}
 			else
 				os_strncpy( transfer.name,
@@ -240,16 +242,20 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 		if ( os_directory_open( path, &dir ) == OS_STATUS_SUCCESS)
 		{
 			char file_name[ PATH_MAX + 1u ];
+			iot_bool_t walk_directory = IOT_TRUE;
 
-			while ( os_directory_next( &dir, IOT_TRUE, file_name, PATH_MAX ) == OS_STATUS_SUCCESS )
+			while ( walk_directory )
 			{
 				char file_path[ PATH_MAX + 1u ];
 				os_file_t input_file;
 				struct stat file_stat;
 
+				os_directory_next( &dir, IOT_TRUE, file_name, PATH_MAX );
+
 				os_snprintf( file_path, PATH_MAX, "%s%c%s", path, OS_DIR_SEP, file_name );
-				stat( file_path, &file_stat );
-				input_file = os_file_open( file_path, OS_READ );
+
+				stat( file_name, &file_stat );
+				input_file = os_file_open( file_name, OS_READ );
 				if ( input_file )
 				{
 					/* create an archive of all files */
@@ -282,6 +288,8 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 					os_file_close( input_file );
 					result = IOT_STATUS_SUCCESS;
 				}
+				else
+					walk_directory = IOT_FALSE;
 			}
 			os_directory_close( &dir );
 		}
