@@ -14,6 +14,7 @@ set( TESTS
 	"iot_base64"
 	"iot_common"
 	"iot_json_decode"
+	"iot_json_encode"
 	"iot_location"
 	"iot_telemetry"
 )
@@ -221,6 +222,27 @@ set( TEST_IOT_JSON_DECODE_INCS "${JSON_INCLUDE_DIR}" )
 set( TEST_IOT_JSON_DECODE_SRCS ${MOCK_API_SRCS} "iot_json_decode_test.c" )
 set( TEST_IOT_JSON_DECODE_LIBS ${MOCK_API_LIBS} ${JSON_LIBRARIES} )
 set( TEST_IOT_JSON_DECODE_UNIT "json/iot_json_decode.c" "json/iot_json_base.c" )
+
+set( MOCK_API_PART ${MOCK_API_FUNC} )
+list( REMOVE_ITEM MOCK_API_PART
+	"iot_json_encode_array_end"
+	"iot_json_encode_array_start"
+	"iot_json_encode_bool"
+	"iot_json_encode_dump"
+	"iot_json_encode_initialize"
+	"iot_json_encode_integer"
+	"iot_json_encode_object_end"
+	"iot_json_encode_object_start"
+	"iot_json_encode_real"
+	"iot_json_encode_string"
+	"iot_json_encode_terminate"
+)
+set( TEST_IOT_JSON_ENCODE_MOCK ${MOCK_API_PART} )
+set( TEST_IOT_JSON_ENCODE_DEFS "${JSON_DEFINES_}" )
+set( TEST_IOT_JSON_ENCODE_INCS "${JSON_INCLUDE_DIR}" )
+set( TEST_IOT_JSON_ENCODE_SRCS ${MOCK_API_SRCS} "iot_json_encode_test.c" )
+set( TEST_IOT_JSON_ENCODE_LIBS ${MOCK_API_LIBS} ${JSON_LIBRARIES} )
+set( TEST_IOT_JSON_ENCODE_UNIT "json/iot_json_encode.c" "json/iot_json_base.c" )
 
 set( TEST_IOT_LOCATION_MOCK ${MOCK_API_FUNC} )
 set( TEST_IOT_LOCATION_SRCS ${MOCK_API_SRCS} "iot_location_test.c" )

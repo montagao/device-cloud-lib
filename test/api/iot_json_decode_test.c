@@ -536,7 +536,12 @@ static void test_iot_json_decode_initialize_null( void **state )
 {
 	iot_json_decoder_t *result;
 	result = iot_json_decode_initialize( NULL, 0u, 0u );
+#ifdef IOT_STACK_ONLY
 	assert_null( result );
+#else
+	assert_non_null( result );
+	iot_json_decode_terminate( result );
+#endif
 }
 
 static void test_iot_json_decode_initialize_too_small( void **state )

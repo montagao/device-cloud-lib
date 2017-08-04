@@ -384,6 +384,8 @@ iot_json_decoder_t *iot_json_decode_initialize(
 
 #ifndef IOT_STACK_ONLY
 	iot_bool_t on_heap = IOT_FALSE;
+	if ( !buf )
+		flags |= IOT_JSON_FLAG_DYNAMIC;
 	if ( flags & IOT_JSON_FLAG_DYNAMIC )
 	{
 		additional_size = 0u;
@@ -904,7 +906,7 @@ iot_status_t iot_json_decode_string(
 		if ( json_is_string( j ) )
 		{
 			v = json_string_value( j );
-#ifdef JANSSON_VERSION_HEX >= 0x020700
+#if JANSSON_VERSION_HEX >= 0x020700
 			v_len = json_string_length( j );
 #else
 			if ( v )

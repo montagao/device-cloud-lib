@@ -218,6 +218,7 @@ IOT_API IOT_SECTION size_t iot_json_decode_array_size(
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_json_decode_type
+ * @see iot_json_encode_bool
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_bool(
 	const iot_json_decoder_t *json,
@@ -259,6 +260,7 @@ IOT_API IOT_SECTION iot_json_decoder_t *iot_json_decode_initialize(
  * @see iot_json_decode_number
  * @see iot_json_decode_real
  * @see iot_json_decode_type
+ * @see iot_json_encode_integer
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_integer(
 	const iot_json_decoder_t *json,
@@ -454,6 +456,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_parse(
  * @see iot_json_decode_integer
  * @see iot_json_decode_number
  * @see iot_json_decode_type
+ * @see iot_json_encode_real
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_real(
 	const iot_json_decoder_t *json,
@@ -482,6 +485,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_real(
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_json_decode_type
+ * @see iot_json_encode_string
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_string(
 	const iot_json_decoder_t *json,
@@ -523,48 +527,234 @@ IOT_API IOT_SECTION iot_json_type_t iot_json_decode_type(
 /** @brief Represents a base JSON encoder */
 typedef struct iot_json_encoder iot_json_encoder_t;
 
+/**
+ * @brief Ends the encoding of a JSON array
+ *
+ * @param[in]      json                base JSON encoder
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_array_iterator
+ * @see iot_json_encode_array_start
+ */
 iot_status_t iot_json_encode_array_end(
 	iot_json_encoder_t *json );
 
+/**
+ * @brief Starts the encoding of a new JSON array
+ *
+ * @param[in]      json                base JSON encoder
+ * @param[in]      key                 (optional) parent JSON object key
+ *
+ * @note @c key should be NULL when not inside a JSON object.  If defining a key
+ * when not inside an JSON object a parent object is generated.  If NULL when
+ * inside a JSON object, a blank key ("") will be used.  Adding an object with
+ * the same key as another item in the object will result in undefined
+ * behaviour.
+ *
+ * @retval IOT_STATUS_FULL             the maximum number of items for the
+ *                                     buffer has been reached
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      adding item not inside an array or object
+ * @retval IOT_STATUS_NO_MEMORY        no more memory available
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_array_iterator
+ * @see iot_json_encode_array_end
+ */
 iot_status_t iot_json_encode_array_start(
 	iot_json_encoder_t *json,
 	const char *key );
 
+/**
+ * @brief Encodes a boolean
+ *
+ * @param[in]      json                base JSON encoder
+ * @param[in]      key                 (optional) parent JSON object key
+ * @param[in]      value               boolean value
+ *
+ * @note @c key should be NULL when not inside a JSON object.  If defining a key
+ * when not inside an JSON object a parent object is generated.  If NULL when
+ * inside a JSON object, a blank key ("") will be used.  Adding an object with
+ * the same key as another item in the object will result in undefined
+ * behaviour.
+ *
+ * @retval IOT_STATUS_FULL             the maximum number of items for the
+ *                                     buffer has been reached
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      adding item not inside an array or object
+ * @retval IOT_STATUS_NO_MEMORY        no more memory available
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_bool
+ */
 iot_status_t iot_json_encode_bool(
 	iot_json_encoder_t *json,
 	const char *key,
 	iot_bool_t value );
 
+/**
+ * @brief Outputs a JSON encoded string produced by the JSON encoder
+ *
+ * @param[in]      json                base JSON encoder
+ *
+ * @return string in JSON format
+ */
 const char *iot_json_encode_dump(
 	iot_json_encoder_t *json );
 
+/**
+ * @brief Initializes the JSON encoding system
+ *
+ * @note specifying the flag IOT_JSON_FLAG_DYNAMIC indicates to use dynamic
+ * memory on the heap for allocating the base JSON decoder and JSON tokens.
+ * In this case, the parameters @c buf and @c len are ignored.
+ *
+ * @param[in,out]  buf                 memory to use for the base parser
+ * @param[in]      len                 amount of memory in the buf parameter
+ * @param[in]      flags               flags for indicating parsing support
+ *
+ * @return a valid base JSON encoder
+ *
+ * @see iot_json_encode_parse
+ * @see iot_json_encode_terminate
+ */
 iot_json_encoder_t *iot_json_encode_initialize(
 	char *buf,
 	size_t len,
 	unsigned int flags );
 
+/**
+ * @brief Encodes an integer number
+ *
+ * @param[in]      json                base JSON encoder
+ * @param[in]      key                 (optional) parent JSON object key
+ * @param[in]      value               integer number
+ *
+ * @note @c key should be NULL when not inside a JSON object.  If defining a key
+ * when not inside an JSON object a parent object is generated.  If NULL when
+ * inside a JSON object, a blank key ("") will be used.  Adding an object with
+ * the same key as another item in the object will result in undefined
+ * behaviour.
+ *
+ * @retval IOT_STATUS_FULL             the maximum number of items for the
+ *                                     buffer has been reached
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      adding item not inside an array or object
+ * @retval IOT_STATUS_NO_MEMORY        no more memory available
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_integer
+ */
 iot_status_t iot_json_encode_integer(
 	iot_json_encoder_t *json,
 	const char *key,
 	iot_int64_t value );
 
+/**
+ * @brief Ends the encoding of a JSON object
+ *
+ * @param[in]      json                base JSON encoder
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_object_iterator
+ * @see iot_json_encode_object_start
+ */
 iot_status_t iot_json_encode_object_end(
 	iot_json_encoder_t *json );
 
+/**
+ * @brief Starts the encoding of a new JSON object
+ *
+ * @param[in]      json                base JSON encoder
+ * @param[in]      key                 (optional) parent JSON object key
+ *
+ * @note @c key should be NULL when not inside a JSON object.  If defining a key
+ * when not inside an JSON object a parent object is generated.  If NULL when
+ * inside a JSON object, a blank key ("") will be used.  Adding an object with
+ * the same key as another item in the object will result in undefined
+ * behaviour.
+ *
+ * @retval IOT_STATUS_FULL             the maximum number of items for the
+ *                                     buffer has been reached
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      adding item not inside an array or object
+ * @retval IOT_STATUS_NO_MEMORY        no more memory available
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_object_iterator
+ * @see iot_json_encode_object_end
+ */
 iot_status_t iot_json_encode_object_start(
 	iot_json_encoder_t *json,
 	const char *key );
 
+/**
+ * @brief Encodes a floating-point number
+ *
+ * @param[in]      json                base JSON encoder
+ * @param[in]      key                 (optional) parent JSON object key
+ * @param[in]      value               floating-point number
+ *
+ * @note @c key should be NULL when not inside a JSON object.  If defining a key
+ * when not inside an JSON object a parent object is generated.  If NULL when
+ * inside a JSON object, a blank key ("") will be used.  Adding an object with
+ * the same key as another item in the object will result in undefined
+ * behaviour.
+ *
+ * @retval IOT_STATUS_FULL             the maximum number of items for the
+ *                                     buffer has been reached
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      adding item not inside an array or object
+ * @retval IOT_STATUS_NO_MEMORY        no more memory available
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_real
+ */
 iot_status_t iot_json_encode_real(
 	iot_json_encoder_t *json,
 	const char *key,
 	iot_float64_t value );
 
+/**
+ * @brief Encodes a string
+ *
+ * @param[in]      json                base JSON encoder
+ * @param[in]      key                 (optional) parent JSON object key
+ * @param[in]      value               string value
+ *
+ * @note @c key should be NULL when not inside a JSON object.  If defining a key
+ * when not inside an JSON object a parent object is generated.  If NULL when
+ * inside a JSON object, a blank key ("") will be used.  Adding an object with
+ * the same key as another item in the object will result in undefined
+ * behaviour.
+ *
+ * @retval IOT_STATUS_FULL             the maximum number of items for the
+ *                                     buffer has been reached
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      adding item not inside an array or object
+ * @retval IOT_STATUS_NO_MEMORY        no more memory available
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_string
+ */
 iot_status_t iot_json_encode_string(
 	iot_json_encoder_t *json,
 	const char *key,
 	const char *value );
 
+/**
+ * @brief Frees memory assocated with a JSON encoder
+ *
+ * @param[in]      json                base JSON encoder
+ *
+ * @see iot_json_encode_initialize
+ */
 void iot_json_encode_terminate(
 	iot_json_encoder_t *json );
 
