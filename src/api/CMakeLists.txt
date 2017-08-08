@@ -60,7 +60,11 @@ if ( IOT_API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.0" )
 	endif ( CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)" )
 endif()
 
-include_directories( SYSTEM "${JSON_INCLUDE_DIR}" "${MQTT_INCLUDE_DIR}" )
+include_directories( SYSTEM
+	"${JSON_INCLUDE_DIR}"
+	"${MQTT_INCLUDE_DIR}"
+	"${OSAL_INCLUDE_DIR}"
+)
 if( JSON_DEFINES )
 	foreach( JSON_DEFINE ${JSON_DEFINES} )
 		set( JSON_DEFINES_ "-D${JSON_DEFINE}=1" )
