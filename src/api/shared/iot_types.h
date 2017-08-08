@@ -384,6 +384,8 @@ struct iot_file_transfer
 	iot_timestamp_t retry_time;
 	/** @brief time when transfer expired */
 	iot_timestamp_t expiry_time;
+	/** @brief Use global file store */
+	iot_bool_t use_global_store;
 	/** @brief progress function callback */
 	iot_file_progress_callback_t *callback;
 	/** @brief callback's user data */

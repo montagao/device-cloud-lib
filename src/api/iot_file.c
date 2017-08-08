@@ -33,6 +33,7 @@
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
+ * @param[in]      use_global_store    Use global file store
  * @param[in]      file_name           cloud's file name (optional)
  *                                     if file name is not given, local file
  *                                     name will be used, if it is a directory,
@@ -60,6 +61,7 @@ static iot_status_t iot_file_transfer(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
+	iot_bool_t use_global_store,
 	iot_operation_t op,
 	const char * const file_name,
 	const char * const file_path,
@@ -84,16 +86,25 @@ iot_status_t iot_file_send(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
+	iot_file_store_t storage,
 	const char *file_name,
 	const char *file_path,
 	iot_file_progress_callback_t *func,
 	void *user_data )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+
+	/* Need a flag to indicate to the subsystem to use the global
+	 * file store or private one in the thing scope */
+	iot_bool_t use_global_store = IOT_FALSE;
+
+	if ( storage & IOT_FILE_FLAG_GLOBAL )
+		use_global_store = IOT_TRUE;
+
 	if ( handle && file_path )
 		result = iot_file_transfer(
 			handle, txn, max_time_out,
-			IOT_OPERATION_FILE_PUT,
+			use_global_store, IOT_OPERATION_FILE_PUT,
 			file_name, file_path,
 			func, user_data );
 	return result;
@@ -103,16 +114,25 @@ iot_status_t iot_file_receive(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
+	iot_file_store_t storage,
 	const char *file_name,
 	const char *file_path,
 	iot_file_progress_callback_t *func,
 	void *user_data )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+
+	/* Need a flag to indicate to the subsystem to use the global
+	 * file store or private one in the thing scope */
+	iot_bool_t use_global_store = IOT_FALSE;
+
+	if ( storage & IOT_FILE_FLAG_GLOBAL )
+		use_global_store = IOT_TRUE;
+
 	if ( handle && file_path )
 		result = iot_file_transfer(
 			handle, txn, max_time_out,
-			IOT_OPERATION_FILE_GET,
+			use_global_store, IOT_OPERATION_FILE_GET,
 			file_name, file_path,
 			func, user_data );
 	return result;
@@ -122,6 +142,7 @@ iot_status_t iot_file_transfer(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
+	iot_bool_t use_global_store,
 	iot_operation_t op,
 	const char * const file_name,
 	const char * const file_path,
@@ -138,10 +159,11 @@ iot_status_t iot_file_transfer(
 		transfer.op = op;
 		transfer.callback = func;
 		transfer.user_data = user_data;
+		transfer.use_global_store = use_global_store;
 
 		/* Use default directories if the
 		 * path provided is not absolute */
-		if ( file_path[0] == OS_DIR_SEP )
+		if ( file_path && file_path[0] == OS_DIR_SEP )
 			os_strncpy( transfer.path, file_path, PATH_MAX );
 		else
 			os_snprintf( transfer.path, PATH_MAX, "%s%c%s",
@@ -151,9 +173,8 @@ iot_status_t iot_file_transfer(
 				OS_DIR_SEP,
 				file_path );
 
-		/* Use the file's name if one
-		 * for cloud isn't provided */
-		if ( file_name && file_name[0] )
+		/* Use the file_name to rename it on the cloud */
+		if ( file_name && file_name[0] != '\0' )
 			os_strncpy( transfer.name, file_name, PATH_MAX );
 		else
 		{
@@ -175,17 +196,18 @@ iot_status_t iot_file_transfer(
 					transfer.name[i - 1] = '\0';
 			}
 			else
+				/* If name was not defined, take it
+				 * from the basename(path)*/
 				os_strncpy( transfer.name,
-					os_strrchr( transfer.path, OS_DIR_SEP ) + 1u,
-					PATH_MAX );
+						os_strrchr( transfer.path, OS_DIR_SEP ) + 1u,
+						PATH_MAX );
 		}
 
 		if ( op == IOT_OPERATION_FILE_PUT )
 		{
-			/* check if the file to upload exists and readable */
 			if ( os_directory_exists( transfer.path ) )
 				result = iot_file_archive_directory( transfer.path, PATH_MAX );
-			else if ( os_file_exists( transfer.path ) )
+			else if ( os_file_exists( transfer.path) )
 				result = IOT_STATUS_SUCCESS;
 			else
 				os_printf( "Error: %s does not exist\n",

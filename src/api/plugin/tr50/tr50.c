@@ -1017,121 +1017,119 @@ void tr50_on_message(
 
 							j_messages = iot_json_decode_object_find( json,
 								j_params, "messages" );
-							if ( j_messages )
+
+							/* actions/methods parsing */
+							if ( j_messages && iot_json_decode_type( json, j_messages )
+								== IOT_JSON_TYPE_ARRAY )
 							{
-								/* actions/methods parsing */
-								if ( j_obj && iot_json_decode_type( json, j_obj )
-									== IOT_JSON_TYPE_ARRAY )
+								size_t i;
+								const size_t msg_count =
+									iot_json_decode_array_size( json, j_messages );
+								for ( i = 0u; i < msg_count; ++i )
 								{
-									size_t i;
-									const size_t msg_count =
-										iot_json_decode_array_size( json, j_obj );
-									for ( i = 0u; i < msg_count; ++i )
+									iot_json_item_t *j_cmd_item;
+									if ( iot_json_decode_array_at( json,
+										j_messages, i, &j_cmd_item ) == IOT_STATUS_SUCCESS )
 									{
-										iot_json_item_t *j_cmd_item;
-										if ( iot_json_decode_array_at( json,
-											j_obj, i, &j_cmd_item ) == IOT_STATUS_SUCCESS )
+										iot_json_item_t *j_id;
+										j_id = iot_json_decode_object_find(
+											json, j_cmd_item, "id" );
+										if ( !j_id )
+											os_printf( "\"id\" not found!\n" );
+
+										j_params = iot_json_decode_object_find(
+											json, j_cmd_item, "params" );
+										if ( !j_params )
+											os_printf( "\"params\" not found!\n" );
+
+										if ( j_id && j_params )
 										{
-											iot_json_item_t *j_id;
-											j_id = iot_json_decode_object_find(
-												json, j_cmd_item, "id" );
-											if ( !j_id )
-												os_printf( "\"id\" not found!\n" );
+											iot_json_item_t *j_method;
+											iot_json_object_iterator_t *iter;
+											iot_action_request_t *req = NULL;
 
-											j_params = iot_json_decode_object_find(
-												json, j_cmd_item, "params" );
-											if ( !j_params )
-												os_printf( "\"params\" not found!\n" );
-
-											if ( j_id && j_params )
+											j_method = iot_json_decode_object_find(
+												json, j_params, "method" );
+											if ( j_method )
 											{
-												iot_json_item_t *j_method;
-												iot_json_object_iterator_t *iter;
-												iot_action_request_t *req = NULL;
+												char id[ IOT_ID_MAX_LEN + 1u ];
+												*id = '\0';
 
-												j_method = iot_json_decode_object_find(
-													json, j_params, "method" );
-												if ( j_method )
-												{
-													char id[ IOT_ID_MAX_LEN + 1u ];
-													*id = '\0';
+												iot_json_decode_string( json, j_id, &v, &v_len );
+												os_snprintf( id, IOT_ID_MAX_LEN, "%.*s", (int)v_len, v );
+												id[ IOT_ID_MAX_LEN ] = '\0';
 
-													iot_json_decode_string( json, j_id, &v, &v_len );
-													os_snprintf( id, IOT_ID_MAX_LEN, "%.*s", (int)v_len, v );
-													id[ IOT_ID_MAX_LEN ] = '\0';
-
-													iot_json_decode_string( json, j_method, &v, &v_len );
-													os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
-													name[ IOT_NAME_MAX_LEN ] = '\0';
-													req = iot_action_request_allocate( data->lib, name, "tr50" );
-													iot_action_request_attribute_set( req, "id", IOT_TYPE_STRING, id );
-												}
-
-												/* for each parameter */
-												j_params = iot_json_decode_object_find(
-													json, j_params, "params" );
-												iter = iot_json_decode_object_iterator(
-													json, j_params );
-												while ( iter )
-												{
-													iot_json_item_t *j_value = NULL;
-													iot_json_decode_object_iterator_key(
-														json, j_params, iter,
-														&v, &v_len );
-													iot_json_decode_object_iterator_value(
-														json, j_params, iter,
-														&j_value );
-													os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
-													name[ IOT_NAME_MAX_LEN ] = '\0';
-													iter = iot_json_decode_object_iterator_next(
-														json, j_params, iter );
-													switch ( iot_json_decode_type( json,
-														j_value ) )
-													{
-													case IOT_JSON_TYPE_BOOL:
-														{
-														iot_bool_t value;
-														iot_json_decode_bool( json, j_value, &value );
-														iot_action_request_parameter_set( req, name, IOT_TYPE_BOOL, value );
-														}
-													case IOT_JSON_TYPE_INTEGER:
-														{
-														iot_int64_t value;
-														iot_json_decode_integer( json, j_value, &value );
-														iot_action_request_parameter_set( req, name, IOT_TYPE_INT64, value );
-														}
-														break;
-													case IOT_JSON_TYPE_REAL:
-														{
-														iot_float64_t value;
-														iot_json_decode_real( json, j_value, &value );
-														iot_action_request_parameter_set( req, name, IOT_TYPE_FLOAT64, value );
-														}
-														break;
-													case IOT_JSON_TYPE_STRING:
-														{
-														char *value;
-														iot_json_decode_string( json, j_value, &v, &v_len );
-														value = os_malloc( v_len + 1u );
-														if( value )
-														{
-															os_strncpy( value, v, v_len );
-															value[v_len] = '\0';
-															iot_action_request_parameter_set( req, name, IOT_TYPE_STRING, value );
-															os_free( value );
-														}
-														}
-													case IOT_JSON_TYPE_ARRAY:
-													case IOT_JSON_TYPE_OBJECT:
-													case IOT_JSON_TYPE_NULL:
-													default:
-														break;
-													}
-												}
-
-												if ( req )
-													iot_action_request_execute( req, 0u );
+												iot_json_decode_string( json, j_method, &v, &v_len );
+												os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
+												name[ IOT_NAME_MAX_LEN ] = '\0';
+												req = iot_action_request_allocate( data->lib, name, "tr50" );
+												iot_action_request_attribute_set( req, "id", IOT_TYPE_STRING, id );
 											}
+
+											/* for each parameter */
+											j_params = iot_json_decode_object_find(
+												json, j_params, "params" );
+											iter = iot_json_decode_object_iterator(
+												json, j_params );
+											while ( iter )
+											{
+												iot_json_item_t *j_value = NULL;
+												iot_json_decode_object_iterator_key(
+													json, j_params, iter,
+													&v, &v_len );
+												iot_json_decode_object_iterator_value(
+													json, j_params, iter,
+													&j_value );
+												os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
+												name[ IOT_NAME_MAX_LEN ] = '\0';
+												iter = iot_json_decode_object_iterator_next(
+													json, j_params, iter );
+												switch ( iot_json_decode_type( json,
+													j_value ) )
+												{
+												case IOT_JSON_TYPE_BOOL:
+													{
+													iot_bool_t value;
+													iot_json_decode_bool( json, j_value, &value );
+													iot_action_request_parameter_set( req, name, IOT_TYPE_BOOL, value );
+													}
+												case IOT_JSON_TYPE_INTEGER:
+													{
+													iot_int64_t value;
+													iot_json_decode_integer( json, j_value, &value );
+													iot_action_request_parameter_set( req, name, IOT_TYPE_INT64, value );
+													}
+													break;
+												case IOT_JSON_TYPE_REAL:
+													{
+													iot_float64_t value;
+													iot_json_decode_real( json, j_value, &value );
+													iot_action_request_parameter_set( req, name, IOT_TYPE_FLOAT64, value );
+													}
+													break;
+												case IOT_JSON_TYPE_STRING:
+													{
+													char *value;
+													iot_json_decode_string( json, j_value, &v, &v_len );
+													value = os_malloc( v_len + 1u );
+													if( value )
+													{
+														os_strncpy( value, v, v_len );
+														value[v_len] = '\0';
+														iot_action_request_parameter_set( req, name, IOT_TYPE_STRING, value );
+														os_free( value );
+													}
+													}
+												case IOT_JSON_TYPE_ARRAY:
+												case IOT_JSON_TYPE_OBJECT:
+												case IOT_JSON_TYPE_NULL:
+												default:
+													break;
+												}
+											}
+
+											if ( req )
+												iot_action_request_execute( req, 0u );
 										}
 									}
 								}
@@ -1385,6 +1383,8 @@ iot_status_t tr50_file_request_send(
 			result = IOT_STATUS_FAILURE;
 			if ( json )
 			{
+				char global_name[PATH_MAX];
+
 				/* create json string request for file.get/file.put */
 				os_snprintf( id, 5u, "%d", data->msg_id );
 				id[5u] = '\0';
@@ -1396,23 +1396,24 @@ iot_status_t tr50_file_request_send(
 
 				iot_json_encode_object_start( json, "params" );
 
-				/* FIXME: need to support uploading to
-				 * the global file store.  Then, check
-				 * to see if the global is set, and
-				 * prepend the thingkey to the
-				 * filename for uploads only. */
-				/*iot_json_encode_bool( json, "global", IOT_TRUE );*/
+				/* Use the global file store if true */
 
-				/* prepend a thing key if this is global */
-				/*if ( transfer->op == IOT_OPERATION_FILE_PUT )*/
-				/*{*/
-				/*char global_fname[PATH_MAX];*/
-				/*os_snprintf( global_fname, PATH_MAX, "%s_%s", data->thing_key, transfer->name);*/
-				/*iot_json_encode_string( json, "fileName", global_fname );*/
-				/*}*/
-				/*else*/
+				iot_json_encode_bool( json, "global",
+					transfer->use_global_store);
 
-				iot_json_encode_string( json, "fileName", transfer->name );
+				/* prepend a thing key if this is
+				 * global, but strip any path information in the file.  It is not
+				 * valid to upload a file with a path name */
+				if ( transfer->op == IOT_OPERATION_FILE_PUT &&
+					transfer->use_global_store == IOT_TRUE )
+				{
+					os_snprintf( global_name, PATH_MAX,
+							"%s_%s", data->thing_key, transfer->name);
+					iot_json_encode_string( json, "fileName", global_name );
+				}
+				else
+					iot_json_encode_string( json, "fileName", transfer->name );
+
 				iot_json_encode_string( json, "thingKey", data->thing_key );
 
 				if ( transfer->op == IOT_OPERATION_FILE_PUT )

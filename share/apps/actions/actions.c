@@ -29,6 +29,10 @@
 
 /** @brief name of string parameter */
 #define PARAM_NAME_STR                 "param_str"
+/** @brief name of file parameter */
+#define PARAM_NAME_FILE                 "param_file"
+/** @brief name of path parameter */
+#define PARAM_NAME_PATH                 "param_path"
 /** @brief name of integer parameter */
 #define PARAM_NAME_INT                 "param_int"
 /** @brief name of float parameter */
@@ -76,6 +80,8 @@ static iot_action_t *quit_action = NULL;
 static iot_action_t *script_action = NULL;
 /** @brief Pointer to the test parameters action */
 static iot_action_t *test_params_action = NULL;
+/** @brief Pointer to the test file upload action */
+static iot_action_t *file_upload_action = NULL;
 
 /**
  * @brief Send telemetry data to the agent
@@ -119,6 +125,18 @@ static iot_status_t on_action_test_parameters(
 	iot_action_request_t* request,
 	void* user_data );
 
+/**
+ * @brief Callback function to test file upload
+ *
+ * @param[in,out]  request             request invoked by the cloud
+ * @param[in]      user_data           not used
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+static iot_status_t on_action_file_upload(
+	iot_action_request_t* request,
+	void* user_data );
 /**
  * @brief Handles terminatation signal and tears down gracefully
  *
@@ -229,6 +247,30 @@ static iot_t* initialize( void )
 				"Failed to register action. Reason: %s",
 				iot_error( status ) );
 		}
+
+		/* create the file upload action */
+		IOT_LOG( iot_lib, IOT_LOG_INFO, "%s",
+			"Registering action on_action_file_upload" );
+		file_upload_action = iot_action_allocate( iot_lib,
+			"file_upload" );
+
+		/* 1. param file */
+		iot_action_parameter_add( file_upload_action,
+			PARAM_NAME_FILE, IOT_PARAMETER_IN, IOT_TYPE_STRING, 0u );
+
+		/*2. param path */
+		iot_action_parameter_add( file_upload_action,
+			PARAM_NAME_PATH, IOT_PARAMETER_IN, IOT_TYPE_STRING, 0u );
+
+		status = iot_action_register_callback( file_upload_action,
+			&on_action_file_upload, iot_lib, NULL, 0u );
+		if ( status != IOT_STATUS_SUCCESS )
+		{
+			IOT_LOG( iot_lib, IOT_LOG_ERROR,
+				"Failed to register action. Reason: %s",
+				iot_error( status ) );
+		}
+
 	}
 	else
 		IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s", "Failed to connect" );
@@ -349,15 +391,109 @@ void sig_handler( int signo )
 	}
 }
 
-int main( void )
+iot_status_t on_action_file_upload(
+	iot_action_request_t* request,
+	void* user_data )
+{
+	iot_status_t result = IOT_STATUS_SUCCESS;
+	iot_status_t status = IOT_STATUS_FAILURE;
+	const char *param_file = NULL;
+	const char *param_path = NULL;
+	iot_t *iot_lib = (iot_t *)user_data;
+
+	/* In this example, two parameters are possible: path and
+	 * file.  If path is specified and no file, then dir is assumed.  If
+	 * file is specified but not path, then an absolute path to the file
+	 * is specified.  Note: both of these params could be
+	 * optional. */
+
+	/* get file to upload */
+	status = iot_action_parameter_get( request, PARAM_NAME_FILE,
+		IOT_FALSE, IOT_TYPE_STRING, &param_file );
+	if ( status != IOT_STATUS_SUCCESS )
+	{
+		result = IOT_STATUS_BAD_PARAMETER;
+		printf( "Parameter: %s is emtpy, ignoring...\n",
+			PARAM_NAME_FILE );
+	}
+	else
+		printf( "Value for parameter: %s = %s\n", PARAM_NAME_FILE,
+			param_file );
+
+	/* get path to upload */
+	status = iot_action_parameter_get( request, PARAM_NAME_PATH,
+	IOT_FALSE, IOT_TYPE_STRING, &param_path );
+	if ( status != IOT_STATUS_SUCCESS )
+	{
+		result = IOT_STATUS_BAD_PARAMETER;
+		printf( "Parameter: %s is empty, ignoring...\n",
+			PARAM_NAME_PATH );
+	}
+	else
+		printf( "Value for parameter: %s = %s\n", PARAM_NAME_PATH,
+			param_path );
+
+	printf ( "========================================================\n"
+		"Uploading to the global file store.\n"
+		"Note: thing_key will be prefixed to the file name\n"
+		"Note: If %s is a directory, it will be tarred and uploaded\n"
+		"========================================================\n",
+			param_file );
+
+	result = iot_file_send(iot_lib,       /* lib handle */
+			NULL,                 /* transaction id */
+			0,                    /* max time out */
+			IOT_FILE_FLAG_GLOBAL, /* global flag */
+			param_file,           /* file name to rename on cloud */
+			param_path,           /* path to send */
+			NULL,                 /* callback func */
+			NULL );               /* user data */
+	if ( result != IOT_STATUS_SUCCESS )
+	{
+		result = IOT_STATUS_BAD_PARAMETER;
+		printf( "Failed to upload file: %s\n", param_file);
+	}
+	else
+		printf( "File %s uploaded successfully\n", param_file );
+
+	printf ( "========================================================\n"
+		"Uploading to the thing's private file store.\n"
+		"Note: If %s is a directory, it will be tarred and uploaded\n"
+		"========================================================\n",
+			param_file );
+	result = iot_file_send(iot_lib,       /* lib handle */
+			NULL,                 /* transaction id */
+			0,                    /* max time out */
+			0,                    /* global flag */
+			param_file,                 /* file to send */
+			param_path,                 /* path to send */
+			NULL,                 /* callback func */
+			NULL );               /* user data */
+	if ( result != IOT_STATUS_SUCCESS )
+	{
+		result = IOT_STATUS_BAD_PARAMETER;
+		printf( "Failed to upload file: %s\n", param_file);
+	}
+	else
+		printf( "File %s uploaded successfully\n", param_file );
+
+	return result;
+}
+
+
+#define FILE_SIZE 32
+#define PATH_SIZE 64
+int main( )
 {
 	iot_t *iot_lib = initialize();
 	if ( iot_lib )
 	{
+
 #ifndef _WIN32
 		struct timespec t;
 #endif
 		signal( SIGINT, sig_handler );
+
 
 		while ( running != IOT_FALSE )
 		{

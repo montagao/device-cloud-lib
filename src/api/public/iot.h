@@ -234,6 +234,8 @@ typedef iot_uint32_t                             iot_version_t;
 typedef struct iot_file_transfer                 iot_file_transfer_t;
 /** @brief Type containing information to pass to file transfer callback */
 typedef struct iot_file_progress                 iot_file_progress_t;
+/** @brief Storage option for file transfer */
+typedef uint32_t                                 iot_file_store_t;
 
 /**
  * @}
@@ -1307,6 +1309,10 @@ IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(
 #endif /* ifndef __clang__ */
 #endif /* ifndef iot_EXPORTS */
 
+
+/** @brief File transfer flag to use global store */
+#define IOT_FILE_FLAG_GLOBAL           0x1
+
 /**
  * @brief Get a file from cloud
  *
@@ -1314,6 +1320,8 @@ IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
+ * @param[in]      store               Bitmask that control low level
+ *                                     details for file transfer
  * @param[in]      file_name           cloud's file name to get (optional)
  *                                     if file name is not given, local file
  *                                     name will be used
@@ -1337,6 +1345,7 @@ IOT_API IOT_SECTION iot_status_t iot_file_receive(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
+	iot_file_store_t store,
 	const char *file_name,
 	const char *file_path,
 	iot_file_progress_callback_t *func,
@@ -1349,6 +1358,8 @@ IOT_API IOT_SECTION iot_status_t iot_file_receive(
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
+ * @param[in]      store               Bitmask that control low level
+ *                                     details for file transfer
  * @param[in]      file_name           cloud's file name to send (optional)
  *                                     if file name is not given, local file
  *                                     name will be used, if it is a directory,
@@ -1376,6 +1387,7 @@ IOT_API IOT_SECTION iot_status_t iot_file_send(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
+	iot_file_store_t store,
 	const char *file_name,
 	const char *file_path,
 	iot_file_progress_callback_t *func,
