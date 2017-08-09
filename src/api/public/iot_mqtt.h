@@ -20,6 +20,40 @@ extern "C" {
 #endif /* ifdef __cplusplus */
 
 /**
+ * @brief Possible types for iot proxy
+ */
+typedef enum iot_proxy_type
+{
+	/**
+	 * @brief UNKNOWN proxy type
+	 */
+	IOT_PROXY_UNKNOWN,
+	/**
+	 * @brief SOCKS5 proxy type
+	 */
+	IOT_PROXY_SOCKS5,
+	/**
+	 * @brief HTTP proxy type
+	 */
+	IOT_PROXY_HTTP,
+} iot_proxy_type_t;
+
+/** @brief Structure containing information about proxy server used */
+typedef struct iot_proxy
+{
+	/** @brief Proxy to use */
+	const char *host;
+	/** @brief Port number the proxy server listens to */
+	const iot_int64_t port;
+	/** @brief Proxy protocol type to use */
+	iot_proxy_type_t type;
+	/** @brief User name to use for proxy authentication */
+	const char *username;
+	/** @brief Password to use with proxy authentication */
+	const char *password;
+} iot_mqtt_proxy_t;
+
+/**
  * @brief Structure for passing in mqtt SSL configuration information
  */
 typedef struct iot_mqtt_ssl
@@ -72,6 +106,7 @@ typedef void (*iot_mqtt_message_callback_t)(
  * @param[in]      host                host server to connect to
  * @param[in]      port                (optional) port to connect on
  * @param[in]      ssl_conf            (optional) secure connection information
+ * @param[in]      proxy_conf          (optional) proxy information
  * @param[in]      username            user name to connect with
  * @param[in]      password            password to connect with
  * @param[in]      max_time_out        maximum time to wait
@@ -85,6 +120,7 @@ IOT_API IOT_SECTION iot_mqtt_t* iot_mqtt_connect(
 	const char *host,
 	iot_uint16_t port,
 	iot_mqtt_ssl_t *ssl_conf,
+	iot_mqtt_proxy_t *proxy_conf,
 	const char *username,
 	const char *password,
 	iot_millisecond_t max_time_out );

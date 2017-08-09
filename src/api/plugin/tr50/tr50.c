@@ -759,8 +759,11 @@ iot_status_t tr50_connect(
 		const char *app_token = NULL;
 		const char *ca_bundle = NULL;
 		const char *host = NULL;
+		const char *proxy_type = NULL;
 		iot_int64_t port = 0;
 		iot_mqtt_ssl_t ssl_conf;
+		iot_mqtt_proxy_t proxy_conf;
+		iot_mqtt_proxy_t *proxy_conf_p = NULL;
 		iot_bool_t validate_cert = IOT_FALSE;
 
 		iot_option_get( lib, "cloud.host", IOT_FALSE,
@@ -778,6 +781,28 @@ iot_status_t tr50_connect(
 		ssl_conf.ca_path = ca_bundle;
 		ssl_conf.insecure = !validate_cert;
 
+		os_memzero( &proxy_conf, sizeof( iot_mqtt_proxy_t ) );
+		if ( iot_option_get( lib, "proxy.type", IOT_FALSE,
+			IOT_TYPE_STRING, &proxy_type )
+				== IOT_STATUS_SUCCESS )
+		{
+			proxy_conf_p = &proxy_conf;
+			iot_option_get( lib, "proxy.host", IOT_FALSE,
+				IOT_TYPE_STRING, &proxy_conf.host );
+			iot_option_get( lib, "proxy.port", IOT_FALSE,
+				IOT_TYPE_INT64, &proxy_conf.port );
+			iot_option_get( lib, "proxy.username", IOT_FALSE,
+				IOT_TYPE_STRING, &proxy_conf.username );
+			iot_option_get( lib, "proxy.password", IOT_FALSE,
+				IOT_TYPE_STRING, &proxy_conf.password );
+			if ( os_strcmp( proxy_type, "SOCKS5" ) == 0 )
+				proxy_conf.type = IOT_PROXY_SOCKS5;
+			else if ( os_strcmp( proxy_type, "HTTP" ) == 0 )
+				proxy_conf.type = IOT_PROXY_HTTP;
+			else
+				proxy_conf.type = IOT_PROXY_UNKNOWN;
+		}
+
 		if ( app_token == NULL )
 			IOT_LOG( lib, IOT_LOG_ERROR, "tr50: %s",
 				"no application token provided" );
@@ -790,6 +815,7 @@ iot_status_t tr50_connect(
 			host,
 			(iot_uint16_t)port,
 			&ssl_conf,
+			proxy_conf_p,
 			data->thing_key,
 			app_token,
 			max_time_out );

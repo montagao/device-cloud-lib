@@ -180,6 +180,7 @@ iot_mqtt_t* iot_mqtt_connect(
 	const char *host,
 	iot_uint16_t port,
 	iot_mqtt_ssl_t *ssl_conf,
+	iot_mqtt_proxy_t *proxy_conf,
 	const char *username,
 	const char *password,
 	iot_millisecond_t max_time_out )
@@ -219,6 +220,24 @@ iot_mqtt_t* iot_mqtt_connect(
 				if ( username && password )
 					mosquitto_username_pw_set( result->mosq,
 						username, password );
+
+				if ( proxy_conf )
+				{
+					if ( proxy_conf->type == IOT_PROXY_SOCKS5 )
+						mosquitto_socks5_set(
+							result->mosq,
+							proxy_conf->host,
+							(int)proxy_conf->port,
+							proxy_conf->username,
+							proxy_conf->password );
+					else
+						os_fprintf(OS_STDERR,
+							"unsuppored proxy setting: "
+							"host port %d proxy_type %d !\n",
+							(int)port,
+							(int)proxy_conf->type );
+				}
+
 				if ( ssl_conf && port != 1883u )
 				{
 					mosquitto_tls_set( result->mosq,
@@ -252,6 +271,13 @@ iot_mqtt_t* iot_mqtt_connect(
 					"tcp://%s:%d", host, port );
 			url[ IOT_MQTT_URL_MAX ] = '\0';
 			os_memzero( result, sizeof( struct iot_mqtt ) );
+
+			if ( proxy_conf )
+				os_fprintf(OS_STDERR,
+					"unsuppored proxy setting: "
+					"host port %d proxy_type %d !\n",
+					(int)port,
+					(int)proxy_conf->type );
 
 			if ( MQTTClient_create( &result->client, url,
 				client_id, MQTTCLIENT_PERSISTENCE_NONE,
