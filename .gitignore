@@ -10,3 +10,4 @@ lib/
 Makefile
 out/
 test-case-count.py
+*.swp
