@@ -30,8 +30,6 @@
 /** @brief maximum number of telemetry samples to send */
 #define MAX_LOOP_ITERATIONS 360
 
-/** @brief name of string parameter */
-#define PARAM_NAME_STR                 "param_str"
 /** @brief name of integer parameter */
 #define PARAM_NAME_INT                 "param_int"
 /** @brief name of float parameter */
@@ -52,12 +50,10 @@
 /** @brief Whether the application is still running */
 static iot_bool_t running = IOT_TRUE;
 /** @brief Whether or not currently sending telemetry */
-static iot_bool_t send_telemetry = IOT_TRUE;
+static iot_bool_t send_telemetry = IOT_FALSE;
 
 /** @brief Pointer to the boolean telemetry object */
 static iot_telemetry_t *telemetry_boolean = NULL;
-/** @brief Pointer to the string telemetry object */
-static iot_telemetry_t *telemetry_string = NULL;
 /** @brief Pointer to the 8-bit integer telemetry object */
 static iot_telemetry_t *telemetry_int8 = NULL;
 /** @brief Pointer to the 16-bit integer telemetry object */
@@ -74,8 +70,6 @@ static iot_telemetry_t *telemetry_uint16 = NULL;
 static iot_telemetry_t *telemetry_uint32 = NULL;
 /** @brief Pointer to the 64-bit unsigned integer telemetry object */
 static iot_telemetry_t *telemetry_uint64 = NULL;
-/** @brief Pointer to the raw telemetry object */
-static iot_telemetry_t *telemetry_raw = NULL;
 
 /** @brief Action to enable/disable transmission of telemetry */
 static iot_action_t *enable_action = NULL;
@@ -86,14 +80,6 @@ static iot_action_t *enable_action = NULL;
  * @param[in]      delay         Length of time in seconds to sleep.
  */
 static void do_sleep( unsigned int delay );
-
-/**
- * @brief Random string generation handler.
- *
- * @param[out]     dest                Buffer to store random string.
- * @param[in]      length              Size of the random string to generate.
- */
-static void generate_random_string( char *dest, size_t length );
 
 /**
  * @brief Send telemetry data to the agent
@@ -148,64 +134,6 @@ static void send_telemetry_sample( iot_t *iot_lib );
  */
 static void sig_handler( int signo );
 
-/**
- * @brief Text sample used for random string generation.
- */
-static const char text_buffer[] =
-	"Arma virumque cano, Troiae qui primus ab oris "
-	"Italiam, fato profugus, Laviniaque venit "
-	"litora, multum ille et terris iactatus et alto "
-	"vi superum saevae memorem Iunonis ob iram;"
-	"multa quoque et bello passus, dum conderet urbem,"
-	"inferretque deos Latio, genus unde Latinum,"
-	"Albanique patres, atque altae moenia Romae.";
-
-/**
- * @brief Text sample length.
- */
-#define MAX_TEXT_SIZE 64
-
-void generate_random_string( char *dest, size_t length )
-{
-#define MAX_WORDS 64
-	const char *str;
-	unsigned int word_count = 0u;
-	const char *words[MAX_WORDS];
-
-	/* setup array containing pointer to words */
-	str = text_buffer;
-	while ( *str != '\0' && word_count < MAX_WORDS )
-	{
-		/* skip all no word characters */
-		while ( !isalnum( *str ) ) ++str;
-		if ( *str != '\0' )
-		{
-			words[word_count] = str;
-			++word_count;
-			while ( isalnum( *str ) ) ++str;
-		}
-	}
-
-	/* copy words into buffer */
-	while( length > 1u )
-	{
-		double index;
-		const char *word;
-
-		index = (unsigned int)random_num( 0, word_count - 1u );
-		word = words[(unsigned int)index];
-		while( isalnum( *word ) && ( length-- > 1u ) )
-			*dest++ = *word++;
-
-		if ( length > 1u )
-		{
-			*dest++ = ' ';
-			length--;
-		}
-	}
-	*dest = '\0';
-}
-
 static iot_t* initialize( void )
 {
 	iot_t* iot_lib;
@@ -222,8 +150,6 @@ static iot_t* initialize( void )
 		/* Allocate telemetry items */
 		telemetry_boolean = iot_telemetry_allocate( iot_lib,
 			"bool", IOT_TYPE_BOOL );
-		telemetry_string = iot_telemetry_allocate( iot_lib,
-			"string", IOT_TYPE_STRING );
 		telemetry_int8 = iot_telemetry_allocate( iot_lib,
 			"int8", IOT_TYPE_INT8 );
 		telemetry_int16 = iot_telemetry_allocate( iot_lib,
@@ -240,17 +166,11 @@ static iot_t* initialize( void )
 			"uint32", IOT_TYPE_UINT32 );
 		telemetry_uint64 = iot_telemetry_allocate( iot_lib,
 			"uint64", IOT_TYPE_UINT64 );
-		telemetry_raw = iot_telemetry_allocate( iot_lib,
-			"raw", IOT_TYPE_RAW );
 
 		/* Register telemetry items */
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "registering telemetry: %s",
 			"bool" );
 		iot_telemetry_register( telemetry_boolean, NULL, 0u );
-
-		IOT_LOG( iot_lib, IOT_LOG_INFO, "registering telemetry: %s",
-			"string" );
-		iot_telemetry_register( telemetry_string, NULL, 0u );
 
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "registering telemetry: %s",
 			"int8" );
@@ -283,10 +203,6 @@ static iot_t* initialize( void )
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "registering telemetry: %s",
 			"uint64" );
 		iot_telemetry_register( telemetry_uint64, NULL, 0u );
-
-		IOT_LOG( iot_lib, IOT_LOG_INFO, "registering telemetry: %s",
-			"raw" );
-		iot_telemetry_register( telemetry_raw, NULL, 0u );
 
 		/* Allocate actions */
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "registering action: %s",
@@ -357,16 +273,11 @@ void send_telemetry_sample( iot_t *iot_lib )
 {
 	static iot_bool_t bool_test = IOT_FALSE;
 	iot_int64_t int_test;
-	char string_test[MAX_TEXT_SIZE];
-	size_t sample_size;
 	double random_value;
 	(void)iot_lib;
 
 	random_value = random_num( -3000000000.0, 3000000000.0 );
 	int_test = (iot_int64_t)random_value;
-	random_value = random_num( 0, MAX_TEXT_SIZE - 1);
-	sample_size = (size_t)random_value;
-	generate_random_string( string_test, sample_size );
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO,"%s",
 		"+--------------------------------------------------------+");
@@ -375,10 +286,6 @@ void send_telemetry_sample( iot_t *iot_lib )
 	iot_telemetry_publish( telemetry_boolean, NULL, 0,
 		IOT_TYPE_BOOL, bool_test );
 	
-	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending string: %s", string_test );
-	iot_telemetry_publish( telemetry_string, NULL, 0,
-		IOT_TYPE_STRING, string_test );
-
 	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending int8  : %hhd", (signed char) int_test );
 	iot_telemetry_publish( telemetry_int8, NULL, 0,
 		IOT_TYPE_INT8, (iot_int8_t)int_test );
@@ -412,10 +319,6 @@ void send_telemetry_sample( iot_t *iot_lib )
 		(unsigned long long int) int_test );
 	iot_telemetry_publish( telemetry_uint64, NULL, 0,
 		IOT_TYPE_UINT64, (iot_uint64_t)int_test );
-
-	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending raw   : %s", string_test );
-	iot_telemetry_publish_raw( telemetry_raw, NULL, 0,
-		sample_size, string_test );
 
 	/* toggle the boolean value for next sample */
 	if ( bool_test == IOT_FALSE )
