@@ -29,168 +29,168 @@ static void test_log_callback( iot_log_level_t log_level,
 	check_expected( user_data );
 }
 
-/* iot_attribute_get */
-static void test_iot_attribute_get_not_found( void **state )
+/* iot_option_get */
+static void test_iot_option_get_not_found( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	struct iot_data data;
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_RAW;
-	lib.attribute[0].data.heap_storage = test_malloc( 1u );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.raw.ptr =
-		lib.attribute[0].data.heap_storage;
-	lib.attribute[0].data.value.raw.length = 1u;
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_RAW;
+	lib.option[0].data.heap_storage = test_malloc( 1u );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.raw.ptr =
+		lib.option[0].data.heap_storage;
+	lib.option[0].data.value.raw.length = 1u;
 
-	result = iot_attribute_get( &lib, "attr_bool", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_bool", IOT_FALSE,
 		IOT_TYPE_BOOL, &data.value.boolean );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_float32", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_float32", IOT_FALSE,
 		IOT_TYPE_FLOAT32, &data.value.float32 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_float64", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_float64", IOT_FALSE,
 		IOT_TYPE_FLOAT64, &data.value.float64 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_int8", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_int8", IOT_FALSE,
 		IOT_TYPE_INT8, &data.value.int8 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_int16", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_int16", IOT_FALSE,
 		IOT_TYPE_INT16, &data.value.int16 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_int32", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_int32", IOT_FALSE,
 		IOT_TYPE_INT32, &data.value.int32 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_int64", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_int64", IOT_FALSE,
 		IOT_TYPE_INT64, &data.value.int64 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_raw", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_raw", IOT_FALSE,
 		IOT_TYPE_RAW, &data.value.raw );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_string", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_string", IOT_FALSE,
 		IOT_TYPE_RAW, &data.value.string );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_uint8", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_uint8", IOT_FALSE,
 		IOT_TYPE_UINT8, &data.value.uint8 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_uint16", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_uint16", IOT_FALSE,
 		IOT_TYPE_UINT16, &data.value.uint16 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_uint32", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_uint32", IOT_FALSE,
 		IOT_TYPE_UINT32, &data.value.uint32 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
-	result = iot_attribute_get( &lib, "attr_uint64", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_uint64", IOT_FALSE,
 		IOT_TYPE_UINT64, &data.value.uint64 );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
 
 	/* clean up */
-	test_free( lib.attribute[0].data.heap_storage );
+	test_free( lib.option[0].data.heap_storage );
 }
 
-static void test_iot_attribute_get_null_lib( void **state )
+static void test_iot_option_get_null_lib( void **state )
 {
 	struct iot_data data;
 	iot_status_t result;
 
-	result = iot_attribute_get( NULL, "attr_bool", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_bool", IOT_FALSE,
 		IOT_TYPE_BOOL, &data.value.boolean );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_float32", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_float32", IOT_FALSE,
 		IOT_TYPE_FLOAT32, &data.value.float32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_float64", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_float64", IOT_FALSE,
 		IOT_TYPE_FLOAT64, &data.value.float64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_int8", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_int8", IOT_FALSE,
 		IOT_TYPE_INT8, &data.value.int8 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_int16", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_int16", IOT_FALSE,
 		IOT_TYPE_INT16, &data.value.int16 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_int32", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_int32", IOT_FALSE,
 		IOT_TYPE_INT32, &data.value.int32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_int64", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_int64", IOT_FALSE,
 		IOT_TYPE_INT64, &data.value.int64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_raw", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_raw", IOT_FALSE,
 		IOT_TYPE_RAW, &data.value.raw );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_string", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_string", IOT_FALSE,
 		IOT_TYPE_RAW, &data.value.string );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_uint8", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_uint8", IOT_FALSE,
 		IOT_TYPE_UINT8, &data.value.uint8 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_uint16", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_uint16", IOT_FALSE,
 		IOT_TYPE_UINT16, &data.value.uint16 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_uint32", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_uint32", IOT_FALSE,
 		IOT_TYPE_UINT32, &data.value.uint32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( NULL, "attr_uint64", IOT_FALSE,
+	result = iot_option_get( NULL, "attr_uint64", IOT_FALSE,
 		IOT_TYPE_UINT64, &data.value.uint64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_get_null_name( void **state )
+static void test_iot_option_get_null_name( void **state )
 {
 	struct iot_data data;
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_BOOL, &data.value.boolean );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_FLOAT32, &data.value.float32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_FLOAT64, &data.value.float64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_INT8, &data.value.int8 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_INT16, &data.value.int16 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_INT32, &data.value.int32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_INT64, &data.value.int64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_RAW, &data.value.raw );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_RAW, &data.value.string );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_UINT8, &data.value.uint8 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_UINT16, &data.value.uint16 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_UINT32, &data.value.uint32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_get( &lib, NULL, IOT_FALSE,
+	result = iot_option_get( &lib, NULL, IOT_FALSE,
 		IOT_TYPE_UINT64, &data.value.uint64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_get_valid( void **state )
+static void test_iot_option_get_valid( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const char *const test_value = "test_data";
 	const char *data = NULL;
@@ -198,31 +198,31 @@ static void test_iot_attribute_get_valid( void **state )
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_STRING;
-	lib.attribute[0].data.heap_storage =
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_STRING;
+	lib.option[0].data.heap_storage =
 		test_malloc( strlen( test_value ) + 1u );
-	strcpy( (char*)lib.attribute[0].data.heap_storage, test_value );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.string =
-		(const char*)lib.attribute[0].data.heap_storage;
+	strcpy( (char*)lib.option[0].data.heap_storage, test_value );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.string =
+		(const char*)lib.option[0].data.heap_storage;
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_name", IOT_FALSE,
 		IOT_TYPE_STRING, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_non_null( data );
 	assert_string_equal( data, test_value );
 
 	/* clean up */
-	test_free( lib.attribute[0].data.heap_storage );
+	test_free( lib.option[0].data.heap_storage );
 }
 
-static void test_iot_attribute_get_valid_convert_int32( void **state )
+static void test_iot_option_get_valid_convert_int32( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	iot_int32_t test_value = 32;
 	struct iot_data data;
@@ -230,87 +230,87 @@ static void test_iot_attribute_get_valid_convert_int32( void **state )
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_INT32;
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.int32 = test_value;
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_INT32;
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.int32 = test_value;
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_UINT8, &data.value.uint8 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.uint8, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_UINT16, &data.value.uint16 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.uint16, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_UINT32, &data.value.uint32 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.uint32, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_UINT64, &data.value.uint64 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.uint64, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_INT8, &data.value.int8 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.int8, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_INT16, &data.value.int16 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.int16, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_INT32, &data.value.int32 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.int32, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_INT64, &data.value.int64 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data.value.int64, test_value );
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_TRUE,
+	result = iot_option_get( &lib, "attr_name", IOT_TRUE,
 		IOT_TYPE_NULL, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 }
 
-static void test_iot_attribute_get_wrong_type( void **state )
+static void test_iot_option_get_wrong_type( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const char *data = NULL;
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_INT32;
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.int32 = 32;
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_INT32;
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.int32 = 32;
 
-	result = iot_attribute_get( &lib, "attr_name", IOT_FALSE,
+	result = iot_option_get( &lib, "attr_name", IOT_FALSE,
 		IOT_TYPE_STRING, &data );
 	assert_int_equal( result, IOT_STATUS_BAD_REQUEST );
 	assert_null( data );
 }
 
 
-/* iot_attribute_get_raw */
-static void test_iot_attribute_get_raw_not_found( void **state )
+/* iot_option_get_raw */
+static void test_iot_option_get_raw_not_found( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const void *data = NULL;
 	size_t length = 0u;
@@ -318,36 +318,36 @@ static void test_iot_attribute_get_raw_not_found( void **state )
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_RAW;
-	lib.attribute[0].data.heap_storage = test_malloc( 1u );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.raw.ptr =
-		lib.attribute[0].data.heap_storage;
-	lib.attribute[0].data.value.raw.length = 1u;
-	result = iot_attribute_get_raw( &lib, "bad_name",
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_RAW;
+	lib.option[0].data.heap_storage = test_malloc( 1u );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.raw.ptr =
+		lib.option[0].data.heap_storage;
+	lib.option[0].data.value.raw.length = 1u;
+	result = iot_option_get_raw( &lib, "bad_name",
 		IOT_FALSE, &length, &data );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
 
 	/* clean up */
-	test_free( lib.attribute[0].data.heap_storage );
+	test_free( lib.option[0].data.heap_storage );
 }
 
-static void test_iot_attribute_get_raw_null_lib( void **state )
+static void test_iot_option_get_raw_null_lib( void **state )
 {
 	const void *data = NULL;
 	size_t length = 0u;
 	iot_status_t result;
 
-	result = iot_attribute_get_raw( NULL, "attr_name",
+	result = iot_option_get_raw( NULL, "attr_name",
 		IOT_FALSE, &length, &data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_get_raw_null_name( void **state )
+static void test_iot_option_get_raw_null_name( void **state )
 {
 	const void *data = NULL;
 	size_t length = 0u;
@@ -355,26 +355,26 @@ static void test_iot_attribute_get_raw_null_name( void **state )
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_get_raw( &lib, NULL,
+	result = iot_option_get_raw( &lib, NULL,
 		IOT_FALSE, &length, &data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_get_raw_null_data( void **state )
+static void test_iot_option_get_raw_null_data( void **state )
 {
 	size_t length = 0u;
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_get_raw( &lib, "attr_name",
+	result = iot_option_get_raw( &lib, "attr_name",
 		IOT_FALSE, &length, NULL );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_get_raw_valid( void **state )
+static void test_iot_option_get_raw_valid( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const void *data = NULL;
 	size_t length = 0u;
@@ -382,29 +382,29 @@ static void test_iot_attribute_get_raw_valid( void **state )
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_RAW;
-	lib.attribute[0].data.heap_storage = test_malloc( 1u );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.raw.ptr =
-		lib.attribute[0].data.heap_storage;
-	lib.attribute[0].data.value.raw.length = 1u;
-	result = iot_attribute_get_raw( &lib, "attr_name",
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_RAW;
+	lib.option[0].data.heap_storage = test_malloc( 1u );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.raw.ptr =
+		lib.option[0].data.heap_storage;
+	lib.option[0].data.value.raw.length = 1u;
+	result = iot_option_get_raw( &lib, "attr_name",
 		IOT_FALSE, &length, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( length, 1u );
-	assert_ptr_equal( data, lib.attribute[0].data.value.raw.ptr );
+	assert_ptr_equal( data, lib.option[0].data.value.raw.ptr );
 
 	/* clean up */
-	test_free( lib.attribute[0].data.heap_storage );
+	test_free( lib.option[0].data.heap_storage );
 }
 
-static void test_iot_attribute_get_raw_wrong_type( void **state )
+static void test_iot_option_get_raw_wrong_type( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const void *data = NULL;
 	size_t length = 0u;
@@ -412,15 +412,15 @@ static void test_iot_attribute_get_raw_wrong_type( void **state )
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_INT32;
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.int32 = 32;
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_INT32;
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.int32 = 32;
 
-	result = iot_attribute_get_raw( &lib, "attr_name",
+	result = iot_option_get_raw( &lib, "attr_name",
 		IOT_FALSE, &length, &data );
 	assert_int_equal( result, IOT_STATUS_BAD_REQUEST );
 	assert_null( data );
@@ -428,11 +428,11 @@ static void test_iot_attribute_get_raw_wrong_type( void **state )
 }
 
 
-/* iot_attribute_set */
-static void test_iot_attribute_set_full( void **state )
+/* iot_option_set */
+static void test_iot_option_set_full( void **state )
 {
-	struct iot_attribute attr[ IOT_ATTRIBUTE_MAX ];
-	char name[ IOT_ATTRIBUTE_MAX ][ IOT_NAME_MAX_LEN + 1u ];
+	struct iot_option attr[ IOT_OPTION_MAX ];
+	char name[ IOT_OPTION_MAX ][ IOT_NAME_MAX_LEN + 1u ];
 	unsigned int i;
 	struct iot lib;
 	struct iot_data_raw raw_data;
@@ -443,59 +443,59 @@ static void test_iot_attribute_set_full( void **state )
 	raw_data.length = strlen( str_data );
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute = &attr[0];
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; ++i )
+	lib.option = &attr[0];
+	for ( i = 0u; i < IOT_OPTION_MAX; ++i )
 	{
 		char attr_name[25u];
 		snprintf( attr_name, 25u, "attr-%d", i );
-		++lib.attribute_count;
-		lib.attribute[i].name = name[i];
-		strncpy( lib.attribute[i].name, attr_name,
+		++lib.option_count;
+		lib.option[i].name = name[i];
+		strncpy( lib.option[i].name, attr_name,
 			IOT_NAME_MAX_LEN );
 	}
 
-	result = iot_attribute_set( &lib, "new_attr_bool",
+	result = iot_option_set( &lib, "new_attr_bool",
 		IOT_TYPE_BOOL, IOT_FALSE );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_float32",
+	result = iot_option_set( &lib, "new_attr_float32",
 		IOT_TYPE_FLOAT32, 3.2 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_float64",
+	result = iot_option_set( &lib, "new_attr_float64",
 		IOT_TYPE_FLOAT64, 0.000064 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_int8",
+	result = iot_option_set( &lib, "new_attr_int8",
 		IOT_TYPE_INT8, 8 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_int16",
+	result = iot_option_set( &lib, "new_attr_int16",
 		IOT_TYPE_INT16, 16 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_int32",
+	result = iot_option_set( &lib, "new_attr_int32",
 		IOT_TYPE_INT32, 32 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_int64",
+	result = iot_option_set( &lib, "new_attr_int64",
 		IOT_TYPE_INT64, 64 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_raw",
+	result = iot_option_set( &lib, "new_attr_raw",
 		IOT_TYPE_RAW, &raw_data );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_string",
+	result = iot_option_set( &lib, "new_attr_string",
 		IOT_TYPE_STRING, str_data );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_uint8",
+	result = iot_option_set( &lib, "new_attr_uint8",
 		IOT_TYPE_UINT8, 8u );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_uint16",
+	result = iot_option_set( &lib, "new_attr_uint16",
 		IOT_TYPE_UINT16, 16u );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_uint32",
+	result = iot_option_set( &lib, "new_attr_uint32",
 		IOT_TYPE_UINT32, 32u );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	result = iot_attribute_set( &lib, "new_attr_uint64",
+	result = iot_option_set( &lib, "new_attr_uint64",
 		IOT_TYPE_UINT64, 64u );
 	assert_int_equal( result, IOT_STATUS_FULL );
 }
 
-static void test_iot_attribute_set_null_lib( void **state )
+static void test_iot_option_set_null_lib( void **state )
 {
 	struct iot_data_raw raw_data;
 	iot_status_t result;
@@ -504,48 +504,48 @@ static void test_iot_attribute_set_null_lib( void **state )
 	raw_data.ptr = str_data;
 	raw_data.length = strlen( str_data );
 
-	result = iot_attribute_set( NULL, "new_attr_bool",
+	result = iot_option_set( NULL, "new_attr_bool",
 		IOT_TYPE_BOOL, IOT_FALSE );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_float32",
+	result = iot_option_set( NULL, "new_attr_float32",
 		IOT_TYPE_FLOAT32, 3.2 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_float64",
+	result = iot_option_set( NULL, "new_attr_float64",
 		IOT_TYPE_FLOAT64, 0.000064 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_int8",
+	result = iot_option_set( NULL, "new_attr_int8",
 		IOT_TYPE_INT8, 8 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_int16",
+	result = iot_option_set( NULL, "new_attr_int16",
 		IOT_TYPE_INT16, 16 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_int32",
+	result = iot_option_set( NULL, "new_attr_int32",
 		IOT_TYPE_INT32, 32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_int64",
+	result = iot_option_set( NULL, "new_attr_int64",
 		IOT_TYPE_INT64, 64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_raw",
+	result = iot_option_set( NULL, "new_attr_raw",
 		IOT_TYPE_RAW, &raw_data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_string",
+	result = iot_option_set( NULL, "new_attr_string",
 		IOT_TYPE_STRING, str_data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_uint8",
+	result = iot_option_set( NULL, "new_attr_uint8",
 		IOT_TYPE_UINT8, 8u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_uint16",
+	result = iot_option_set( NULL, "new_attr_uint16",
 		IOT_TYPE_UINT16, 16u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_uint32",
+	result = iot_option_set( NULL, "new_attr_uint32",
 		IOT_TYPE_UINT32, 32u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( NULL, "new_attr_uint64",
+	result = iot_option_set( NULL, "new_attr_uint64",
 		IOT_TYPE_UINT64, 64u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_set_null_name( void **state )
+static void test_iot_option_set_null_name( void **state )
 {
 	const char *data = "test_string";
 	struct iot lib;
@@ -556,58 +556,58 @@ static void test_iot_attribute_set_null_name( void **state )
 	raw_data.length = strlen( data );
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_BOOL, IOT_FALSE );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_BOOL, IOT_FALSE );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_FLOAT32, 3.2 );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_FLOAT32, 3.2 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_FLOAT64, 0.000064 );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_FLOAT64, 0.000064 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_INT8, 8 );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_INT8, 8 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_INT16, 16 );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_INT16, 16 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_INT32, 32 );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_INT32, 32 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_INT64, 64 );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_INT64, 64 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_RAW, &raw_data );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_RAW, &raw_data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_STRING, data );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_STRING, data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_UINT8, 8u );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_UINT8, 8u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_UINT16, 16u );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_UINT16, 16u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_UINT32, 32u );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_UINT32, 32u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
-	result = iot_attribute_set( &lib, NULL, IOT_TYPE_UINT64, 64u );
+	result = iot_option_set( &lib, NULL, IOT_TYPE_UINT64, 64u );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_set_null_data( void **state )
+static void test_iot_option_set_null_data( void **state )
 {
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_set( &lib, "attr_raw",
+	result = iot_option_set( &lib, "attr_raw",
 		IOT_TYPE_RAW, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_null( lib.attribute[0].data.value.raw.ptr );
-	assert_true( lib.attribute[0].data.has_value == IOT_FALSE );
-	result = iot_attribute_set( &lib, "attr_string",
+	assert_null( lib.option[0].data.value.raw.ptr );
+	assert_true( lib.option[0].data.has_value == IOT_FALSE );
+	result = iot_option_set( &lib, "attr_string",
 		IOT_TYPE_STRING, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_string_equal( lib.attribute[1].data.value.string, "" );
-	assert_true( lib.attribute[1].data.has_value != IOT_FALSE );
+	assert_string_equal( lib.option[1].data.value.string, "" );
+	assert_true( lib.option[1].data.has_value != IOT_FALSE );
 
 	/* clean up */
-	os_free( lib.attribute[1].data.heap_storage );
+	os_free( lib.option[1].data.heap_storage );
 }
 
-static void test_iot_attribute_set_overwrite( void **state )
+static void test_iot_option_set_overwrite( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const char *data = "test_string";
 	struct iot lib;
@@ -618,206 +618,206 @@ static void test_iot_attribute_set_overwrite( void **state )
 	raw_data.length = strlen( data );
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_RAW;
-	lib.attribute[0].data.heap_storage = os_malloc( 1u );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.raw.ptr =
-		lib.attribute[0].data.heap_storage;
-	lib.attribute[0].data.value.raw.length = 1u;
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_RAW;
+	lib.option[0].data.heap_storage = os_malloc( 1u );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.raw.ptr =
+		lib.option[0].data.heap_storage;
+	lib.option[0].data.value.raw.length = 1u;
 
-	result = iot_attribute_set( &lib, "attr_name",
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_BOOL, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_BOOL );
-	assert_int_equal( lib.attribute[0].data.value.boolean, IOT_TRUE );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_BOOL );
+	assert_int_equal( lib.option[0].data.value.boolean, IOT_TRUE );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_FLOAT32, 3.2 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_FLOAT32 );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_FLOAT32 );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_FLOAT64, 0.000064 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_FLOAT64 );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_FLOAT64 );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_INT8, 8 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_INT8 );
-	assert_int_equal( lib.attribute[0].data.value.int8, 8 );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_INT8 );
+	assert_int_equal( lib.option[0].data.value.int8, 8 );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_INT16, 16 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_INT16 );
-	assert_int_equal( lib.attribute[0].data.value.int16, 16 );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_INT16 );
+	assert_int_equal( lib.option[0].data.value.int16, 16 );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_INT32, 32 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_INT32 );
-	assert_int_equal( lib.attribute[0].data.value.int32, 32 );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_INT32 );
+	assert_int_equal( lib.option[0].data.value.int32, 32 );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_INT64, (iot_int64_t)64 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_INT64 );
-	assert_int_equal( lib.attribute[0].data.value.int64, 64 );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_INT64 );
+	assert_int_equal( lib.option[0].data.value.int64, 64 );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_RAW, &raw_data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_RAW );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_RAW );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_STRING, data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_STRING );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_STRING );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_UINT8, 8u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_UINT8 );
-	assert_int_equal( lib.attribute[0].data.value.uint8, 8u );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_UINT8 );
+	assert_int_equal( lib.option[0].data.value.uint8, 8u );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_UINT16, 16u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_UINT16 );
-	assert_int_equal( lib.attribute[0].data.value.uint16, 16u );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_UINT16 );
+	assert_int_equal( lib.option[0].data.value.uint16, 16u );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_UINT32, 32u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_UINT32 );
-	assert_int_equal( lib.attribute[0].data.value.uint32, 32u );
-	result = iot_attribute_set( &lib, "attr_name",
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_UINT32 );
+	assert_int_equal( lib.option[0].data.value.uint32, 32u );
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_UINT64, (iot_uint64_t)64u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_UINT64 );
-	assert_int_equal( lib.attribute[0].data.value.uint64, 64u );
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_UINT64 );
+	assert_int_equal( lib.option[0].data.value.uint64, 64u );
 }
 
-static void test_iot_attribute_set_valid( void **state )
+static void test_iot_option_set_valid( void **state )
 {
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_set( &lib, "attr_name",
+	result = iot_option_set( &lib, "attr_name",
 		IOT_TYPE_INT64, (iot_int64_t)64 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( lib.attribute[0].data.type, IOT_TYPE_INT64 );
-	assert_int_equal( lib.attribute[0].data.value.int64, 64 );
+	assert_int_equal( lib.option[0].data.type, IOT_TYPE_INT64 );
+	assert_int_equal( lib.option[0].data.value.int64, 64 );
 }
 
-/* iot_attribute_set_raw */
-static void test_iot_attribute_set_raw_full( void **state )
+/* iot_option_set_raw */
+static void test_iot_option_set_raw_full( void **state )
 {
-	struct iot_attribute attr[ IOT_ATTRIBUTE_MAX ];
-	char name[ IOT_ATTRIBUTE_MAX ][ IOT_NAME_MAX_LEN + 1u ];
+	struct iot_option attr[ IOT_OPTION_MAX ];
+	char name[ IOT_OPTION_MAX ][ IOT_NAME_MAX_LEN + 1u ];
 	unsigned int i;
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute = &attr[0];
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; ++i )
+	lib.option = &attr[0];
+	for ( i = 0u; i < IOT_OPTION_MAX; ++i )
 	{
 		char attr_name[25u];
 		snprintf( attr_name, 25u, "attr-%d", i );
-		++lib.attribute_count;
-		lib.attribute[i].name = name[i];
-		strncpy( lib.attribute[i].name, attr_name,
+		++lib.option_count;
+		lib.option[i].name = name[i];
+		strncpy( lib.option[i].name, attr_name,
 			IOT_NAME_MAX_LEN );
 	}
-	result = iot_attribute_set_raw( &lib, "new_attr", 0u, NULL );
+	result = iot_option_set_raw( &lib, "new_attr", 0u, NULL );
 	assert_int_equal( result, IOT_STATUS_FULL );
 }
 
-static void test_iot_attribute_set_raw_null_lib( void **state )
+static void test_iot_option_set_raw_null_lib( void **state )
 {
 	const char *data = "raw_data";
 	iot_status_t result;
 
-	result = iot_attribute_set_raw( NULL, "attr_name",
+	result = iot_option_set_raw( NULL, "attr_name",
 		strlen( data ), data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_set_raw_null_name( void **state )
+static void test_iot_option_set_raw_null_name( void **state )
 {
 	const char *data = "raw_data";
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_set_raw( &lib, NULL,
+	result = iot_option_set_raw( &lib, NULL,
 		strlen( data ), data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_attribute_set_raw_null_data( void **state )
+static void test_iot_option_set_raw_null_data( void **state )
 {
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	result = iot_attribute_set_raw( &lib, "attr_name", 0u, NULL );
+	result = iot_option_set_raw( &lib, "attr_name", 0u, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_null( lib.attribute[0].data.value.raw.ptr );
+	assert_null( lib.option[0].data.value.raw.ptr );
 }
 
-static void test_iot_attribute_set_raw_overwrite_data( void **state )
+static void test_iot_option_set_raw_overwrite_data( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	const char *data = "raw_data";
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_RAW;
-	lib.attribute[0].data.heap_storage = os_malloc( 1u );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.raw.ptr =
-		lib.attribute[0].data.heap_storage;
-	lib.attribute[0].data.value.raw.length = 1u;
-	result = iot_attribute_set_raw( &lib, "attr_name",
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_RAW;
+	lib.option[0].data.heap_storage = os_malloc( 1u );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.raw.ptr =
+		lib.option[0].data.heap_storage;
+	lib.option[0].data.value.raw.length = 1u;
+	result = iot_option_set_raw( &lib, "attr_name",
 		strlen( data ), &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_true( lib.attribute[0].data.type == IOT_TYPE_RAW );
-	assert_non_null( lib.attribute[0].data.value.raw.ptr );
-	assert_true( lib.attribute[0].data.has_value != IOT_FALSE );
+	assert_true( lib.option[0].data.type == IOT_TYPE_RAW );
+	assert_non_null( lib.option[0].data.value.raw.ptr );
+	assert_true( lib.option[0].data.has_value != IOT_FALSE );
 
 	/* clean up */
-	os_free( lib.attribute[0].data.heap_storage );
+	os_free( lib.option[0].data.heap_storage );
 }
 
-static void test_iot_attribute_set_raw_overwrite_null( void **state )
+static void test_iot_option_set_raw_overwrite_null( void **state )
 {
-	struct iot_attribute attr;
+	struct iot_option attr;
 	char name[ IOT_NAME_MAX_LEN + 1u ];
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	lib.attribute = &attr;
-	lib.attribute[0].name = name;
-	strncpy( lib.attribute[0].name, "attr_name", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_RAW;
-	lib.attribute[0].data.heap_storage = os_malloc( 1u );
-	lib.attribute[0].data.has_value = IOT_TRUE;
-	lib.attribute[0].data.value.raw.ptr =
-		lib.attribute[0].data.heap_storage;
-	lib.attribute[0].data.value.raw.length = 1u;
-	result = iot_attribute_set_raw( &lib, "attr_name", 0u, NULL );
+	lib.option_count = 1u;
+	lib.option = &attr;
+	lib.option[0].name = name;
+	strncpy( lib.option[0].name, "attr_name", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_RAW;
+	lib.option[0].data.heap_storage = os_malloc( 1u );
+	lib.option[0].data.has_value = IOT_TRUE;
+	lib.option[0].data.value.raw.ptr =
+		lib.option[0].data.heap_storage;
+	lib.option[0].data.value.raw.length = 1u;
+	result = iot_option_set_raw( &lib, "attr_name", 0u, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_true( lib.attribute[0].data.type == IOT_TYPE_RAW );
-	assert_null( lib.attribute[0].data.value.raw.ptr );
-	assert_true( lib.attribute[0].data.has_value == IOT_FALSE );
+	assert_true( lib.option[0].data.type == IOT_TYPE_RAW );
+	assert_null( lib.option[0].data.value.raw.ptr );
+	assert_true( lib.option[0].data.has_value == IOT_FALSE );
 }
 
-static void test_iot_attribute_set_raw_valid( void **state )
+static void test_iot_option_set_raw_valid( void **state )
 {
 	const char *data = "raw_data";
 	struct iot lib;
@@ -825,15 +825,15 @@ static void test_iot_attribute_set_raw_valid( void **state )
 
 	memset( &lib, 0, sizeof( struct iot ) );
 	/*will_return( __wrap_os_malloc, 1 );*/
-	result = iot_attribute_set_raw( &lib, "attr_name",
+	result = iot_option_set_raw( &lib, "attr_name",
 		strlen( data ), &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_true( lib.attribute[0].data.type == IOT_TYPE_RAW );
-	assert_non_null( lib.attribute[0].data.value.raw.ptr );
-	assert_true( lib.attribute[0].data.has_value != IOT_FALSE );
+	assert_true( lib.option[0].data.type == IOT_TYPE_RAW );
+	assert_non_null( lib.option[0].data.value.raw.ptr );
+	assert_true( lib.option[0].data.has_value != IOT_FALSE );
 
 	/* clean up */
-	/*test_free( lib.attribute[0].data.heap_storage );*/
+	/*test_free( lib.option[0].data.heap_storage );*/
 }
 
 /* iot_connect */
@@ -1532,18 +1532,18 @@ static void test_iot_terminate_single_sample( void **state )
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 }
 
-static void test_iot_terminate_attribute( void **state )
+static void test_iot_terminate_option( void **state )
 {
 	struct iot lib;
 	iot_status_t result;
 
 	memset( &lib, 0, sizeof( struct iot ) );
-	lib.attribute_count = 1u;
-	strncpy( lib.attribute[0].name, "test", IOT_NAME_MAX_LEN );
-	lib.attribute[0].data.type = IOT_TYPE_STRING;
-	lib.attribute[0].data.heap_storage = test_malloc( 1u );
-	lib.attribute[0].data.value.string =
-		(const char*)lib.attribute[0].data.heap_storage;
+	lib.option_count = 1u;
+	strncpy( lib.option[0].name, "test", IOT_NAME_MAX_LEN );
+	lib.option[0].data.type = IOT_TYPE_STRING;
+	lib.option[0].data.heap_storage = test_malloc( 1u );
+	lib.option[0].data.value.string =
+		(const char*)lib.option[0].data.heap_storage;
 	will_return( __wrap_iot_protocol_transmit, IOT_STATUS_SUCCESS );
 	result = iot_terminate( &lib, 0u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -1634,31 +1634,31 @@ int main( int argc, char *argv[] )
 {
 	int result;
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test( test_iot_attribute_get_not_found ),
-		cmocka_unit_test( test_iot_attribute_get_null_lib ),
-		cmocka_unit_test( test_iot_attribute_get_null_name ),
-		cmocka_unit_test( test_iot_attribute_get_valid ),
-		cmocka_unit_test( test_iot_attribute_get_valid_convert_int32 ),
-		cmocka_unit_test( test_iot_attribute_get_wrong_type ),
-		cmocka_unit_test( test_iot_attribute_get_raw_not_found ),
-		cmocka_unit_test( test_iot_attribute_get_raw_null_lib ),
-		cmocka_unit_test( test_iot_attribute_get_raw_null_name ),
-		cmocka_unit_test( test_iot_attribute_get_raw_null_data ),
-		cmocka_unit_test( test_iot_attribute_get_raw_valid ),
-		cmocka_unit_test( test_iot_attribute_get_raw_wrong_type ),
-		cmocka_unit_test( test_iot_attribute_set_full ),
-		cmocka_unit_test( test_iot_attribute_set_null_lib ),
-		cmocka_unit_test( test_iot_attribute_set_null_name ),
-		cmocka_unit_test( test_iot_attribute_set_null_data ),
-		cmocka_unit_test( test_iot_attribute_set_overwrite ),
-		cmocka_unit_test( test_iot_attribute_set_valid ),
-		cmocka_unit_test( test_iot_attribute_set_raw_full ),
-		cmocka_unit_test( test_iot_attribute_set_raw_null_lib ),
-		cmocka_unit_test( test_iot_attribute_set_raw_null_name ),
-		cmocka_unit_test( test_iot_attribute_set_raw_null_data ),
-		cmocka_unit_test( test_iot_attribute_set_raw_overwrite_data ),
-		cmocka_unit_test( test_iot_attribute_set_raw_overwrite_null ),
-		cmocka_unit_test( test_iot_attribute_set_raw_valid ),
+		cmocka_unit_test( test_iot_option_get_not_found ),
+		cmocka_unit_test( test_iot_option_get_null_lib ),
+		cmocka_unit_test( test_iot_option_get_null_name ),
+		cmocka_unit_test( test_iot_option_get_valid ),
+		cmocka_unit_test( test_iot_option_get_valid_convert_int32 ),
+		cmocka_unit_test( test_iot_option_get_wrong_type ),
+		cmocka_unit_test( test_iot_option_get_raw_not_found ),
+		cmocka_unit_test( test_iot_option_get_raw_null_lib ),
+		cmocka_unit_test( test_iot_option_get_raw_null_name ),
+		cmocka_unit_test( test_iot_option_get_raw_null_data ),
+		cmocka_unit_test( test_iot_option_get_raw_valid ),
+		cmocka_unit_test( test_iot_option_get_raw_wrong_type ),
+		cmocka_unit_test( test_iot_option_set_full ),
+		cmocka_unit_test( test_iot_option_set_null_lib ),
+		cmocka_unit_test( test_iot_option_set_null_name ),
+		cmocka_unit_test( test_iot_option_set_null_data ),
+		cmocka_unit_test( test_iot_option_set_overwrite ),
+		cmocka_unit_test( test_iot_option_set_valid ),
+		cmocka_unit_test( test_iot_option_set_raw_full ),
+		cmocka_unit_test( test_iot_option_set_raw_null_lib ),
+		cmocka_unit_test( test_iot_option_set_raw_null_name ),
+		cmocka_unit_test( test_iot_option_set_raw_null_data ),
+		cmocka_unit_test( test_iot_option_set_raw_overwrite_data ),
+		cmocka_unit_test( test_iot_option_set_raw_overwrite_null ),
+		cmocka_unit_test( test_iot_option_set_raw_valid ),
 #if 0
 		cmocka_unit_test( test_iot_connect_null_lib ),
 		cmocka_unit_test( test_iot_connect_protocol_initialize_fail ),
@@ -1710,7 +1710,7 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_terminate_no_sample ),
 		cmocka_unit_test( test_iot_terminate_full_samples ),
 		cmocka_unit_test( test_iot_terminate_single_sample ),
-		cmocka_unit_test( test_iot_terminate_attribute ),
+		cmocka_unit_test( test_iot_terminate_option ),
 		cmocka_unit_test( test_iot_terminate_blank ),
 		cmocka_unit_test( test_iot_terminate_null_lib ),
 		cmocka_unit_test( test_iot_timestamp_now_valid ),

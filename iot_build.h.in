@@ -34,8 +34,8 @@
 #define IOT_ACTION_QUEUE_MAX           @IOT_ACTION_QUEUE_MAX@
 /** @brief Maximum number of actions in stack */
 #define IOT_ACTION_STACK_MAX           @IOT_ACTION_STACK_MAX@
-/** @brief Maximum number of attributes */
-#define IOT_ATTRIBUTE_MAX              @IOT_ATTRIBUTE_MAX@
+/** @brief Maximum number of options */
+#define IOT_OPTION_MAX                 @IOT_OPTION_MAX@
 /** @brief Maximum number of parameters per action */
 #define IOT_PARAMETER_MAX              @IOT_PARAMETER_MAX@
 /** @brief maximum number of samples per telemetry item */

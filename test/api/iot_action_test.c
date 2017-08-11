@@ -143,159 +143,159 @@ static void test_iot_action_allocate_null_lib( void **state )
 	assert_null( action );
 }
 
-static void test_iot_action_attribute_get_not_there( void **state )
+static void test_iot_action_option_get_not_there( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 	iot_int32_t data = 0;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	strncpy( action.attribute[0].name, "someattribute", IOT_NAME_MAX_LEN );
-	action.attribute[0].data.type = IOT_TYPE_INT32;
-	action.attribute[0].data.value.int32 = 12345;
-	action.attribute[0].data.has_value = IOT_TRUE;
-	strncpy( action.attribute[1].name, "someotherattribute", IOT_NAME_MAX_LEN );
-	action.attribute[1].data.type = IOT_TYPE_FLOAT32;
-	action.attribute[1].data.value.float32 = 123.456f;
-	action.attribute[1].data.has_value = IOT_TRUE;
-	action.attribute_count = 2u;
+	strncpy( action.option[0].name, "someoption", IOT_NAME_MAX_LEN );
+	action.option[0].data.type = IOT_TYPE_INT32;
+	action.option[0].data.value.int32 = 12345;
+	action.option[0].data.has_value = IOT_TRUE;
+	strncpy( action.option[1].name, "someotheroption", IOT_NAME_MAX_LEN );
+	action.option[1].data.type = IOT_TYPE_FLOAT32;
+	action.option[1].data.value.float32 = 123.456f;
+	action.option[1].data.has_value = IOT_TRUE;
+	action.option_count = 2u;
 	result =
-	    iot_action_attribute_get( &action, "yetanotherattribute", IOT_TRUE, IOT_TYPE_INT32, &data );
+	    iot_action_option_get( &action, "yetanotheroption", IOT_TRUE, IOT_TYPE_INT32, &data );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
 	assert_int_equal( data, 0 );
 }
 
-static void test_iot_action_attribute_get_null_action( void **state )
+static void test_iot_action_option_get_null_action( void **state )
 {
 	iot_status_t result;
 	iot_int32_t data = 0;
 
-	result = iot_action_attribute_get( NULL, "someattribute", IOT_TRUE, IOT_TYPE_INT32, &data );
+	result = iot_action_option_get( NULL, "someoption", IOT_TRUE, IOT_TYPE_INT32, &data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 	assert_int_equal( data, 0 );
 }
 
-static void test_iot_action_attribute_get_null_name( void **state )
+static void test_iot_action_option_get_null_name( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 	iot_int32_t data = 0;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	strncpy( action.attribute[0].name, "someattribute", IOT_NAME_MAX_LEN );
-	action.attribute[0].data.type = IOT_TYPE_INT32;
-	action.attribute[0].data.value.int32 = 12345;
-	action.attribute[0].data.has_value = IOT_TRUE;
-	action.attribute_count = 1u;
-	result = iot_action_attribute_get( &action, NULL, IOT_TRUE, IOT_TYPE_INT32, &data );
+	strncpy( action.option[0].name, "someoption", IOT_NAME_MAX_LEN );
+	action.option[0].data.type = IOT_TYPE_INT32;
+	action.option[0].data.value.int32 = 12345;
+	action.option[0].data.has_value = IOT_TRUE;
+	action.option_count = 1u;
+	result = iot_action_option_get( &action, NULL, IOT_TRUE, IOT_TYPE_INT32, &data );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 	assert_int_equal( data, 0 );
 }
 
-static void test_iot_action_attribute_get_valid( void **state )
+static void test_iot_action_option_get_valid( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 	iot_int32_t data = 0;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	strncpy( action.attribute[0].name, "someattribute", IOT_NAME_MAX_LEN );
-	action.attribute[0].data.type = IOT_TYPE_INT32;
-	action.attribute[0].data.value.int32 = 12345;
-	action.attribute[0].data.has_value = IOT_TRUE;
-	action.attribute_count = 1u;
-	result = iot_action_attribute_get( &action, "someattribute", IOT_TRUE, IOT_TYPE_INT32, &data );
+	strncpy( action.option[0].name, "someoption", IOT_NAME_MAX_LEN );
+	action.option[0].data.type = IOT_TYPE_INT32;
+	action.option[0].data.value.int32 = 12345;
+	action.option[0].data.has_value = IOT_TRUE;
+	action.option_count = 1u;
+	result = iot_action_option_get( &action, "someoption", IOT_TRUE, IOT_TYPE_INT32, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 12345 );
 }
 
-static void test_iot_action_attribute_set_add( void **state )
+static void test_iot_action_option_set_add( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	strncpy( action.attribute[0].name, "someotherattribute", IOT_NAME_MAX_LEN );
-	action.attribute_count = 1u;
-	result = iot_action_attribute_set( &action, "someattribute", IOT_TYPE_INT8, 35 );
+	strncpy( action.option[0].name, "someotheroption", IOT_NAME_MAX_LEN );
+	action.option_count = 1u;
+	result = iot_action_option_set( &action, "someoption", IOT_TYPE_INT8, 35 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( action.attribute[1].data.value.int8, 35 );
-	assert_string_equal( action.attribute[0].name, "someotherattribute" );
-	assert_string_equal( action.attribute[1].name, "someattribute" );
-	assert_int_equal( action.attribute_count, 2u );
+	assert_int_equal( action.option[1].data.value.int8, 35 );
+	assert_string_equal( action.option[0].name, "someotheroption" );
+	assert_string_equal( action.option[1].name, "someoption" );
+	assert_int_equal( action.option_count, 2u );
 }
 
-static void test_iot_action_attribute_set_full( void **state )
+static void test_iot_action_option_set_full( void **state )
 {
 	size_t i;
 	iot_action_t action;
 	iot_status_t result;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; ++i )
-		snprintf( action.attribute[i].name, IOT_NAME_MAX_LEN, "attribute%lu", i + 1 );
-	action.attribute_count = IOT_ATTRIBUTE_MAX;
-	result = iot_action_attribute_set( &action, "someattribute", IOT_TYPE_INT8, 35 );
+	for ( i = 0u; i < IOT_OPTION_MAX; ++i )
+		snprintf( action.option[i].name, IOT_NAME_MAX_LEN, "option%lu", i + 1 );
+	action.option_count = IOT_OPTION_MAX;
+	result = iot_action_option_set( &action, "someoption", IOT_TYPE_INT8, 35 );
 	assert_int_equal( result, IOT_STATUS_FULL );
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; ++i )
-		assert_string_not_equal( action.attribute[i].name, "someattribute" );
-	assert_int_equal( action.attribute_count, IOT_ATTRIBUTE_MAX );
+	for ( i = 0u; i < IOT_OPTION_MAX; ++i )
+		assert_string_not_equal( action.option[i].name, "someoption" );
+	assert_int_equal( action.option_count, IOT_OPTION_MAX );
 }
 
-static void test_iot_action_attribute_set_null_action( void **state )
+static void test_iot_action_option_set_null_action( void **state )
 {
 	iot_status_t result;
 
-	result = iot_action_attribute_set( NULL, "someattribute", IOT_TYPE_INT8, 35 );
+	result = iot_action_option_set( NULL, "someoption", IOT_TYPE_INT8, 35 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_action_attribute_set_null_data( void **state )
+static void test_iot_action_option_set_null_data( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	action.attribute_count = 0u;
-	result = iot_action_attribute_set( &action, "someattribute", IOT_TYPE_NULL, NULL );
+	action.option_count = 0u;
+	result = iot_action_option_set( &action, "someoption", IOT_TYPE_NULL, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( action.attribute_count, 1u );
+	assert_int_equal( action.option_count, 1u );
 }
 
-static void test_iot_action_attribute_set_update( void **state )
+static void test_iot_action_option_set_update( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	strncpy( action.attribute[0].name, "someattribute", IOT_NAME_MAX_LEN );
-	action.attribute[0].data.type = IOT_TYPE_FLOAT32;
-	action.attribute[0].data.value.float32 = 12.3f;
-	action.attribute[0].data.has_value = IOT_TRUE;
-	action.attribute_count = 1u;
-	result = iot_action_attribute_set( &action, "someattribute", IOT_TYPE_INT8, 35 );
+	strncpy( action.option[0].name, "someoption", IOT_NAME_MAX_LEN );
+	action.option[0].data.type = IOT_TYPE_FLOAT32;
+	action.option[0].data.value.float32 = 12.3f;
+	action.option[0].data.has_value = IOT_TRUE;
+	action.option_count = 1u;
+	result = iot_action_option_set( &action, "someoption", IOT_TYPE_INT8, 35 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( action.attribute[0].data.value.int8, 35 );
-	assert_int_equal( action.attribute[0].data.type, IOT_TYPE_INT8 );
-	assert_string_equal( action.attribute[0].name, "someattribute" );
-	assert_int_equal( action.attribute_count, 1u );
+	assert_int_equal( action.option[0].data.value.int8, 35 );
+	assert_int_equal( action.option[0].data.type, IOT_TYPE_INT8 );
+	assert_string_equal( action.option[0].name, "someoption" );
+	assert_int_equal( action.option_count, 1u );
 }
 
-static void test_iot_action_attribute_set_raw_add( void **state )
+static void test_iot_action_option_set_raw_add( void **state )
 {
 	iot_action_t action;
 	iot_status_t result;
 	char data[20] = "this is text\0";
 
 	memset( &action, 0u, sizeof( iot_action_t ) );
-	strncpy( action.attribute[0].name, "someotherattribute", IOT_NAME_MAX_LEN );
-	action.attribute_count = 1u;
-	result = iot_action_attribute_set_raw( &action, "someattribute", sizeof( data ), (void *)data );
+	strncpy( action.option[0].name, "someotheroption", IOT_NAME_MAX_LEN );
+	action.option_count = 1u;
+	result = iot_action_option_set_raw( &action, "someoption", sizeof( data ), (void *)data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_string_equal( (const char *)action.attribute[1].data.value.raw.ptr, "this is text" );
-	assert_string_equal( action.attribute[0].name, "someotherattribute" );
-	assert_string_equal( action.attribute[1].name, "someattribute" );
-	assert_int_equal( action.attribute_count, 2u );
+	assert_string_equal( (const char *)action.option[1].data.value.raw.ptr, "this is text" );
+	assert_string_equal( action.option[0].name, "someotheroption" );
+	assert_string_equal( action.option[1].name, "someoption" );
+	assert_int_equal( action.option_count, 2u );
 }
 
 static void test_iot_action_deregister_deregistered( void **state )
@@ -403,7 +403,7 @@ static void test_iot_action_flags_set_valid( void **state )
 	assert_int_equal( action.flags, 5 );
 }
 
-static void test_iot_action_free_attributes( void **state )
+static void test_iot_action_free_options( void **state )
 {
 	size_t i;
 	iot_t lib;
@@ -421,25 +421,25 @@ static void test_iot_action_free_attributes( void **state )
 	action->lib = &lib;
 	action->state = IOT_ITEM_REGISTERED;
 	action->callback = &test_callback_func;
-	action->attribute_count = 3u;
-	strncpy( action->attribute[0].name, "attribute 1", IOT_NAME_MAX_LEN );
-	action->attribute[0].data.type = IOT_TYPE_STRING;
-	action->attribute[0].data.heap_storage = test_malloc( sizeof( char ) * IOT_NAME_MAX_LEN );
-	action->attribute[0].data.value.string = (char *)action->attribute[0].data.heap_storage;
+	action->option_count = 3u;
+	strncpy( action->option[0].name, "option 1", IOT_NAME_MAX_LEN );
+	action->option[0].data.type = IOT_TYPE_STRING;
+	action->option[0].data.heap_storage = test_malloc( sizeof( char ) * IOT_NAME_MAX_LEN );
+	action->option[0].data.value.string = (char *)action->option[0].data.heap_storage;
 	strncpy(
-	    (char *)action->attribute[0].data.heap_storage, "here is some text", IOT_NAME_MAX_LEN );
-	strncpy( action->attribute[1].name, "attribute 2", IOT_NAME_MAX_LEN );
-	action->attribute[1].data.type = IOT_TYPE_STRING;
-	action->attribute[1].data.heap_storage = test_malloc( sizeof( char ) * IOT_NAME_MAX_LEN );
-	action->attribute[1].data.value.string = (char *)action->attribute[1].data.heap_storage;
-	strncpy( (char *)action->attribute[1].data.heap_storage, "some more text", IOT_NAME_MAX_LEN );
-	strncpy( action->attribute[2].name, "attribute 3", IOT_NAME_MAX_LEN );
-	action->attribute[2].data.type = IOT_TYPE_RAW;
-	action->attribute[2].data.heap_storage = test_malloc( sizeof( char ) * IOT_NAME_MAX_LEN );
-	action->attribute[2].data.value.raw.ptr = action->attribute[2].data.heap_storage;
-	action->attribute[2].data.value.raw.length = IOT_NAME_MAX_LEN;
+	    (char *)action->option[0].data.heap_storage, "here is some text", IOT_NAME_MAX_LEN );
+	strncpy( action->option[1].name, "option 2", IOT_NAME_MAX_LEN );
+	action->option[1].data.type = IOT_TYPE_STRING;
+	action->option[1].data.heap_storage = test_malloc( sizeof( char ) * IOT_NAME_MAX_LEN );
+	action->option[1].data.value.string = (char *)action->option[1].data.heap_storage;
+	strncpy( (char *)action->option[1].data.heap_storage, "some more text", IOT_NAME_MAX_LEN );
+	strncpy( action->option[2].name, "option 3", IOT_NAME_MAX_LEN );
+	action->option[2].data.type = IOT_TYPE_RAW;
+	action->option[2].data.heap_storage = test_malloc( sizeof( char ) * IOT_NAME_MAX_LEN );
+	action->option[2].data.value.raw.ptr = action->option[2].data.heap_storage;
+	action->option[2].data.value.raw.length = IOT_NAME_MAX_LEN;
 	strncpy(
-	    (char *)action->attribute[2].data.heap_storage, "oh look more text", IOT_NAME_MAX_LEN );
+	    (char *)action->option[2].data.heap_storage, "oh look more text", IOT_NAME_MAX_LEN );
 	will_return( __wrap_iot_protocol_transmit, IOT_STATUS_SUCCESS );
 	result = iot_action_free( action, 0u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -1251,7 +1251,7 @@ static void test_iot_action_process_actions_not_found( void **state )
 	assert_int_equal( lib.request_queue_free_count, 0u );
 }
 
-static void test_iot_action_process_attributes( void **state )
+static void test_iot_action_process_options( void **state )
 {
 	size_t i;
 	iot_t lib;
@@ -1273,16 +1273,16 @@ static void test_iot_action_process_attributes( void **state )
 	lib.request_queue_wait_count = 1u;
 	lib.request_queue_free_count = 1u;
 	strncpy( lib.request_queue_wait[0]->name, "action name 1", IOT_NAME_MAX_LEN );
-	lib.request_queue_wait[0]->attribute_count = 1u;
-	strncpy( lib.request_queue_wait[0]->attribute[0].name, "attr", IOT_NAME_MAX_LEN );
-	lib.request_queue_wait[0]->attribute[0].data.heap_storage =
+	lib.request_queue_wait[0]->option_count = 1u;
+	strncpy( lib.request_queue_wait[0]->option[0].name, "attr", IOT_NAME_MAX_LEN );
+	lib.request_queue_wait[0]->option[0].data.heap_storage =
 	    test_malloc( ( IOT_NAME_MAX_LEN + 1 ) * sizeof( char ) );
-	lib.request_queue_wait[0]->attribute[0].data.value.string =
-	    (char *)lib.request_queue_wait[0]->attribute[0].data.heap_storage;
-	strncpy( (char *)lib.request_queue_wait[0]->attribute[0].data.heap_storage,
+	lib.request_queue_wait[0]->option[0].data.value.string =
+	    (char *)lib.request_queue_wait[0]->option[0].data.heap_storage;
+	strncpy( (char *)lib.request_queue_wait[0]->option[0].data.heap_storage,
 	         "some text",
 	         IOT_NAME_MAX_LEN );
-	lib.request_queue_wait[0]->attribute[0].data.type = IOT_TYPE_STRING;
+	lib.request_queue_wait[0]->option[0].data.type = IOT_TYPE_STRING;
 	will_return( test_callback_func, IOT_STATUS_SUCCESS );
 	will_return( __wrap_iot_protocol_transmit, IOT_STATUS_SUCCESS );
 	will_return( __wrap_iot_protocol_transmit, 0u );
@@ -2676,16 +2676,16 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_action_allocate_full ),
 		cmocka_unit_test( test_iot_action_allocate_stack_full ),
 		cmocka_unit_test( test_iot_action_allocate_null_lib ),
-		cmocka_unit_test( test_iot_action_attribute_get_not_there ),
-		cmocka_unit_test( test_iot_action_attribute_get_null_action ),
-		cmocka_unit_test( test_iot_action_attribute_get_null_name ),
-		cmocka_unit_test( test_iot_action_attribute_get_valid ),
-		cmocka_unit_test( test_iot_action_attribute_set_add ),
-		cmocka_unit_test( test_iot_action_attribute_set_full ),
-		cmocka_unit_test( test_iot_action_attribute_set_null_action ),
-		cmocka_unit_test( test_iot_action_attribute_set_null_data ),
-		cmocka_unit_test( test_iot_action_attribute_set_update ),
-		cmocka_unit_test( test_iot_action_attribute_set_raw_add ),
+		cmocka_unit_test( test_iot_action_option_get_not_there ),
+		cmocka_unit_test( test_iot_action_option_get_null_action ),
+		cmocka_unit_test( test_iot_action_option_get_null_name ),
+		cmocka_unit_test( test_iot_action_option_get_valid ),
+		cmocka_unit_test( test_iot_action_option_set_add ),
+		cmocka_unit_test( test_iot_action_option_set_full ),
+		cmocka_unit_test( test_iot_action_option_set_null_action ),
+		cmocka_unit_test( test_iot_action_option_set_null_data ),
+		cmocka_unit_test( test_iot_action_option_set_update ),
+		cmocka_unit_test( test_iot_action_option_set_raw_add ),
 		cmocka_unit_test( test_iot_action_deregister_deregistered ),
 		cmocka_unit_test( test_iot_action_deregister_null_action ),
 		cmocka_unit_test( test_iot_action_deregister_null_lib ),
@@ -2693,7 +2693,7 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_action_deregister_valid ),
 		cmocka_unit_test( test_iot_action_flags_set_null_action ),
 		cmocka_unit_test( test_iot_action_flags_set_valid ),
-		cmocka_unit_test( test_iot_action_free_attributes ),
+		cmocka_unit_test( test_iot_action_free_options ),
 		cmocka_unit_test( test_iot_action_free_not_found ),
 		cmocka_unit_test( test_iot_action_free_null_action ),
 		cmocka_unit_test( test_iot_action_free_null_handle ),
@@ -2732,7 +2732,7 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_action_process_actions_empty ),
 		cmocka_unit_test( test_iot_action_process_actions_full ),
 		cmocka_unit_test( test_iot_action_process_actions_not_found ),
-		cmocka_unit_test( test_iot_action_process_attributes ),
+		cmocka_unit_test( test_iot_action_process_options ),
 		cmocka_unit_test( test_iot_action_process_command_no_return ),
 		cmocka_unit_test( test_iot_action_process_command_parameter_bool ),
 		cmocka_unit_test( test_iot_action_process_command_parameter_float ),

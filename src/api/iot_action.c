@@ -31,17 +31,17 @@
 #define IOT_PARAMETER_NAME_BAD_CHARACTERS        "=\\;&|"
 
 /**
- * @brief Sets the value of an action attribute
+ * @brief Sets the value of an action option
  *
  * @param[in,out]  action              action object to set
- * @param[in]      name                attribute name
- * @param[in]      data                attribute value to set
+ * @param[in]      name                option name
+ * @param[in]      data                option value to set
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STAUTS_FULL             maximum number of attributes reached
+ * @retval IOT_STAUTS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  */
-static IOT_SECTION iot_status_t iot_action_attribute_set_data(
+static IOT_SECTION iot_status_t iot_action_option_set_data(
 	iot_action_t *action,
 	const char *name,
 	const struct iot_data *data );
@@ -101,17 +101,17 @@ size_t iot_action_parameter_adjustment(
 #endif
 
 /**
- * @brief Sets the value of an action request attribute
+ * @brief Sets the value of an action request option
  *
  * @param[in,out]  request             action request object to set
- * @param[in]      name                attribute name
- * @param[in]      data                attribute value to set
+ * @param[in]      name                option name
+ * @param[in]      data                option value to set
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STAUTS_FULL             maximum number of attributes reached
+ * @retval IOT_STAUTS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  */
-static IOT_SECTION iot_status_t iot_action_request_attribute_set_data(
+static IOT_SECTION iot_status_t iot_action_request_option_set_data(
 	iot_action_request_t *request,
 	const char *name,
 	const struct iot_data *data );
@@ -195,7 +195,7 @@ iot_action_t *iot_action_allocate(
 				if ( name_len > IOT_NAME_MAX_LEN )
 					name_len = IOT_NAME_MAX_LEN;
 #ifdef IOT_STACK_ONLY
-				result->attribute = result->_attribute;
+				result->option = result->_option;
 				result->name = result->_name;
 				result->parameter = result->_parameter;
 #else /* ifdef IOT_STACK_ONLY */
@@ -252,7 +252,7 @@ iot_action_t *iot_action_allocate(
 	return result;
 }
 
-iot_status_t iot_action_attribute_get(
+iot_status_t iot_action_option_get(
 	const iot_action_t *action,
 	const char *name,
 	iot_bool_t convert,
@@ -265,13 +265,13 @@ iot_status_t iot_action_attribute_get(
 		size_t i;
 		result = IOT_STATUS_NOT_FOUND;
 		va_start( args, type );
-		for ( i = 0u; i < action->attribute_count &&
+		for ( i = 0u; i < action->option_count &&
 			result == IOT_STATUS_NOT_FOUND; ++i )
 		{
-			if ( os_strncmp( action->attribute[i].name,
+			if ( os_strncmp( action->option[i].name,
 				name, IOT_NAME_MAX_LEN ) == 0 )
 				result = iot_common_arg_get(
-					&action->attribute[i].data,
+					&action->option[i].data,
 					convert, type, args );
 		}
 		va_end( args );
@@ -279,7 +279,7 @@ iot_status_t iot_action_attribute_get(
 	return result;
 }
 
-iot_status_t iot_action_attribute_set(
+iot_status_t iot_action_option_set(
 	iot_action_t *action,
 	const char* name,
 	iot_type_t type, ... )
@@ -290,10 +290,10 @@ iot_status_t iot_action_attribute_set(
 	va_start( args, type );
 	iot_common_arg_set( &data, IOT_TRUE, type, args );
 	va_end( args );
-	return iot_action_attribute_set_data( action, name, &data );
+	return iot_action_option_set_data( action, name, &data );
 }
 
-iot_status_t iot_action_attribute_set_data(
+iot_status_t iot_action_option_set_data(
 	iot_action_t *action,
 	const char *name,
 	const struct iot_data *data )
@@ -302,40 +302,40 @@ iot_status_t iot_action_attribute_set_data(
 	if ( action && data )
 	{
 		unsigned int i;
-		struct iot_attribute *attr = NULL;
+		struct iot_option *attr = NULL;
 
-		/* see if this is an attribute update */
+		/* see if this is an option update */
 		for ( i = 0u;
-			attr == NULL && i < action->attribute_count; ++i )
+			attr == NULL && i < action->option_count; ++i )
 		{
-			if ( os_strcmp( action->attribute[i].name, name ) == 0 )
-				attr = &action->attribute[i];
+			if ( os_strcmp( action->option[i].name, name ) == 0 )
+				attr = &action->option[i];
 		}
 
-		/* adding a new attribute */
+		/* adding a new option */
 		result = IOT_STATUS_FULL;
-		if ( !attr && action->attribute_count < IOT_ATTRIBUTE_MAX )
+		if ( !attr && action->option_count < IOT_OPTION_MAX )
 		{
 #ifndef IOT_STACK_ONLY
 			void *ptr = NULL;
-			if ( !action->attribute )
+			if ( !action->option )
 			{
-				ptr = os_realloc( action->attribute,
-					sizeof( struct iot_attribute ) *
-						( action->attribute_count + 1u ) );
+				ptr = os_realloc( action->option,
+					sizeof( struct iot_option ) *
+						( action->option_count + 1u ) );
 				if ( ptr )
-					action->attribute = ptr;
+					action->option = ptr;
 			}
-			if ( action->attribute && ptr )
+			if ( action->option && ptr )
 #endif /* ifndef IOT_STACK_ONLY */
 			{
-				attr = &action->attribute[action->attribute_count];
-				os_memzero( attr, sizeof( struct iot_attribute ) );
-				++action->attribute_count;
+				attr = &action->option[action->option_count];
+				os_memzero( attr, sizeof( struct iot_option ) );
+				++action->option_count;
 			}
 		}
 
-		/* add or update the attribute */
+		/* add or update the option */
 		if ( attr )
 		{
 			iot_bool_t update = IOT_TRUE;
@@ -369,7 +369,7 @@ iot_status_t iot_action_attribute_set_data(
 	return result;
 }
 
-iot_status_t iot_action_attribute_set_raw(
+iot_status_t iot_action_option_set_raw(
 	iot_action_t *action,
 	const char* name,
 	size_t length,
@@ -381,7 +381,7 @@ iot_status_t iot_action_attribute_set_raw(
 	data.value.raw.ptr = ptr;
 	data.value.raw.length = length;
 	data.has_value = IOT_TRUE;
-	return iot_action_attribute_set_data( action, name, &data );
+	return iot_action_option_set_data( action, name, &data );
 }
 
 iot_status_t iot_action_deregister(
@@ -892,10 +892,10 @@ iot_status_t iot_action_free( iot_action_t *action,
 					os_free_null(
 						(void **)&action->parameter[j].data.heap_storage );
 
-				for ( j = 0u; j < action->attribute_count; ++j )
+				for ( j = 0u; j < action->option_count; ++j )
 				{
 					os_free_null(
-						(void **)&action->attribute[j].data.heap_storage );
+						(void **)&action->option[j].data.heap_storage );
 				}
 #endif /* ifndef IOT_STACK_ONLY */
 
@@ -914,7 +914,7 @@ iot_status_t iot_action_free( iot_action_t *action,
 				lib->action_ptr[
 					lib->action_count] = action;
 #else /* ifdef IOT_STACK_ONLY */
-				os_free_null( (void **)&action->attribute );
+				os_free_null( (void **)&action->option );
 				os_free_null( (void **)&action->name );
 				os_free_null( (void **)&action->parameter );
 				if ( action->is_in_heap == IOT_FALSE )
@@ -1441,7 +1441,7 @@ iot_action_request_t *iot_action_request_allocate(
 	return result;
 }
 
-iot_status_t iot_action_request_attribute_get(
+iot_status_t iot_action_request_option_get(
 	const iot_action_request_t *request,
 	const char *name,
 	iot_bool_t convert,
@@ -1454,13 +1454,13 @@ iot_status_t iot_action_request_attribute_get(
 		size_t i;
 		result = IOT_STATUS_NOT_FOUND;
 		va_start( args, type );
-		for ( i = 0u; i < request->attribute_count &&
+		for ( i = 0u; i < request->option_count &&
 			result == IOT_STATUS_NOT_FOUND; ++i )
 		{
-			if ( os_strncmp( request->attribute[i].name,
+			if ( os_strncmp( request->option[i].name,
 				name, IOT_NAME_MAX_LEN ) == 0 )
 				result = iot_common_arg_get(
-					&request->attribute[i].data,
+					&request->option[i].data,
 					convert, type, args );
 		}
 		va_end( args );
@@ -1468,7 +1468,7 @@ iot_status_t iot_action_request_attribute_get(
 	return result;
 }
 
-iot_status_t iot_action_request_attribute_set(
+iot_status_t iot_action_request_option_set(
 	iot_action_request_t *request,
 	const char* name,
 	iot_type_t type, ... )
@@ -1479,10 +1479,10 @@ iot_status_t iot_action_request_attribute_set(
 	va_start( args, type );
 	iot_common_arg_set( &data, IOT_TRUE, type, args );
 	va_end( args );
-	return iot_action_request_attribute_set_data( request, name, &data );
+	return iot_action_request_option_set_data( request, name, &data );
 }
 
-iot_status_t iot_action_request_attribute_set_data(
+iot_status_t iot_action_request_option_set_data(
 	iot_action_request_t *request,
 	const char *name,
 	const struct iot_data *data )
@@ -1491,36 +1491,36 @@ iot_status_t iot_action_request_attribute_set_data(
 	if ( request && data )
 	{
 		unsigned int i;
-		struct iot_attribute *attr = NULL;
+		struct iot_option *attr = NULL;
 
-		/* see if this is an attribute update */
+		/* see if this is an option update */
 		for ( i = 0u;
-			attr == NULL && i < request->attribute_count; ++i )
+			attr == NULL && i < request->option_count; ++i )
 		{
-			if ( os_strcmp( request->attribute[i].name, name ) == 0 )
-				attr = &request->attribute[i];
+			if ( os_strcmp( request->option[i].name, name ) == 0 )
+				attr = &request->option[i];
 		}
 
-		/* adding a new attribute */
+		/* adding a new option */
 		result = IOT_STATUS_FULL;
-		if ( !attr && request->attribute_count < IOT_ATTRIBUTE_MAX )
+		if ( !attr && request->option_count < IOT_OPTION_MAX )
 		{
 #ifndef IOT_STACK_ONLY
-			void *ptr = os_realloc( request->attribute,
-				sizeof( struct iot_attribute ) *
-					( request->attribute_count + 1u ) );
+			void *ptr = os_realloc( request->option,
+				sizeof( struct iot_option ) *
+					( request->option_count + 1u ) );
 			if ( ptr )
-					request->attribute = ptr;
-			if ( request->attribute && ptr )
+					request->option = ptr;
+			if ( request->option && ptr )
 #endif /* ifndef IOT_STACK_ONLY */
 			{
-				attr = &request->attribute[request->attribute_count];
-				os_memzero( attr, sizeof( struct iot_attribute ) );
-				++request->attribute_count;
+				attr = &request->option[request->option_count];
+				os_memzero( attr, sizeof( struct iot_option ) );
+				++request->option_count;
 			}
 		}
 
-		/* add or update the attribute */
+		/* add or update the option */
 		if ( attr )
 		{
 			iot_bool_t update = IOT_TRUE;
@@ -1556,7 +1556,7 @@ iot_status_t iot_action_request_attribute_set_data(
 	return result;
 }
 
-iot_status_t iot_action_request_attribute_set_raw(
+iot_status_t iot_action_request_option_set_raw(
 	iot_action_request_t *request,
 	const char* name,
 	size_t length,
@@ -1568,7 +1568,7 @@ iot_status_t iot_action_request_attribute_set_raw(
 	data.value.raw.ptr = ptr;
 	data.value.raw.length = length;
 	data.has_value = IOT_TRUE;
-	return iot_action_request_attribute_set_data( request, name, &data );
+	return iot_action_request_option_set_data( request, name, &data );
 }
 
 iot_status_t iot_action_request_copy( iot_action_request_t *dest,
@@ -1713,10 +1713,10 @@ iot_status_t iot_action_request_free(
 		size_t i;
 
 		/* free any space allocated */
-		for ( i = 0u; i < request->attribute_count; ++i )
+		for ( i = 0u; i < request->option_count; ++i )
 		{
-			os_free_null( (void**)&request->attribute[i].name );
-			os_free_null( (void**)&request->attribute[i].data.heap_storage );
+			os_free_null( (void**)&request->option[i].name );
+			os_free_null( (void**)&request->option[i].data.heap_storage );
 		}
 		for ( i = 0u; i < request->parameter_count; ++i )
 		{
@@ -1724,9 +1724,9 @@ iot_status_t iot_action_request_free(
 			os_free_null( (void**)&request->parameter[i].data.heap_storage );
 		}
 
-		request->attribute_count = 0u;
+		request->option_count = 0u;
 		request->parameter_count = 0u;
-		os_free_null( (void**)&request->attribute );
+		os_free_null( (void**)&request->option );
 		os_free_null( (void**)&request->parameter );
 		os_free_null( (void**)&request->error );
 #endif /* ifndef IOT_STACK_ONLY */

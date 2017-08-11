@@ -159,195 +159,195 @@ static void test_iot_telemetry_allocate_valid( void **state )
 	test_free( t_names );
 }
 
-static void test_iot_telemetry_attribute_get_not_found( void **state )
+static void test_iot_telemetry_option_get_not_found( void **state )
 {
 	char *a_names;
-	struct iot_attribute attrs[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option attrs[ IOT_OPTION_MAX ];
 	size_t i;
 	iot_status_t result;
 	iot_telemetry_t telemetry;
 	iot_int32_t value = 0;
 
-	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_ATTRIBUTE_MAX );
+	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_OPTION_MAX );
 	assert_non_null( a_names );
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	telemetry.attribute = attrs;
-	telemetry.attribute_count = IOT_ATTRIBUTE_MAX;
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; i++ )
+	telemetry.option = attrs;
+	telemetry.option_count = IOT_OPTION_MAX;
+	for ( i = 0u; i < IOT_OPTION_MAX; i++ )
 	{
-		telemetry.attribute[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
-		snprintf( telemetry.attribute[i].name, IOT_NAME_MAX_LEN, "attribute %lu", i );
-		telemetry.attribute[i].data.value.int32 = 2352;
-		telemetry.attribute[i].data.type = IOT_TYPE_INT32;
-		telemetry.attribute[i].data.has_value = IOT_TRUE;
+		telemetry.option[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
+		snprintf( telemetry.option[i].name, IOT_NAME_MAX_LEN, "option %lu", i );
+		telemetry.option[i].data.value.int32 = 2352;
+		telemetry.option[i].data.type = IOT_TYPE_INT32;
+		telemetry.option[i].data.has_value = IOT_TRUE;
 	}
-	result = iot_telemetry_attribute_get( &telemetry, "waldo", IOT_FALSE, IOT_TYPE_INT32, &value );
+	result = iot_telemetry_option_get( &telemetry, "waldo", IOT_FALSE, IOT_TYPE_INT32, &value );
 	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
 	assert_int_equal( value, 0 );
 	test_free( a_names );
 }
 
-static void test_iot_telemetry_attribute_get_null_name( void **state )
+static void test_iot_telemetry_option_get_null_name( void **state )
 {
 	char *a_names;
-	struct iot_attribute attrs[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option attrs[ IOT_OPTION_MAX ];
 	size_t i;
 	iot_status_t result;
 	iot_telemetry_t telemetry;
 	iot_int32_t value = 0;
 
-	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_ATTRIBUTE_MAX );
+	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_OPTION_MAX );
 	assert_non_null( a_names );
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	bzero( &attrs, sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	telemetry.attribute = attrs;
-	telemetry.attribute_count = IOT_ATTRIBUTE_MAX;
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; i++ )
+	bzero( &attrs, sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	telemetry.option = attrs;
+	telemetry.option_count = IOT_OPTION_MAX;
+	for ( i = 0u; i < IOT_OPTION_MAX; i++ )
 	{
-		telemetry.attribute[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
-		snprintf( telemetry.attribute[i].name, IOT_NAME_MAX_LEN, "attribute %lu", i );
-		telemetry.attribute[i].data.value.int32 = 2352;
-		telemetry.attribute[i].data.type = IOT_TYPE_INT32;
-		telemetry.attribute[i].data.has_value = IOT_TRUE;
+		telemetry.option[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
+		snprintf( telemetry.option[i].name, IOT_NAME_MAX_LEN, "option %lu", i );
+		telemetry.option[i].data.value.int32 = 2352;
+		telemetry.option[i].data.type = IOT_TYPE_INT32;
+		telemetry.option[i].data.has_value = IOT_TRUE;
 	}
-	result = iot_telemetry_attribute_get( &telemetry, NULL, IOT_FALSE, IOT_TYPE_INT32, &value );
+	result = iot_telemetry_option_get( &telemetry, NULL, IOT_FALSE, IOT_TYPE_INT32, &value );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 	assert_int_equal( value, 0 );
 	test_free( a_names );
 }
 
-static void test_iot_telemetry_attribute_get_null_telemetry( void **state )
+static void test_iot_telemetry_option_get_null_telemetry( void **state )
 {
 	iot_status_t result;
 	iot_int32_t value = 0;
 
-	result = iot_telemetry_attribute_get( NULL, "telemetry", IOT_FALSE, IOT_TYPE_INT32, &value );
+	result = iot_telemetry_option_get( NULL, "telemetry", IOT_FALSE, IOT_TYPE_INT32, &value );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 	assert_int_equal( value, 0 );
 }
 
-static void test_iot_telemetry_attribute_get_valid( void **state )
+static void test_iot_telemetry_option_get_valid( void **state )
 {
 	char *a_names;
-	struct iot_attribute attrs[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option attrs[ IOT_OPTION_MAX ];
 	size_t i;
 	iot_status_t result;
 	iot_telemetry_t telemetry;
 	iot_int32_t value = 0;
 
-	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_ATTRIBUTE_MAX );
+	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_OPTION_MAX );
 	assert_non_null( a_names );
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	bzero( &attrs, sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	telemetry.attribute = attrs;
-	telemetry.attribute_count = IOT_ATTRIBUTE_MAX;
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; i++ )
+	bzero( &attrs, sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	telemetry.option = attrs;
+	telemetry.option_count = IOT_OPTION_MAX;
+	for ( i = 0u; i < IOT_OPTION_MAX; i++ )
 	{
-		telemetry.attribute[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
-		snprintf( telemetry.attribute[i].name, IOT_NAME_MAX_LEN, "attribute %lu", i );
-		telemetry.attribute[i].data.value.int32 = 2352;
-		telemetry.attribute[i].data.type = IOT_TYPE_INT32;
-		telemetry.attribute[i].data.has_value = IOT_TRUE;
+		telemetry.option[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
+		snprintf( telemetry.option[i].name, IOT_NAME_MAX_LEN, "option %lu", i );
+		telemetry.option[i].data.value.int32 = 2352;
+		telemetry.option[i].data.type = IOT_TYPE_INT32;
+		telemetry.option[i].data.has_value = IOT_TRUE;
 	}
 	result =
-	    iot_telemetry_attribute_get( &telemetry, "attribute 2", IOT_FALSE, IOT_TYPE_INT32, &value );
+	    iot_telemetry_option_get( &telemetry, "option 2", IOT_FALSE, IOT_TYPE_INT32, &value );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( value, 2352 );
 	test_free( a_names );
 }
 
-static void test_iot_telemetry_attribute_set_add( void **state )
+static void test_iot_telemetry_option_set_add( void **state )
 {
-	struct iot_attribute attrs[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option attrs[ IOT_OPTION_MAX ];
 	char attr0_name[IOT_NAME_MAX_LEN + 1u];
 	iot_status_t result;
 	iot_telemetry_t telemetry;
 
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	bzero( &attrs, sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	telemetry.attribute = attrs;
+	bzero( &attrs, sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	telemetry.option = attrs;
 	attrs[0].name = attr0_name;
-	telemetry.attribute_count = 1u;
-	strncpy( telemetry.attribute[0].name, "attribute 0", IOT_NAME_MAX_LEN );
-	telemetry.attribute[0].data.value.int32 = 2352;
-	telemetry.attribute[0].data.type = IOT_TYPE_INT32;
-	telemetry.attribute[0].data.has_value = IOT_TRUE;
-	result = iot_telemetry_attribute_set( &telemetry, "attribute 1", IOT_TYPE_INT32, 4527 );
+	telemetry.option_count = 1u;
+	strncpy( telemetry.option[0].name, "option 0", IOT_NAME_MAX_LEN );
+	telemetry.option[0].data.value.int32 = 2352;
+	telemetry.option[0].data.type = IOT_TYPE_INT32;
+	telemetry.option[0].data.has_value = IOT_TRUE;
+	result = iot_telemetry_option_set( &telemetry, "option 1", IOT_TYPE_INT32, 4527 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( telemetry.attribute_count, 2u );
-	assert_string_equal( telemetry.attribute[1].name, "attribute 1" );
-	assert_int_equal( telemetry.attribute[1].data.type, IOT_TYPE_INT32 );
-	assert_int_equal( telemetry.attribute[1].data.value.int32, 4527 );
+	assert_int_equal( telemetry.option_count, 2u );
+	assert_string_equal( telemetry.option[1].name, "option 1" );
+	assert_int_equal( telemetry.option[1].data.type, IOT_TYPE_INT32 );
+	assert_int_equal( telemetry.option[1].data.value.int32, 4527 );
 }
 
-static void test_iot_telemetry_attribute_set_full( void **state )
+static void test_iot_telemetry_option_set_full( void **state )
 {
 	char *a_names;
-	struct iot_attribute attrs[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option attrs[ IOT_OPTION_MAX ];
 	size_t i;
 	iot_status_t result;
 	iot_telemetry_t telemetry;
 
-	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_ATTRIBUTE_MAX );
+	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_OPTION_MAX );
 	assert_non_null( a_names );
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	bzero( &attrs, sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	telemetry.attribute = attrs;
-	telemetry.attribute_count = IOT_ATTRIBUTE_MAX;
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; i++ )
+	bzero( &attrs, sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	telemetry.option = attrs;
+	telemetry.option_count = IOT_OPTION_MAX;
+	for ( i = 0u; i < IOT_OPTION_MAX; i++ )
 	{
-		telemetry.attribute[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
-		snprintf( telemetry.attribute[i].name, IOT_NAME_MAX_LEN, "attribute %lu", i );
-		telemetry.attribute[i].data.value.int32 = 2352;
-		telemetry.attribute[i].data.type = IOT_TYPE_INT32;
-		telemetry.attribute[i].data.has_value = IOT_TRUE;
+		telemetry.option[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
+		snprintf( telemetry.option[i].name, IOT_NAME_MAX_LEN, "option %lu", i );
+		telemetry.option[i].data.value.int32 = 2352;
+		telemetry.option[i].data.type = IOT_TYPE_INT32;
+		telemetry.option[i].data.has_value = IOT_TRUE;
 	}
-	result = iot_telemetry_attribute_set( &telemetry, "another attribute", IOT_TYPE_INT32, 4527 );
+	result = iot_telemetry_option_set( &telemetry, "another option", IOT_TYPE_INT32, 4527 );
 	assert_int_equal( result, IOT_STATUS_FULL );
 	test_free( a_names );
 }
 
-static void test_iot_telemetry_attribute_set_null_telemetry( void **state )
+static void test_iot_telemetry_option_set_null_telemetry( void **state )
 {
 	iot_status_t result;
 
-	result = iot_telemetry_attribute_set( NULL, "attribute", IOT_TYPE_INT32, 4527 );
+	result = iot_telemetry_option_set( NULL, "option", IOT_TYPE_INT32, 4527 );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_telemetry_attribute_set_update( void **state )
+static void test_iot_telemetry_option_set_update( void **state )
 {
 	char *a_names;
-	struct iot_attribute attrs[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option attrs[ IOT_OPTION_MAX ];
 	size_t i;
 	iot_status_t result;
 	iot_telemetry_t telemetry;
 
-	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_ATTRIBUTE_MAX );
+	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * IOT_OPTION_MAX );
 	assert_non_null( a_names );
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	bzero( &attrs, sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	telemetry.attribute = attrs;
-	telemetry.attribute_count = IOT_ATTRIBUTE_MAX;
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; i++ )
+	bzero( &attrs, sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	telemetry.option = attrs;
+	telemetry.option_count = IOT_OPTION_MAX;
+	for ( i = 0u; i < IOT_OPTION_MAX; i++ )
 	{
-		telemetry.attribute[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
-		snprintf( telemetry.attribute[i].name, IOT_NAME_MAX_LEN, "attribute %lu", i );
-		telemetry.attribute[i].data.value.int32 = 2352;
-		telemetry.attribute[i].data.type = IOT_TYPE_INT32;
-		telemetry.attribute[i].data.has_value = IOT_TRUE;
+		telemetry.option[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
+		snprintf( telemetry.option[i].name, IOT_NAME_MAX_LEN, "option %lu", i );
+		telemetry.option[i].data.value.int32 = 2352;
+		telemetry.option[i].data.type = IOT_TYPE_INT32;
+		telemetry.option[i].data.has_value = IOT_TRUE;
 	}
-	result = iot_telemetry_attribute_set( &telemetry, "attribute 3", IOT_TYPE_INT16, 4527 );
+	result = iot_telemetry_option_set( &telemetry, "option 3", IOT_TYPE_INT16, 4527 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( telemetry.attribute[3].data.type, IOT_TYPE_INT16 );
-	assert_int_equal( telemetry.attribute[3].data.value.int16, 4527 );
+	assert_int_equal( telemetry.option[3].data.type, IOT_TYPE_INT16 );
+	assert_int_equal( telemetry.option[3].data.value.int16, 4527 );
 	test_free( a_names );
 }
 
-static void test_iot_telemetry_attribute_set_raw_valid( void **state )
+static void test_iot_telemetry_option_set_raw_valid( void **state )
 {
 	char *a_names;
-	struct iot_attribute attrs[ 2u ];
+	struct iot_option attrs[ 2u ];
 	size_t i;
 	iot_status_t result;
 	iot_telemetry_t telemetry;
@@ -356,25 +356,25 @@ static void test_iot_telemetry_attribute_set_raw_valid( void **state )
 	a_names = test_malloc( sizeof( char ) * ( IOT_NAME_MAX_LEN + 1u ) * 2u );
 	assert_non_null( a_names );
 	bzero( &telemetry, sizeof( iot_telemetry_t ) );
-	bzero( &attrs, sizeof( struct iot_attribute ) * 2u );
-	telemetry.attribute = attrs;
-	telemetry.attribute_count = 1u;
+	bzero( &attrs, sizeof( struct iot_option ) * 2u );
+	telemetry.option = attrs;
+	telemetry.option_count = 1u;
 	for ( i = 0u; i < 2u; ++i )
-		telemetry.attribute[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
-	strncpy( telemetry.attribute[0].name, "attribute 0", IOT_NAME_MAX_LEN );
-	telemetry.attribute[0].data.value.int32 = 2352;
-	telemetry.attribute[0].data.type = IOT_TYPE_INT32;
-	telemetry.attribute[0].data.has_value = IOT_TRUE;
-	result = iot_telemetry_attribute_set_raw(
-	    &telemetry, "attribute 1", sizeof( data ), (const void *)data );
+		telemetry.option[i].name = &a_names[( IOT_NAME_MAX_LEN + 1u ) * i];
+	strncpy( telemetry.option[0].name, "option 0", IOT_NAME_MAX_LEN );
+	telemetry.option[0].data.value.int32 = 2352;
+	telemetry.option[0].data.type = IOT_TYPE_INT32;
+	telemetry.option[0].data.has_value = IOT_TRUE;
+	result = iot_telemetry_option_set_raw(
+	    &telemetry, "option 1", sizeof( data ), (const void *)data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	assert_int_equal( telemetry.attribute_count, 2u );
-	assert_string_equal( telemetry.attribute[1].name, "attribute 1" );
-	assert_int_equal( telemetry.attribute[1].data.type, IOT_TYPE_RAW );
-	assert_int_equal( telemetry.attribute[1].data.has_value, IOT_TRUE );
-	assert_int_equal( telemetry.attribute[1].data.value.raw.length, sizeof( data ) );
-	assert_string_equal( (const char *)telemetry.attribute[1].data.value.raw.ptr, data );
-	assert_ptr_equal( telemetry.attribute[1].data.value.raw.ptr, data );
+	assert_int_equal( telemetry.option_count, 2u );
+	assert_string_equal( telemetry.option[1].name, "option 1" );
+	assert_int_equal( telemetry.option[1].data.type, IOT_TYPE_RAW );
+	assert_int_equal( telemetry.option[1].data.has_value, IOT_TRUE );
+	assert_int_equal( telemetry.option[1].data.value.raw.length, sizeof( data ) );
+	assert_string_equal( (const char *)telemetry.option[1].data.value.raw.ptr, data );
+	assert_ptr_equal( telemetry.option[1].data.value.raw.ptr, data );
 	test_free( a_names );
 }
 
@@ -468,7 +468,7 @@ static void test_iot_telemetry_deregister_valid( void **state )
 	assert_int_equal( telemetry->state, IOT_ITEM_DEREGISTERED );
 }
 
-static void test_iot_telemetry_free_attributes( void **state )
+static void test_iot_telemetry_free_options( void **state )
 {
 	size_t i;
 	iot_status_t result;
@@ -482,18 +482,18 @@ static void test_iot_telemetry_free_attributes( void **state )
 	telemetry = lib.telemetry_ptr[1];
 	telemetry->lib = &lib;
 	telemetry->state = IOT_ITEM_REGISTERED;
-	telemetry->attribute = os_malloc( sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	assert_non_null( telemetry->attribute );
-	bzero( telemetry->attribute, sizeof( struct iot_attribute ) * IOT_ATTRIBUTE_MAX );
-	for ( i = 0u; i < IOT_ATTRIBUTE_MAX; i++ )
+	telemetry->option = os_malloc( sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	assert_non_null( telemetry->option );
+	bzero( telemetry->option, sizeof( struct iot_option ) * IOT_OPTION_MAX );
+	for ( i = 0u; i < IOT_OPTION_MAX; i++ )
 	{
-		telemetry->attribute[i].data.type = IOT_TYPE_RAW;
-		telemetry->attribute[i].data.heap_storage = os_malloc( 20 );
-		telemetry->attribute[i].data.value.raw.ptr = telemetry->attribute[i].data.heap_storage;
-		telemetry->attribute[i].data.value.raw.length = 20;
-		telemetry->attribute[i].data.has_value = IOT_TRUE;
+		telemetry->option[i].data.type = IOT_TYPE_RAW;
+		telemetry->option[i].data.heap_storage = os_malloc( 20 );
+		telemetry->option[i].data.value.raw.ptr = telemetry->option[i].data.heap_storage;
+		telemetry->option[i].data.value.raw.length = 20;
+		telemetry->option[i].data.has_value = IOT_TRUE;
 	}
-	telemetry->attribute_count = IOT_ATTRIBUTE_MAX;
+	telemetry->option_count = IOT_OPTION_MAX;
 	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
 	result = iot_telemetry_free( telemetry, 0u );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -975,21 +975,21 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_telemetry_allocate_null_lib ),
 		cmocka_unit_test( test_iot_telemetry_allocate_null_name ),
 		cmocka_unit_test( test_iot_telemetry_allocate_valid ),
-		cmocka_unit_test( test_iot_telemetry_attribute_get_not_found ),
-		cmocka_unit_test( test_iot_telemetry_attribute_get_null_name ),
-		cmocka_unit_test( test_iot_telemetry_attribute_get_null_telemetry ),
-		cmocka_unit_test( test_iot_telemetry_attribute_get_valid ),
-		cmocka_unit_test( test_iot_telemetry_attribute_set_add ),
-		cmocka_unit_test( test_iot_telemetry_attribute_set_full ),
-		cmocka_unit_test( test_iot_telemetry_attribute_set_null_telemetry ),
-		cmocka_unit_test( test_iot_telemetry_attribute_set_update ),
-		cmocka_unit_test( test_iot_telemetry_attribute_set_raw_valid ),
+		cmocka_unit_test( test_iot_telemetry_option_get_not_found ),
+		cmocka_unit_test( test_iot_telemetry_option_get_null_name ),
+		cmocka_unit_test( test_iot_telemetry_option_get_null_telemetry ),
+		cmocka_unit_test( test_iot_telemetry_option_get_valid ),
+		cmocka_unit_test( test_iot_telemetry_option_set_add ),
+		cmocka_unit_test( test_iot_telemetry_option_set_full ),
+		cmocka_unit_test( test_iot_telemetry_option_set_null_telemetry ),
+		cmocka_unit_test( test_iot_telemetry_option_set_update ),
+		cmocka_unit_test( test_iot_telemetry_option_set_raw_valid ),
 		cmocka_unit_test( test_iot_telemetry_deregister_not_registered ),
 		cmocka_unit_test( test_iot_telemetry_deregister_null_lib ),
 		cmocka_unit_test( test_iot_telemetry_deregister_null_telemetry ),
 		cmocka_unit_test( test_iot_telemetry_deregister_transmit_fail ),
 		cmocka_unit_test( test_iot_telemetry_deregister_valid ),
-		cmocka_unit_test( test_iot_telemetry_free_attributes ),
+		cmocka_unit_test( test_iot_telemetry_free_options ),
 		cmocka_unit_test( test_iot_telemetry_free_null_lib ),
 		cmocka_unit_test( test_iot_telemetry_free_null_telemetry ),
 		cmocka_unit_test( test_iot_telemetry_publish_number_types ),

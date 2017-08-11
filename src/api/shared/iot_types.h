@@ -126,13 +126,13 @@ struct iot_action_parameter
 };
 
 /**
- * @brief attribute details
+ * @brief option details
  */
-struct iot_attribute
+struct iot_option
 {
-	/** @brief attribute name */
+	/** @brief option name */
 	char *name;
-	/** @brief attribute data */
+	/** @brief option data */
 	struct iot_data data;
 #ifdef IOT_STACK_ONLY
 	/** @brief storage of name value on heap
@@ -162,10 +162,10 @@ struct iot_action
 	void *user_data;
 	/** @brief command to execute */
 	char *command;
-	/** @brief value of attributes */
-	struct iot_attribute *attribute;
-	/** @brief number of attributes */
-	iot_uint8_t attribute_count;
+	/** @brief value of option*/
+	struct iot_option *option;
+	/** @brief number of options*/
+	iot_uint8_t option_count;
 	/** @brief parameter details */
 	struct iot_action_parameter *parameter;
 	/** @brief number of parameters */
@@ -173,11 +173,11 @@ struct iot_action
 	/** @brief maximum amount of time to wait before returning failure */
 	iot_millisecond_t time_limit;
 #ifdef IOT_STACK_ONLY
-	/** @brief storage of attributes on the stack
+	/** @brief storage of options on the stack
 	 *
-	 * @note This is not to be used directly, use @c attribute instead
+	 * @note This is not to be used directly, use @c option instead
 	 */
-	struct iot_attribute _attribute[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option _option[ IOT_OPTION_MAX ];
 	/** @brief storage of the command to execute on the stack
 	 *
 	 * @note This is not to be used directly, use @c command instead
@@ -206,10 +206,10 @@ struct iot_action_request
 {
 	/** @brief library handle */
 	struct iot *lib;
-	/** @brief value of attributes */
-	struct iot_attribute *attribute;
-	/** @brief number of attributes */
-	iot_uint8_t attribute_count;
+	/** @brief value of option*/
+	struct iot_option *option;
+	/** @brief number of option*/
+	iot_uint8_t option_count;
 	/** @brief detailed error message (may be null) */
 	char *error;
 	/** @brief Name of the action */
@@ -227,8 +227,8 @@ struct iot_action_request
 	/** @brief result of the action */
 	iot_status_t result;
 #ifdef IOT_STACK_ONLY
-	/** @brief holds value of attributes */
-	struct iot_attribute _attribute[ IOT_ATTRIBUTE_MAX ];
+	/** @brief holds value of options */
+	struct iot_option _option[ IOT_OPTION_MAX ];
 	/** @brief error message details */
 	char _error[ IOT_NAME_MAX_LEN + 1u ];
 	/** @brief storage of name value on heap
@@ -329,20 +329,20 @@ struct iot_telemetry
 	enum iot_item_state state;
 	/** @brief name of telemetry */
 	char *name;
-	/** @brief holds value of attributes */
-	struct iot_attribute *attribute;
-	/** @brief number of attributes */
-	iot_uint8_t attribute_count;
+	/** @brief holds value of option */
+	struct iot_option *option;
+	/** @brief number of options*/
+	iot_uint8_t option_count;
 	/** @brief sample time stamp */
 	iot_timestamp_t time_stamp;
 	/** @brief telemetry type */
 	iot_type_t type;
 #ifdef IOT_STACK_ONLY
-	/** @brief storage of attributes on the stack
+	/** @brief storage of options on the stack
 	 *
-	 * @note This is not to be used directly, use @c attribute instead
+	 * @note This is not to be used directly, use @c option instead
 	 */
-	struct iot_attribute _attribute[ IOT_ATTRIBUTE_MAX ];
+	struct iot_option _option[ IOT_OPTION_MAX ];
 	/** @brief storage of name value on the stack
 	 *
 	 * @note This is not to be used directly, use @c name instead
@@ -454,10 +454,10 @@ struct iot
 	 */
 	struct iot_action           *action_ptr[ IOT_ACTION_MAX ];
 
-	/** @brief value of attributes */
-	struct iot_attribute        *attribute;
-	/** @brief number of attributes */
-	iot_uint8_t                 attribute_count;
+	/** @brief value of option */
+	struct iot_option        *option;
+	/** @brief number of options */
+	iot_uint8_t                 option_count;
 
 	/** @brief path to the configuration file */
 	char                        *cfg_file_path;
@@ -554,10 +554,10 @@ struct iot
 };
 
 /**
- * @brief Returns the value of a attribute
+ * @brief Returns the value of an option
  *
  * @param[in]      handle              library handle
- * @param[in]      name                attribute name
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
  * @param[in]      type                type of data to return
  * @param[in,out]  ...                 pointer to a variable of the type
@@ -566,13 +566,13 @@ struct iot
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_attribute_set_raw
- * @see iot_action_attribute_set
+ * @see iot_action_option_set_raw
+ * @see iot_action_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_attribute_get(
+IOT_API IOT_SECTION iot_status_t iot_option_get(
 	const iot_t *handle,
 	const char *name,
 	iot_bool_t convert,
@@ -583,7 +583,7 @@ IOT_API IOT_SECTION iot_status_t iot_attribute_get(
  * @brief Returns a raw value
  *
  * @param[in,out]  lib                 library handle
- * @param[in]      name                attribute name
+ * @param[in]      name                option name
  * @param[in]      convert             convert to raw, if possible
  * @param[out]     length              amount of raw data
  * @param[in,out]  data                pointer to the raw data
@@ -591,13 +591,13 @@ IOT_API IOT_SECTION iot_status_t iot_attribute_get(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_attribute_get
- * @see iot_attribute_set_raw
+ * @see iot_option_get
+ * @see iot_option_set_raw
  */
-IOT_API IOT_SECTION iot_status_t iot_attribute_get_raw(
+IOT_API IOT_SECTION iot_status_t iot_option_get_raw(
 	const iot_t *lib,
 	const char *name,
 	iot_bool_t convert,
@@ -605,41 +605,41 @@ IOT_API IOT_SECTION iot_status_t iot_attribute_get_raw(
 	const void **data );
 
 /**
- * @brief Sets an attribute value
+ * @brief Sets an option value
  *
  * @param[in,out]  lib                 library handle
- * @param[in]      name                attribute name
- * @param[in]      type                type of attribute data
- * @param[in]      ...                 value of attribute data in the type
+ * @param[in]      name                option name
+ * @param[in]      type                type of option data
+ * @param[in]      ...                 value of option data in the type
  *                                     specified
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_attribute_set_raw
+ * @see iot_option_set_raw
  */
-IOT_API IOT_SECTION iot_status_t iot_attribute_set(
+IOT_API IOT_SECTION iot_status_t iot_option_set(
 	iot_t *lib,
 	const char *name,
 	iot_type_t type,
 	... );
 
 /**
- * @brief Sets a raw attribute value
+ * @brief Sets a raw option value
  *
  * @param[in,out]  lib                 library handle
- * @param[in]      name                attribute name
- * @param[in]      length              length of attribute data
- * @param[in]      ptr                 pointer to attribute data
+ * @param[in]      name                option name
+ * @param[in]      length              length of option data
+ * @param[in]      ptr                 pointer to option data
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_attribute_set
+ * @see iot_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_attribute_set_raw(
+IOT_API IOT_SECTION iot_status_t iot_option_set_raw(
 	iot_t *lib,
 	const char *name,
 	size_t length,
@@ -648,26 +648,26 @@ IOT_API IOT_SECTION iot_status_t iot_attribute_set_raw(
 #ifndef iot_EXPORTS
 #ifndef __clang__
 /**
- * @brief Sets an attribute value
+ * @brief Sets an option value
  *
  * @param[in,out]  lib                 library handle
- * @param[in]      name                attribute name
- * @param[in]      type                attribute type
- * @param[in]      data                attribute value
+ * @param[in]      name                option name
+ * @param[in]      type                option type
+ * @param[in]      data                option value
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
  */
-#	define iot_attribute_set( lib, name, type, data ) \
-		iot_attribute_set( lib, name, type, data )
+#	define iot_option_set( lib, name, type, data ) \
+		iot_option_set( lib, name, type, data )
 
 /**
- * @brief Returns the value of an attribute
+ * @brief Returns the value of an option
  *
  * @param[in,out]  lib                 library handle
- * @param[in]      name                attribute name
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
  * @param[in]      type                type of data to return
  * @param[in,out]  data                pointer to a variable of the type
@@ -676,19 +676,19 @@ IOT_API IOT_SECTION iot_status_t iot_attribute_set_raw(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-#	define iot_attribute_get( lib, name, convert, type, data ) \
-		iot_attribute_get( lib, name, convert, type, data )
+#	define iot_option_get( lib, name, convert, type, data ) \
+		iot_option_get( lib, name, convert, type, data )
 #endif /* ifndef __clang__ */
 #endif /* ifndef iot_EXPORTS */
 
 /**
- * @brief Returns the value of a action attribute
+ * @brief Returns the value of a action option
  *
  * @param[in]      action              action object to get value from
- * @param[in]      name                attribute name
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
  * @param[in]      type                type of data to return
  * @param[in,out]  ...                 pointer to a variable of the type
@@ -697,13 +697,13 @@ IOT_API IOT_SECTION iot_status_t iot_attribute_set_raw(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_attribute_set_raw
- * @see iot_action_attribute_set
+ * @see iot_action_option_set_raw
+ * @see iot_action_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_action_attribute_get(
+IOT_API IOT_SECTION iot_status_t iot_action_option_get(
 	const iot_action_t *action,
 	const char *name,
 	iot_bool_t convert,
@@ -713,22 +713,22 @@ IOT_API IOT_SECTION iot_status_t iot_action_attribute_get(
 #ifndef iot_EXPORTS
 #ifndef __clang__
 /**
- * @brief Gets an attribute for a action object
+ * @brief Gets an option for a action object
  *
- * @param[in,out]  action              object to set attribute for
- * @param[in]      name                attribute name
+ * @param[in,out]  action              object to set option for
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
- * @param[in]      type                attribute type
- * @param[in]      data                attribute value
+ * @param[in]      type                option type
+ * @param[in]      data                option value
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-#	define iot_action_attribute_get( action, name, convert, type, data ) \
-		iot_action_attribute_get( action, name, convert, type, data )
+#	define iot_action_option_get( action, name, convert, type, data ) \
+		iot_action_option_get( action, name, convert, type, data )
 #endif /* ifndef __clang__ */
 #endif /* ifndef iot_EXPORTS */
 
@@ -768,10 +768,10 @@ IOT_API IOT_SECTION iot_status_t iot_action_register(
 	iot_millisecond_t max_time_out );
 
 /**
- * @brief Returns the value of a telemetry attribute
+ * @brief Returns the value of a telemetry option
  *
  * @param[in,out]  telemetry           telemetry object to set
- * @param[in]      name                attribute name
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
  * @param[in]      type                type of data to return
  * @param[in,out]  ...                 pointer to a variable of the type
@@ -780,13 +780,13 @@ IOT_API IOT_SECTION iot_status_t iot_action_register(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_telemetry_attribute_set_raw
- * @see iot_telemetry_attribute_set
+ * @see iot_telemetry_option_set_raw
+ * @see iot_telemetry_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_telemetry_attribute_get(
+IOT_API IOT_SECTION iot_status_t iot_telemetry_option_get(
 	const iot_telemetry_t *telemetry,
 	const char *name,
 	iot_bool_t convert,
@@ -796,22 +796,22 @@ IOT_API IOT_SECTION iot_status_t iot_telemetry_attribute_get(
 #ifndef iot_EXPORTS
 #ifndef __clang__
 /**
- * @brief Gets an attribute for a telemetry object
+ * @brief Gets an option for a telemetry object
  *
- * @param[in,out]  telemetry           object to set attribute for
- * @param[in]      name                attribute name
+ * @param[in,out]  telemetry           object to set option for
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
- * @param[in]      type                attribute type
- * @param[in]      data                attribute value
+ * @param[in]      type                option type
+ * @param[in]      data                option value
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-#	define iot_telemetry_attribute_get( telemetry, name, convert, type, data ) \
-		iot_telemetry_attribute_get( telemetry, name, convert, type, data )
+#	define iot_telemetry_option_get( telemetry, name, convert, type, data ) \
+		iot_telemetry_option_get( telemetry, name, convert, type, data )
 #endif /* ifndef__clang__ */
 #endif /* ifndef iot_EXPORTS */
 

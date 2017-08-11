@@ -20,17 +20,17 @@
 #include "os.h"                   /* operating system abstraction */
 
 /**
- * @brief Sets the value of a piece of telemetry attribute data
+ * @brief Sets the value of a piece of telemetry option data
  *
  * @param[in,out]  telemetry           telemetry object to set
- * @param[in]      name                attribute name
- * @param[in]      data                attribute value to set
+ * @param[in]      name                option name
+ * @param[in]      data                option value to set
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STAUTS_FULL             maximum number of attributes reached
+ * @retval IOT_STAUTS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  */
-static IOT_SECTION iot_status_t iot_telemetry_attribute_set_data(
+static IOT_SECTION iot_status_t iot_telemetry_option_set_data(
 	iot_telemetry_t *telemetry,
 	const char *name,
 	const struct iot_data *data );
@@ -96,7 +96,7 @@ iot_telemetry_t *iot_telemetry_allocate(
 				if ( name_len > IOT_NAME_MAX_LEN )
 					name_len = IOT_NAME_MAX_LEN;
 #ifdef IOT_STACK_ONLY
-				result->attribute = result->_attribute;
+				result->option = result->_option;
 				result->name = result->_name;
 #else /* ifdef IOT_STACK_ONLY */
 				result->name = os_malloc( name_len + 1u );
@@ -156,7 +156,7 @@ iot_telemetry_t *iot_telemetry_allocate(
 	return result;
 }
 
-iot_status_t iot_telemetry_attribute_get(
+iot_status_t iot_telemetry_option_get(
 	const iot_telemetry_t *telemetry,
 	const char *name,
 	iot_bool_t convert,
@@ -169,13 +169,13 @@ iot_status_t iot_telemetry_attribute_get(
 		size_t i;
 		result = IOT_STATUS_NOT_FOUND;
 		va_start( args, type );
-		for( i = 0u; i < telemetry->attribute_count &&
+		for( i = 0u; i < telemetry->option_count &&
 			result == IOT_STATUS_NOT_FOUND; ++i )
 		{
-			if ( os_strncmp( telemetry->attribute[i].name,
+			if ( os_strncmp( telemetry->option[i].name,
 				name, IOT_NAME_MAX_LEN ) == 0 )
 				result = iot_common_arg_get(
-					&telemetry->attribute[i].data,
+					&telemetry->option[i].data,
 					convert, type, args );
 		}
 		va_end( args );
@@ -183,7 +183,7 @@ iot_status_t iot_telemetry_attribute_get(
 	return result;
 }
 
-iot_status_t iot_telemetry_attribute_set(
+iot_status_t iot_telemetry_option_set(
 	iot_telemetry_t *telemetry,
 	const char* name,
 	iot_type_t type, ... )
@@ -194,10 +194,10 @@ iot_status_t iot_telemetry_attribute_set(
 	va_start( args, type );
 	iot_common_arg_set( &data, IOT_TRUE, type, args );
 	va_end( args );
-	return iot_telemetry_attribute_set_data( telemetry, name, &data );
+	return iot_telemetry_option_set_data( telemetry, name, &data );
 }
 
-iot_status_t iot_telemetry_attribute_set_data(
+iot_status_t iot_telemetry_option_set_data(
 	iot_telemetry_t *telemetry,
 	const char *name,
 	const struct iot_data *data )
@@ -206,39 +206,39 @@ iot_status_t iot_telemetry_attribute_set_data(
 	if ( telemetry && data )
 	{
 		unsigned int i;
-		struct iot_attribute *attr = NULL;
+		struct iot_option *attr = NULL;
 
-		/* see if this is an attribute update */
+		/* see if this is an option update */
 		for ( i = 0u;
-			attr == NULL && i < telemetry->attribute_count; ++i )
+			attr == NULL && i < telemetry->option_count; ++i )
 		{
-			if ( os_strcmp( telemetry->attribute[i].name, name ) == 0 )
-				attr = &telemetry->attribute[i];
+			if ( os_strcmp( telemetry->option[i].name, name ) == 0 )
+				attr = &telemetry->option[i];
 		}
 
-		/* adding a new attribute */
+		/* adding a new option */
 		result = IOT_STATUS_FULL;
-		if ( !attr && telemetry->attribute_count < IOT_ATTRIBUTE_MAX )
+		if ( !attr && telemetry->option_count < IOT_OPTION_MAX )
 		{
 #ifndef IOT_STACK_ONLY
-			if ( !telemetry->attribute )
+			if ( !telemetry->option )
 			{
-				void *ptr = os_realloc( telemetry->attribute,
-					sizeof( struct iot_attribute ) *
-						( telemetry->attribute_count + 1u ) );
+				void *ptr = os_realloc( telemetry->option,
+					sizeof( struct iot_option ) *
+						( telemetry->option_count + 1u ) );
 				if ( ptr )
-					telemetry->attribute = ptr;
+					telemetry->option = ptr;
 			}
-			if ( telemetry->attribute )
+			if ( telemetry->option )
 #endif /* ifndef IOT_STACK_ONLY */
 			{
-				attr = &telemetry->attribute[telemetry->attribute_count];
-				os_memzero( attr, sizeof( struct iot_attribute ) );
-				++telemetry->attribute_count;
+				attr = &telemetry->option[telemetry->option_count];
+				os_memzero( attr, sizeof( struct iot_option ) );
+				++telemetry->option_count;
 			}
 		}
 
-		/* add or update the attribute */
+		/* add or update the option */
 		if ( attr )
 		{
 			iot_bool_t update = IOT_TRUE;
@@ -272,7 +272,7 @@ iot_status_t iot_telemetry_attribute_set_data(
 	return result;
 }
 
-iot_status_t iot_telemetry_attribute_set_raw(
+iot_status_t iot_telemetry_option_set_raw(
 	iot_telemetry_t *telemetry,
 	const char* name,
 	size_t length,
@@ -284,7 +284,7 @@ iot_status_t iot_telemetry_attribute_set_raw(
 	data.value.raw.ptr = ptr;
 	data.value.raw.length = length;
 	data.has_value = IOT_TRUE;
-	return iot_telemetry_attribute_set_data( telemetry, name, &data );
+	return iot_telemetry_option_set_data( telemetry, name, &data );
 }
 
 iot_status_t iot_telemetry_deregister(
@@ -345,10 +345,10 @@ iot_status_t iot_telemetry_free(
 #endif /* ifndef IOT_STACK_ONLY */
 				/* free any heap allocated storage */
 				size_t j;
-				for ( j = 0u; j < telemetry->attribute_count; ++j )
+				for ( j = 0u; j < telemetry->option_count; ++j )
 				{
 					os_free_null(
-						(void **)&telemetry->attribute[j].data.heap_storage );
+						(void **)&telemetry->option[j].data.heap_storage );
 				}
 
 				/* remove from library */
@@ -363,12 +363,12 @@ iot_status_t iot_telemetry_free(
 				/* clear/free the telemetry */
 				--lib->telemetry_count;
 #ifndef IOT_STACK_ONLY
-				for ( j = 0u; j < telemetry->attribute_count; ++j )
+				for ( j = 0u; j < telemetry->option_count; ++j )
 				{
-					os_free_null( (void**)&telemetry->attribute[j].name );
-					os_free_null( (void**)&telemetry->attribute[j].data.heap_storage );
+					os_free_null( (void**)&telemetry->option[j].name );
+					os_free_null( (void**)&telemetry->option[j].data.heap_storage );
 				}
-				os_free_null( (void**)&telemetry->attribute );
+				os_free_null( (void**)&telemetry->option );
 				os_free_null( (void**)&telemetry->name );
 				if ( is_in_heap == IOT_FALSE )
 				{

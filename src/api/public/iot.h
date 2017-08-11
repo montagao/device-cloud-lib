@@ -663,42 +663,42 @@ IOT_API IOT_SECTION iot_action_t *iot_action_allocate(
 	const char *name );
 
 /**
- * @brief Sets an attribute value for a action object
+ * @brief Sets an option value for a action object
  *
  * @param[in,out]  action              action object to set
  * @param[in]      name                attibute name
- * @param[in]      type                type of attribute data
- * @param[in]      ...                 value of attribute data in the
+ * @param[in]      type                type of option data
+ * @param[in]      ...                 value of option data in the
  *                                     type specified
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes
+ * @retval IOT_STATUS_FULL             maximum number of options
  *                                     reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_attribute_set_raw
+ * @see iot_action_option_set_raw
  */
-IOT_API IOT_SECTION iot_status_t iot_action_attribute_set(
+IOT_API IOT_SECTION iot_status_t iot_action_option_set(
 	iot_action_t *action,
 	const char *name,
 	iot_type_t type,
 	... );
 
 /**
- * @brief Sets a raw attribute value for a action object
+ * @brief Sets a raw option value for a action object
  *
  * @param[in,out]  action              action object to set
  * @param[in]      name                attibute name
- * @param[in]      length              length of attribute data
- * @param[in]      ptr                 pointer to attribute data
+ * @param[in]      length              length of option data
+ * @param[in]      ptr                 pointer to option data
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_attribute_set
+ * @see iot_action_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_action_attribute_set_raw(
+IOT_API IOT_SECTION iot_status_t iot_action_option_set_raw(
 	iot_action_t *action,
 	const char *name,
 	size_t length,
@@ -936,10 +936,10 @@ IOT_API IOT_SECTION iot_action_request_t *iot_action_request_allocate(
 	const char *source );
 
 /**
- * @brief Returns the value of a action request attribute
+ * @brief Returns the value of a action request option
  *
  * @param[in,out]  request             action request object to get value from
- * @param[in]      name                attribute name
+ * @param[in]      name                option name
  * @param[in]      convert             convert to type, if possible
  * @param[in]      type                type of data to return
  * @param[in,out]  ...                 pointer to a variable of the type
@@ -948,57 +948,57 @@ IOT_API IOT_SECTION iot_action_request_t *iot_action_request_allocate(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  *                                     (and not convertible, if set)
- * @retval IOT_STATUS_NOT_FOUND        attribute not found
+ * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_attribute_request_set_raw
- * @see iot_action_attribute_request_set
+ * @see iot_action_option_request_set_raw
+ * @see iot_action_option_request_set
  */
-IOT_API IOT_SECTION iot_status_t iot_action_request_attribute_get(
+IOT_API IOT_SECTION iot_status_t iot_action_request_option_get(
 	const iot_action_request_t *request,
 	const char *name,
 	iot_bool_t convert,
 	iot_type_t type, ... );
 
 /**
- * @brief Sets an attribute value for a action request object
+ * @brief Sets an option value for a action request object
  *
  * @param[in,out]  request             action request object to set
  * @param[in]      name                attibute name
- * @param[in]      type                type of attribute data
- * @param[in]      ...                 value of attribute data in the
+ * @param[in]      type                type of option data
+ * @param[in]      ...                 value of option data in the
  *                                     type specified
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes
+ * @retval IOT_STATUS_FULL             maximum number of options
  *                                     reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_request_attribute_get
- * @see iot_action_request_attribute_set_raw
+ * @see iot_action_request_option_get
+ * @see iot_action_request_option_set_raw
  */
-IOT_API IOT_SECTION iot_status_t iot_action_request_attribute_set(
+IOT_API IOT_SECTION iot_status_t iot_action_request_option_set(
 	iot_action_request_t *request,
 	const char *name,
 	iot_type_t type,
 	... );
 
 /**
- * @brief Sets a raw attribute value for a action request object
+ * @brief Sets a raw option value for a action request object
  *
  * @param[in,out]  request             action request object to set
  * @param[in]      name                attibute name
- * @param[in]      length              length of attribute data
- * @param[in]      ptr                 pointer to attribute data
+ * @param[in]      length              length of option data
+ * @param[in]      ptr                 pointer to option data
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_request_attribute_get
- * @see iot_action_request_attribute_set
+ * @see iot_action_request_option_get
+ * @see iot_action_request_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_action_request_attribute_set_raw(
+IOT_API IOT_SECTION iot_status_t iot_action_request_option_set_raw(
 	iot_action_request_t *request,
 	const char *name,
 	size_t length,
@@ -1223,15 +1223,15 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_status(
 #ifndef iot_EXPORTS
 #ifndef __clang__
 /**
- * @brief Sets an attribute for a action request object
+ * @brief Sets an option for a action request object
  *
- * @param[in,out]  request             object to set attribute for
- * @param[in]      name                attribute name
- * @param[in]      type                attribute type
- * @param[in]      data                attribute value
+ * @param[in,out]  request             object to set option for
+ * @param[in]      name                option name
+ * @param[in]      type                option type
+ * @param[in]      data                option value
  */
-#	define iot_action_request_attribute_set( request, name, type, data ) \
-		iot_action_request_attribute_set( request, name, type, data )
+#	define iot_action_request_option_set( request, name, type, data ) \
+		iot_action_request_option_set( request, name, type, data )
 
 /**
  * @brief Retrieve a parameter value for an action request being iterated
@@ -1276,15 +1276,15 @@ IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(
 #ifndef iot_EXPORTS
 #ifndef __clang__
 /**
- * @brief Sets an attribute for a action object
+ * @brief Sets an option for a action object
  *
- * @param[in,out]  action              object to set attribute for
- * @param[in]      name                attribute name
- * @param[in]      type                attribute type
- * @param[in]      data                attribute value
+ * @param[in,out]  action              object to set option for
+ * @param[in]      name                option name
+ * @param[in]      type                option type
+ * @param[in]      data                option value
  */
-#	define iot_action_attribute_set( action, name, type, data ) \
-		iot_action_attribute_set( action, name, type, data )
+#	define iot_action_option_set( action, name, type, data ) \
+		iot_action_option_set( action, name, type, data )
 
 /**
  * @brief Retrieve a parameter value for an action being handled
@@ -1745,41 +1745,41 @@ IOT_API IOT_SECTION iot_telemetry_t *iot_telemetry_allocate(
 	iot_type_t type );
 
 /**
- * @brief Sets an attribute value for a telemetry object
+ * @brief Sets an option value for a telemetry object
  *
  * @param[in,out]  telemetry           telemetry object to set
  * @param[in]      name                attibute name
- * @param[in]      type                type of attribute data
- * @param[in]      ...                 value of attribute data in the
+ * @param[in]      type                type of option data
+ * @param[in]      ...                 value of option data in the
  *                                     type specified
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FULL             maximum number of attributes reached
+ * @retval IOT_STATUS_FULL             maximum number of options reached
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_telemetry_attribute_set_raw
+ * @see iot_telemetry_option_set_raw
  */
-IOT_API IOT_SECTION iot_status_t iot_telemetry_attribute_set(
+IOT_API IOT_SECTION iot_status_t iot_telemetry_option_set(
 	iot_telemetry_t *telemetry,
 	const char *name,
 	iot_type_t type,
 	... );
 
 /**
- * @brief Sets a raw attribute value for a telemetry object
+ * @brief Sets a raw option value for a telemetry object
  *
  * @param[in,out]  telemetry          telemetry object to set
  * @param[in]      name               attibute name
- * @param[in]      length             length of attribute data
- * @param[in]      ptr                pointer to attribute data
+ * @param[in]      length             length of option data
+ * @param[in]      ptr                pointer to option data
  *
  * @retval IOT_STATUS_BAD_PARAMETER   invalid parameter passed to the function
- * @retval IOT_STATUS_FULL            maximum number of attributes reached
+ * @retval IOT_STATUS_FULL            maximum number of options reached
  * @retval IOT_STATUS_SUCCESS         on success
  *
- * @see iot_telemetry_attribute_set
+ * @see iot_telemetry_option_set
  */
-IOT_API IOT_SECTION iot_status_t iot_telemetry_attribute_set_raw(
+IOT_API IOT_SECTION iot_status_t iot_telemetry_option_set_raw(
 	iot_telemetry_t *telemetry,
 	const char *name,
 	size_t length,
@@ -1896,15 +1896,15 @@ IOT_API IOT_SECTION iot_status_t iot_telemetry_publish_raw(
 #ifndef iot_EXPORTS
 #ifndef __clang__
 /**
- * @brief Sets an attribute for a telemetry object
+ * @brief Sets an option for a telemetry object
  *
- * @param[in,out]  telemetry           object to set attribute for
- * @param[in]      name                attribute name
- * @param[in]      type                attribute type
- * @param[in]      data                attribute value
+ * @param[in,out]  telemetry           object to set option for
+ * @param[in]      name                option name
+ * @param[in]      type                option type
+ * @param[in]      data                option value
  */
-#	define iot_telemetry_attribute_set( telemetry, name, type, data ) \
-		iot_telemetry_attribute_set( telemetry, name, type, data )
+#	define iot_telemetry_option_set( telemetry, name, type, data ) \
+		iot_telemetry_option_set( telemetry, name, type, data )
 
 /**
  * @brief Publishs telemetry towards the cloud

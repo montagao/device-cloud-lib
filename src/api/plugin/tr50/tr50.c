@@ -395,7 +395,7 @@ iot_status_t tr50_action_complete(
 		if ( os_strncmp( source, "tr50", 4 ) == 0 )
 		{
 			const char *req_id;
-			result = iot_action_request_attribute_get(
+			result = iot_action_request_option_get(
 				request, "id", IOT_FALSE, IOT_TYPE_STRING, &req_id );
 			if ( data && result == IOT_STATUS_SUCCESS && req_id && *req_id )
 			{
@@ -658,15 +658,15 @@ iot_status_t tr50_connect(
 		iot_mqtt_ssl_t ssl_conf;
 		iot_bool_t validate_cert = IOT_FALSE;
 
-		iot_attribute_get( lib, "cloud.host", IOT_FALSE,
+		iot_option_get( lib, "cloud.host", IOT_FALSE,
 			IOT_TYPE_STRING, &host );
-		iot_attribute_get( lib, "cloud.port", IOT_FALSE,
+		iot_option_get( lib, "cloud.port", IOT_FALSE,
 			IOT_TYPE_INT64, &port );
-		iot_attribute_get( lib, "cloud.token", IOT_FALSE,
+		iot_option_get( lib, "cloud.token", IOT_FALSE,
 			IOT_TYPE_STRING, &app_token );
-		iot_attribute_get( lib, "ca_bundle_file", IOT_FALSE,
+		iot_option_get( lib, "ca_bundle_file", IOT_FALSE,
 			IOT_TYPE_STRING, &ca_bundle );
-		iot_attribute_get( lib, "validate_cloud_cert", IOT_FALSE,
+		iot_option_get( lib, "validate_cloud_cert", IOT_FALSE,
 			IOT_TYPE_BOOL, &validate_cert );
 
 		os_memzero( &ssl_conf, sizeof( iot_mqtt_ssl_t ) );
@@ -739,15 +739,15 @@ iot_status_t tr50_connect_check(
 			iot_mqtt_ssl_t ssl_conf;
 			iot_bool_t validate_cert = IOT_FALSE;
 
-			iot_attribute_get( lib, "cloud.host", IOT_FALSE,
+			iot_option_get( lib, "cloud.host", IOT_FALSE,
 				IOT_TYPE_STRING, &host );
-			iot_attribute_get( lib, "cloud.port", IOT_FALSE,
+			iot_option_get( lib, "cloud.port", IOT_FALSE,
 				IOT_TYPE_INT64, &port );
-			iot_attribute_get( lib, "cloud.token", IOT_FALSE,
+			iot_option_get( lib, "cloud.token", IOT_FALSE,
 				IOT_TYPE_STRING, &app_token );
-			iot_attribute_get( lib, "ca_bundle_file", IOT_FALSE,
+			iot_option_get( lib, "ca_bundle_file", IOT_FALSE,
 				IOT_TYPE_STRING, &ca_bundle );
-			iot_attribute_get( lib, "validate_cloud_cert", IOT_FALSE,
+			iot_option_get( lib, "validate_cloud_cert", IOT_FALSE,
 				IOT_TYPE_BOOL, &validate_cert );
 
 			os_memzero( &ssl_conf, sizeof( iot_mqtt_ssl_t ) );
@@ -1063,7 +1063,7 @@ void tr50_on_message(
 												os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
 												name[ IOT_NAME_MAX_LEN ] = '\0';
 												req = iot_action_request_allocate( data->lib, name, "tr50" );
-												iot_action_request_attribute_set( req, "id", IOT_TYPE_STRING, id );
+												iot_action_request_option_set( req, "id", IOT_TYPE_STRING, id );
 											}
 
 											/* for each parameter */

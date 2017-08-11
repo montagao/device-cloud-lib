@@ -287,7 +287,7 @@ static iot_t* initialize( void )
 			"light", IOT_TYPE_FLOAT64 );
 		telemetry_temp = iot_telemetry_allocate( iot_lib,
 			"temp", IOT_TYPE_FLOAT32 );
-		iot_telemetry_attribute_set( telemetry_temp,
+		iot_telemetry_option_set( telemetry_temp,
 			"udmp:units", IOT_TYPE_STRING, "Celsius" );
 		telemetry_boolean = iot_telemetry_allocate( iot_lib,
 			"bool", IOT_TYPE_BOOL );
