@@ -34,34 +34,6 @@ set( API_SRCS_C ${API_SRCS_C}
 	CACHE INTERNAL "" FORCE
 )
 
-if ( IOT_API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.1" )
-	set( API_SRCS_C ${API_SRCS_C}
-		"wra_command.c"
-		"wra_common.c"
-		"wra_location.c"
-		"wra_metric.c"
-		"wra_service.c"
-		"wra_source.c"
-		CACHE INTERNAL "" FORCE
-	)
-endif()
-
-if ( IOT_API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.0" )
-	set( API_SRCS_C ${API_SRCS_C}
-		"wra_compat.c"
-		CACHE INTERNAL "" FORCE
-	)
-	# Version 1.0 compatibility is built into a source file called "wra_compat.c"
-	# this file contains deprecated declarations within it to warn customers using
-	# the old API.  However, this flag will cause the build the fail when using
-	# GNU/Clang. This fix suppresses this warning for the offending files.
-	set_source_files_properties( ${API_HDRS_CXX} ${API_SRCS_CXX} PROPERTIES LANGUAGE CXX )
-	if ( CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)" )
-		set_source_files_properties( "wra_compat.c" PROPERTIES COMPILE_FLAGS
-			"-Wno-deprecated-declarations" )
-	endif ( CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)" )
-endif()
-
 include_directories( SYSTEM
 	"${JSON_INCLUDE_DIR}"
 	"${MQTT_INCLUDE_DIR}"

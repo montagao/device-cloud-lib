@@ -15,25 +15,6 @@ set( C_HDRS ${C_HDRS}
 	"iot_plugin.h"
 )
 
-if ( IOT_API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.1" )
-	set( C_HDRS ${C_HDRS}
-		"wra_command.h"
-		"wra_common.h"
-		"wra_location.h"
-		"wra_metric.h"
-		"wra_service.h"
-		"wra_source.h"
-		"wra_types.h"
-		"wra.h"
-	)
-endif()
-
-if ( IOT_API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.0" )
-	set( C_HDRS ${C_HDRS}
-		"wra_compat.h"
-	)
-endif()
-
 get_full_path( C_HDRS ${C_HDRS} )
 set( API_HDRS_C ${API_HDRS_C} ${C_HDRS} CACHE INTERNAL "" FORCE )
 

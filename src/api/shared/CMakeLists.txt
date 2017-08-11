@@ -13,13 +13,6 @@ set( C_HDRS
 	"iot_types.h"
 )
 
-if ( API_MINIMUM_SUPPORTED_VERSION VERSION_LESS "2.1" )
-	set( C_HDRS ${C_HDRS}
-		"wra_connection.h"
-		"wra_internal.h"
-	)
-endif()
-
 get_full_path( C_HDRS ${C_HDRS} )
 set( API_HDRS_C ${API_HDRS_C} ${C_HDRS} CACHE INTERNAL "" FORCE )
 
