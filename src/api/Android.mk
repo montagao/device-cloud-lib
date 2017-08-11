@@ -27,7 +27,7 @@ define build_plugin_util
 __plugin_module_name:= $1
 __plugin_module_src:= $2
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(iot_c_includes)
+LOCAL_C_INCLUDES := $(iot_c_includes) external/hdc/curl/include
 LOCAL_CFLAGS += -DIOT_PLUGIN_BUILTIN -DOPENSSL
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/public
 LOCAL_MODULE := $$(__plugin_module_name)
@@ -41,11 +41,11 @@ $(eval $(call build_plugin_util, libtr50, ./plugin/tr50/tr50.c ) )
 
 # build libiot
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(iot_c_includes)
+LOCAL_C_INCLUDES := $(iot_c_includes) external/hdc/libarchive/contrib/android/include
 LOCAL_CFLAGS += -DIOT_PLUGIN_BUILTIN -DOPENSSL -DJSMN_PARENT_LINKS -DJSMN_STRICT
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/public
-LOCAL_SHARED_LIBRARIES := libcutils libdl libjansson libmosquitto libext2_uuid libcrypto libssl
-LOCAL_STATIC_LIBRARIES := libosal libandroidifaddrs libtr50 libpaho-mqtt3cs libiotjsmn
+LOCAL_SHARED_LIBRARIES := libcutils libdl libjansson libmosquitto libext2_uuid libcrypto libssl libcurl
+LOCAL_STATIC_LIBRARIES := libosal libandroidifaddrs libtr50 libpaho-mqtt3cs libiotjsmn libarchive
 
 LOCAL_MODULE := libiot
 LOCAL_SRC_FILES := \
@@ -53,10 +53,13 @@ LOCAL_SRC_FILES := \
 	./iot_base.c \
 	./iot_base64.c \
 	./iot_common.c \
+	./iot_file.c \
 	./iot_location.c \
 	./iot_mqtt.c \
 	./iot_plugin.c \
 	./iot_telemetry.c \
+	./checksum/iot_checksum.c \
+	./checksum/iot_checksum_crc32.c \
 	./json/iot_json_decode.c \
 	./json/iot_json_encode.c \
 	./json/iot_json_base.c \

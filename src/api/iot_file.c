@@ -13,6 +13,7 @@
 
 #include "public/iot.h"
 
+#include "iot_build.h"             /* for IOT_RUNTIME_DIR_DEFAULT */
 #include "iot_common.h"            /* for iot_common_arg_set */
 #include "iot_plugin.h"            /* for plug-in support */
 
@@ -22,9 +23,8 @@
 #include <archive.h>               /* for archiving functions */
 #include <archive_entry.h>         /* for adding files to an archive */
 
-#define IOT_DEFAULT_RUNTIME_DIR  "/var/lib/iot"
-#define IOT_DEFAULT_DOWNLOAD_DIR IOT_DEFAULT_RUNTIME_DIR "/download"
-#define IOT_DEFAULT_UPLOAD_DIR   IOT_DEFAULT_RUNTIME_DIR "/upload"
+#define IOT_DEFAULT_DOWNLOAD_DIR IOT_RUNTIME_DIR_DEFAULT "/download"
+#define IOT_DEFAULT_UPLOAD_DIR   IOT_RUNTIME_DIR_DEFAULT "/upload"
 
 /**
  * @brief Transfer a file/directory to/from cloud
@@ -252,7 +252,7 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 
 		/* get a temporary file name */
 		os_snprintf( archive_path, PATH_MAX, "%s%cfileXXXXXX.tar",
-			IOT_DEFAULT_RUNTIME_DIR, OS_DIR_SEP );
+			IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP );
 		os_file_temp( archive_path, 4 );
 
 		/* compress all files in upload directories */

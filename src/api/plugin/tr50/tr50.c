@@ -1518,7 +1518,13 @@ OS_THREAD_DECL tr50_file_transfer(
 
 				/* In some OSs libcurl cannot access the default CAs
 				 * and it has to be added in the fs */
+#ifdef __ANDROID__
+				/* FIXME: read this from iot.cfg */
+				curl_easy_setopt( transfer->lib_curl, CURLOPT_CAINFO,
+					"/system/etc/security/cacerts/ca-certificates.crt" );
+#else
 				curl_easy_setopt( transfer->lib_curl, CURLOPT_CAINFO, NULL );
+#endif
 
 #if PROXY_SUPPORT
 				/* Proxy settings */

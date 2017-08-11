@@ -22,6 +22,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../ \
 	$(LOCAL_PATH)/../api/ \
 	external/hdc/libwebsockets/lib \
+	external/hdc/curl/include \
 	external/openssl/include \
 
 LOCAL_SHARED_LIBRARIES := libiot libcrypto libssl libz libdl libext2_uuid
