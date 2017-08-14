@@ -23,7 +23,7 @@
 #include "os.h"           /* for os specific functions */
 #include "api/shared/iot_types.h"      /* for IOT_ACTION_NO_RETURN, IOT_RUNTIME_DIR */
 #include "utilities/app_arg.h"        /* for struct app_arg & functions */
-#include "utilities/app_config.h"     /* for reading config file */
+#include "app_config.h"     /* for reading config file */
 #include "utilities/app_log.h"        /* for app_log function */
 #include "utilities/app_path.h"       /* for app_path_which function */
 
@@ -982,7 +982,7 @@ iot_status_t device_manager_initialize( const char *app_path,
 		/*}*/
 #endif /* ifndef NO_FILEIO_SUPPORT */
 
-		iot_lib = iot_initialize( "device-manager", app_path, 0u );
+		iot_lib = iot_initialize( "device-manager", NULL, 0u );
 		if ( iot_lib == NULL )
 		{
 			os_fprintf( OS_STDERR,
@@ -992,7 +992,7 @@ iot_status_t device_manager_initialize( const char *app_path,
 
 #ifdef _WRS_KERNEL
 		/* Set user specified default log level */
-		iot_log_level_set_string( iot_lib, IOT_LOG_LEVEL );
+		iot_log_level_set_string( iot_lib, IOT_LOG_TRACE );
 #endif /* ifdef _WRS_KERNEL */
 		iot_log_callback_set( iot_lib, &app_log, NULL );
 
@@ -1544,7 +1544,7 @@ iot_status_t device_manager_run_os_command( const char *cmd,
 		else
 		{
 			result = IOT_STATUS_FAILURE;
-			IOT_LOG( APP_DATA.iot_lib, IOT_LOG_TRACE,
+			IOT_LOG( APP_DATA.iot_lib, IOT_LOG_LEVEL,
 				"OS cmd (%s): return value %d",
 				cmd, retval );
 		}
