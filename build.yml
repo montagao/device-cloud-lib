@@ -34,3 +34,7 @@ IOT_RUNTIME_DIR_DEFAULT: "/var/lib/iot"
 IOT_PLUGIN_MAX: 5
 IOT_PLUGIN_BUILTIN:
   - tr50: on
+
+# config files
+IOT_CFG: "iot.cfg"
+IOT_USER: "iot"

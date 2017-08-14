@@ -15,10 +15,35 @@ read_yaml_file( ${IOT_CONFIG_FILE} )
 cmake_minimum_required( VERSION 2.8.5 )
 project( ${IOT_PRODUCT} )
 
+set( IOT_USER "iot" )
+if( WIN32 )
+        set( IOT_USER "SYSTEM" )
+endif()
+
 # Project information
 set( PROJECT_NAME                      "${CMAKE_PROJECT_NAME}" )
 set( PROJECT_VERSION                   "${IOT_VERSION}" )
 set( PROJECT_VENDOR                    "${IOT_VENDOR}" )
+
+set( IOT_SERVICE_TARGET                "iot-service" )
+set( IOT_SERVICE_NAME                  "${PROJECT_NAME} Core Service" )
+set( IOT_SERVICE_DESCRIPTION           "Core aggregation service for ${PROJECT_NAME} devices." )
+string( REPLACE ";" " " IOT_SERVICE_DESCRIPTION "${IOT_SERVICE_DESCRIPTION}" )
+
+set( IOT_DEVICE_MANAGER_TARGET         "iot-device-manager" )
+set( IOT_DEVICE_MANAGER_NAME           "${PROJECT_NAME} Device Manager" )
+set( IOT_DEVICE_MANAGER_DESCRIPTION    "Registers and handles device level requests for ${PROJECT_NAME} devices."
+                                       "Client that registers with ${IOT_SERVICE_TARGET} to handle over-the-air updates,"
+                                       "device reboot/shutdown, agent reset etc." )
+string( REPLACE ";" " " IOT_DEVICE_MANAGER_DESCRIPTION "${IOT_DEVICE_MANAGER_DESCRIPTION}" )
+
+set( IOT_RELAY_TARGET                  "iot-relay" )
+set( IOT_RELAY_NAME                    "${PROJECT_NAME} relay tool" )
+set( IOT_RELAY_DESCRIPTION             "Streamlines connections to the cloud" )
+
+set( IOT_UPDATE_TARGET                  "iot-update" )
+set( IOT_UPDATE_NAME                    "${PROJECT_NAME} Software Updates" )
+set( IOT_UPDATE_DESCRIPTION             "Application to handle software updates" )
 
 # Setup variables
 # Determine if compiling in 64-bit mode

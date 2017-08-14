@@ -7,8 +7,8 @@
 # herein.  All rights not licensed by Wind River are reserved by Wind River.
 #
 
-set( TARGET "iot-relay" )
-set( TARGET_DESCRIPTION "iot-realy" )
+set( TARGET "${IOT_RELAY_TARGET}" )
+set( TARGET_DESCRIPTION "${IOT_RELAY_DESCRIPTION}" )
 
 find_package( LibWebSockets REQUIRED )
 find_package( OpenSSL )
