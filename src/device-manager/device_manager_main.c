@@ -20,16 +20,16 @@
 /*#	include "device_manager_scripts.h"*/
 #endif /*#if !define ( _WIN32 ) && !define ( _WRS_KERNEL )*/
 
-#include "os.h"           /* for os specific functions */
-#include "api/shared/iot_types.h"      /* for IOT_ACTION_NO_RETURN, IOT_RUNTIME_DIR */
+#include "os.h"                       /* for os specific functions */
+#include "api/shared/iot_types.h"     /* for IOT_ACTION_NO_RETURN, IOT_RUNTIME_DIR */
 #include "utilities/app_arg.h"        /* for struct app_arg & functions */
-#include "app_config.h"     /* for reading config file */
+#include "app_config.h"               /* for reading config file */
 #include "utilities/app_log.h"        /* for app_log function */
 #include "utilities/app_path.h"       /* for app_path_which function */
 
 #include "iot_build.h"
-
-#include <stdlib.h>                    /* for EXIT_SUCCESS, EXIT_FAILURE */
+#include "iot_json.h"                 /* for json */
+#include <stdlib.h>                   /* for EXIT_SUCCESS, EXIT_FAILURE */
 
 /* Note: for backwards compatibility, register under two services instead of one
  */
@@ -1091,6 +1091,20 @@ iot_status_t device_manager_action_enable(
 }
 
 #ifndef _WRS_KERNEL
+
+const char *const action_cfg_names[] ={ 
+	"software_update",
+	"file_transfers",
+	"decommission_device",
+	"restore_factory_images",
+	"dump_log_files",
+	"shutdown_device",
+	"reboot_device",
+	"reset_agent",
+	"remote_login",
+	NULL
+};
+
 iot_status_t device_manager_config_read(
 	struct device_manager_info *device_manager_info,
 	const char *app_path, const char *config_file )
@@ -1101,12 +1115,14 @@ iot_status_t device_manager_config_read(
 	{
 		struct device_manager_file_io_info *const file_io =
 			&device_manager_info->file_io_info;
-		/*struct iot_proxy *const proxy = &file_io->proxy_info;*/
-		struct app_config *config = NULL;
+		/*struct app_config *config = NULL;*/
 		char install_dir[PATH_MAX + 1u];
-		char temp_string[PATH_MAX + 1u];
+		/*char temp_string[PATH_MAX + 1u];*/
+		char default_iot_cfg_path[PATH_MAX + 1u];
 		char *p_path;
 		iot_bool_t has_rdp = IOT_FALSE;
+		os_file_t fd;
+
 
 		/* Find install dir to be used later */
 		os_strncpy( install_dir, app_path, PATH_MAX );
@@ -1121,22 +1137,6 @@ iot_status_t device_manager_config_read(
 			IOT_RUNTIME_DIR_DEFAULT, PATH_MAX );
 		os_env_expand( device_manager_info->runtime_dir, PATH_MAX );
 		device_manager_info->runtime_dir[PATH_MAX] = '\0';
-
-		file_io->ssl_validate = SSL_DEFAULT_VALIDATE;
-
-		file_io->cert_path[0] = '\0';
-		if ( IOT_DEFAULT_CERT_PATH[0] != '\0' )
-		{
-			os_strncpy( temp_string, IOT_DEFAULT_CERT_PATH,
-				PATH_MAX );
-			os_env_expand( temp_string, PATH_MAX );
-			if ( os_path_is_absolute( temp_string ) == IOT_TRUE )
-				os_strncpy( file_io->cert_path, temp_string, PATH_MAX );
-			else
-				os_make_path( file_io->cert_path, PATH_MAX,
-					install_dir, temp_string, NULL );
-			file_io->cert_path[PATH_MAX] = '\0';
-		}
 
 		/* set the default value for remote login.  Can be
 		 * overriden in the iot.cfg file. */
@@ -1254,6 +1254,8 @@ iot_status_t device_manager_config_read(
 		/* standard actions */
 		device_manager_info->enabled_actions = 0u;
 #ifndef _WRS_KERNEL
+
+		/* compile time definition */
 		if ( IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE )
 			device_manager_action_enable( device_manager_info,
 				DEVICE_MANAGER_ENABLE_SOFTWARE_UPDATE, IOT_TRUE );
@@ -1294,44 +1296,112 @@ iot_status_t device_manager_config_read(
 
 		/* Read config file */
 		result = IOT_STATUS_NOT_FOUND;
+
+		if ( config_file && config_file[0] != '\0' )
+			fd = os_file_open( config_file, OS_READ );
+		else
+		{
+			os_snprintf( default_iot_cfg_path, PATH_MAX, "%s%c%s",
+				IOT_CONFIG_DIR_DEFAULT, OS_DIR_SEP, IOT_CFG );
+			fd = os_file_open( default_iot_cfg_path, OS_READ );
+		}
+
+		if ( fd != OS_FILE_INVALID )
+		{
+			size_t json_size = 0u;
+			size_t json_max_size = 4096u;
+			iot_json_decoder_t *json;
+			iot_json_item_t *json_root = NULL;
+			char *json_string = NULL;
+
+			result = IOT_STATUS_NO_MEMORY;
+			json_size = (size_t)os_file_get_size_handle( fd );
+			if ( json_max_size > json_size || json_max_size == 0 )
+			{
+				json_string = (char *)os_malloc( json_size + 1 );
+				if ( json_string )
+				{
+					json_size = os_file_read( json_string, 1, json_size, fd );
+					json_string[ json_size ] = '\0';
+					if ( json_size > 0 )
+						result = IOT_STATUS_SUCCESS;
+					printf("Read %s = %s\n", config_file, json_string);
+				}
+			}
+			/* now parse the json string read above */
+			if ( result == IOT_STATUS_SUCCESS && json_string )
+			{
+				char err_msg[1024u];
+				const char *temp = NULL;
+				size_t temp_len = 0u;
+
+				json = iot_json_decode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+				if ( json && iot_json_decode_parse( json,
+							json_string, 
+							json_size, &json_root,
+						err_msg, 1024u ) == IOT_STATUS_SUCCESS )
+				{
+					int i = 0;
+					unsigned int action_mask = 0u;
+					iot_json_item_t *j_action_top;
+					iot_json_item_t *const j_actions_enabled =
+						iot_json_decode_object_find( 
+							json, json_root,
+							"actions_enabled" );
+
+					/* handle all the boolean default actions */
+					for ( i = 0; j_actions_enabled && action_cfg_names[i];++i)
+					{
+						iot_bool_t enabled = IOT_FALSE;
+						iot_json_item_t *const j_action = iot_json_decode_object_find( 
+							json, j_actions_enabled,action_cfg_names[i]);
+						iot_json_decode_bool(json, j_action, &enabled );
+						if ( enabled == IOT_TRUE )
+						{
+							printf("%s is enabled\n", action_cfg_names[i]);
+							action_mask |= (1<<i);
+						}
+						else
+							printf("%s is disabled\n", action_cfg_names[i]);
+					}
+					printf("mask = %x\n", action_mask);
+					device_manager_info->enabled_actions = action_mask;
+
+					/* get the runtime dir */
+					j_action_top = iot_json_decode_object_find( 
+							json, json_root, "runtime_dir" );
+
+					iot_json_decode_string( json,
+							j_action_top, &temp,
+							&temp_len  );
+					if ( temp )
+					{
+						if ( temp_len > PATH_MAX )
+							temp_len = PATH_MAX;
+						os_strncpy(device_manager_info->runtime_dir,
+							temp, temp_len );
+
+						os_env_expand( device_manager_info->runtime_dir, PATH_MAX );
+						device_manager_info->runtime_dir[ temp_len ] = '\0';
+						printf("runtime dir = %s\n",device_manager_info->runtime_dir );
+						if ( os_directory_create(
+							device_manager_info->runtime_dir,
+							DIRECTORY_CREATE_MAX_TIMEOUT )
+						!= OS_STATUS_SUCCESS )
+							printf( "Failed to create %s ", device_manager_info->runtime_dir );
+					}
+
+
+				}
+				else
+					printf("error %s\n", err_msg);
+			}
+		}
+		os_file_close( fd );
+#if 0
 		if ( ( config = app_config_open( NULL, config_file ) ) )
 		{
 			iot_bool_t temp_bool = IOT_FALSE;
-			result = app_config_read_string( config, NULL, "runtime_dir", temp_string, PATH_MAX );
-			if ( result == IOT_STATUS_SUCCESS && temp_string[0] != '\0' )
-			{
-				os_strncpy(
-					device_manager_info->runtime_dir,
-					temp_string, PATH_MAX );
-				os_env_expand(
-					device_manager_info->runtime_dir, PATH_MAX );
-				device_manager_info->runtime_dir[PATH_MAX] = '\0';
-				if ( os_directory_create(
-						device_manager_info->runtime_dir,
-						DIRECTORY_CREATE_MAX_TIMEOUT )
-					!= OS_STATUS_SUCCESS )
-					IOT_LOG( NULL, IOT_LOG_ERROR, "Failed to create %s ", device_manager_info->runtime_dir );
-			}
-
-			result = app_config_read_boolean( config, NULL, "ssl_validation", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				file_io->ssl_validate = temp_bool;
-
-			result = app_config_read_string( config, NULL, "cert_path", temp_string, PATH_MAX );
-			if ( result == IOT_STATUS_SUCCESS && temp_string[0] != '\0' )
-			{
-				char cert_path[PATH_MAX];
-				os_strncpy( cert_path, temp_string,
-					PATH_MAX );
-				os_env_expand( cert_path, PATH_MAX );
-				if ( os_path_is_absolute( cert_path ) != IOT_FALSE )
-					os_strncpy( file_io->cert_path,
-						cert_path, PATH_MAX );
-				else
-					os_make_path( file_io->cert_path,
-						PATH_MAX, install_dir, cert_path, NULL );
-				file_io->cert_path[PATH_MAX] = '\0';
-			}
 
 			/* Read the remote login protocol from the
 			 * iot.cfg.  Null is a valid value to disable it.*/
@@ -1344,69 +1414,7 @@ iot_status_t device_manager_config_read(
 					device_manager_info->remote_login_protocols,
 					temp_string, REMOTE_LOGIN_PROTOCOL_MAX );
 			}
-			/*FIXME*/
-			/*result = app_config_read_string( config, "proxy", "username", temp_string, PATH_MAX );*/
-			/*if ( result == IOT_STATUS_SUCCESS && temp_string[0] != '\0' )*/
-			/*os_strncpy( proxy->username, temp_string, PATH_MAX );*/
 
-			/*result = app_config_read_string( config, "proxy", "password", temp_string, PATH_MAX );*/
-			/*if ( result == IOT_STATUS_SUCCESS && temp_string[0] != '\0' )*/
-			/*os_strncpy( proxy->password, temp_string, PATH_MAX );*/
-
-			/* Standard actions */
-			result = app_config_read_boolean( config, "actions_enabled",
-				"shutdown_device", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_DEVICE_SHUTDOWN, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"reboot_device", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_DEVICE_REBOOT, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"reset_agent", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_AGENT_RESET, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"file_transfers", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_FILE_TRANSFERS, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"software_update", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_SOFTWARE_UPDATE, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"restore_factory_images", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_RESTORE_FACTORY_IMAGES, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"decommission_device", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_DECOMMISSION_DEVICE, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"dump_log_files", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_DUMP_LOG_FILES, temp_bool );
-
-			result = app_config_read_boolean( config, "actions_enabled",
-				"remote_login", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				device_manager_action_enable( device_manager_info,
-					DEVICE_MANAGER_ENABLE_REMOTE_LOGIN, temp_bool );
 
 			result = app_config_read_string_array( config, NULL,
 				"upload_additional_dirs", OS_ENV_SPLIT, temp_string, PATH_MAX );
@@ -1422,30 +1430,7 @@ iot_status_t device_manager_config_read(
 
 			app_config_close( config );
 		}
-
-		/* set verification values based on the state of ssl validation */
-		/* These 2 fields are used to enable/disable ssl verification.
-		 * They will be used for CURLOPT_SSL_VERIFYHOST and CURLOPT_SSL_VERIFYPEER
-		 * options. For CURLOPT_SSL_VERIFYPEER, a value of 1L means peer's
-		 * certificate is verified, and 0L means it is not. For CURLOPT_SSL_VERIFYHOST,
-		 * with value of 1L, curl_easy_setopt() will return an error and the
-		 * option value will not be changed; it was previously (libcurl 7.28.0 and
-		 * earlier) a debug option of some sorts, but it is no longer supported due to
-		 * frequently leading to programmer mistakes. Value of 2L means the server's
-		 * certificate is validated and 0L means it is not */
-		if ( file_io->ssl_validate != IOT_FALSE )
-		{
-			file_io->ssl_host_verification = 2L;
-			file_io->ssl_peer_verification = 1L;
-		}
-		else
-		{
-			file_io->ssl_host_verification = 0L;
-			file_io->ssl_peer_verification = 0L;
-		}
-
-		/* Network related settings are located in a separate config file */
-		/*app_config_read_proxy_file( proxy );*/
+#endif
 	}
 	return result;
 }
