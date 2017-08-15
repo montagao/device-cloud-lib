@@ -1479,7 +1479,7 @@ OS_THREAD_DECL tr50_file_transfer(
 					transfer->path, TR50_DOWNLOAD_EXTENSION );
 
 			file_handle = os_file_open( file_path,
-				(transfer->op == IOT_OPERATION_FILE_PUT)? OS_READ : OS_WRITE );
+				(transfer->op == IOT_OPERATION_FILE_PUT)? OS_READ : OS_WRITE | OS_CREATE );
 
 			if ( file_handle )
 			{
