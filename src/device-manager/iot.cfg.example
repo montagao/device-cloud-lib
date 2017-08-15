@@ -1,0 +1,20 @@
+{
+	"runtime_dir": "",
+	"log_level": "",
+	"actions_enabled": {
+		"shutdown_device": True,
+		"reboot_device": True,
+		"reset_agent": True,
+		"file_transfers": True,
+		"software_update": True,
+		"restore_factory_images": True,
+		"decommission_device": True,
+		"dump_log_files": True,
+		"remote_login" : True 
+	},
+	"upload_remove_on_success": True,
+	"upload_additional_dirs": [
+		""
+	]
+}
+
