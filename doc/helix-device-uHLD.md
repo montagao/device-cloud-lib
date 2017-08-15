@@ -643,6 +643,33 @@ iot_status_t iot_file_receive(
 	iot_action_callback_t *completion_callback );
 ```
 
+Alarms
+------
+```
+typedef enum iot_severity {
+	SEVERITY_0,
+	SEVERITY_1,
+	SEVERITY_2,
+	SEVERITY_3,
+	SEVERITY_4,
+	SEVERITY_5
+} iot_severity_t;
+
+IOT_SECTION iot_status_t iot_alarm_deregister(
+	iot_alarm_t *alarm );
+
+IOT_SECTION iot_alarm_t *iot_alarm_register(
+	iot_t *handle,
+	const char *name,
+	);
+
+iot_status_t iot_alarm_publish(
+	iot_alarm_t *alarm,
+	iot_severity severity,
+	const char *msg
+);
+```
+
 HDC2.0 APIs Deprecated
 ========================
 The original wra_* APIs were deprecated in HDC 2.1 timeframe and will
