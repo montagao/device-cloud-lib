@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief source file for base IoT library json functionality
+ * @brief source file for base IoT library JSON functionality
  *
  * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
  *
@@ -25,7 +25,7 @@ static iot_json_realloc_t *JSON_REALLOC = NULL;
 
 #ifdef IOT_JSON_JANSSON
 /**
- * @brief helper function to dynamically allocate memory for json
+ * @brief helper function to dynamically allocate memory for JSON
  *
  * @param[in]      t                   amount of memory in bytes to allocate
  *

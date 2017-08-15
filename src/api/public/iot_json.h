@@ -85,7 +85,7 @@ void iot_json_allocation_set(
 /******************/
 
 /**
- * @brief helper functions for determining json type
+ * @brief helper functions for determining JSON type
  * @{
  */
 #define iot_json_decode_is_array( json, item ) ( iot_json_decode_type( (json), (item) ) == JSON_TYPE_ARRAY )
@@ -96,7 +96,7 @@ void iot_json_allocation_set(
 #define iot_json_decode_is_string( json, item ) ( iot_json_decode_type( (json), (item) ) == JSON_TYPE_STRING )
 /** @} */
 
-/** @brief Represents a base JSON decoder */
+/** @brief Represents a JSON decoder object */
 typedef struct iot_json_decoder iot_json_decoder_t;
 /** @brief Represents a JSON item (object, array, string, real, etc.) */
 typedef void iot_json_item_t;
@@ -111,7 +111,7 @@ typedef void iot_json_object_iterator_t;
  * The valid range for index is from 0 to the return value of
  * json_array_size() minus 1.
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON array
  * @param[in]      index               index of item to retrieve
  * @param[in,out]  out                 returned item at the specified index
@@ -127,7 +127,7 @@ typedef void iot_json_object_iterator_t;
  * @see iot_json_decode_array_size
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_array_at(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	iot_json_item_t *item,
 	size_t index,
 	iot_json_item_t **out );
@@ -135,10 +135,10 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_array_at(
 /**
  * @brief Returns an iterator for iterating through a JSON array
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON array to create iterator for
  *
- * @retval NULL    item is not a JSON array or @c item or @c json is NULL or
+ * @retval NULL    item is not a JSON array or @c item or @c decoder is NULL or
  *                 JSON object contains no elements
  * @retval !NULL   pointer to an iterator to iterate through the given array
  *
@@ -146,13 +146,13 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_array_at(
  * @see iot_json_decode_array_size
  */
 IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	iot_json_item_t *item );
 
 /**
  * @brief Returns an iterator pointing to the next item in a JSON array
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON array to currently being iterated
  * @param[in,out]  iter                current JSON iterator
  *
@@ -167,14 +167,14 @@ IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator(
  * @see iot_json_decode_array_size
  */
 IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator_next(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	iot_json_item_t *item,
 	iot_json_array_iterator_t *iter );
 
 /**
  * @brief Returns value for the object that an iterator currently points to
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON array to currently being iterated
  * @param[in]      iter                iterator to retieve key for
  * @param[in,out]  out                 JSON object that is at the iterator
@@ -186,7 +186,7 @@ IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator_ne
  * @see iot_json_decode_array_iterator_next
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_array_iterator_value(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_json_array_iterator_t *iter,
 	iot_json_item_t **out );
@@ -194,7 +194,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_array_iterator_value(
 /**
  * @brief Returns the number of elements in an array
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON array
  *
  * @return Returns the number of elements in an array, or 0 if array is NULL
@@ -203,13 +203,13 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_array_iterator_value(
  * @see iot_json_decode_array_at
  */
 IOT_API IOT_SECTION size_t iot_json_decode_array_size(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item );
 
 /**
  * @brief Returns the associated boolean value
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON boolean
  * @param[in,out]  out                 returned boolean value
  *
@@ -221,7 +221,7 @@ IOT_API IOT_SECTION size_t iot_json_decode_array_size(
  * @see iot_json_encode_bool
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_bool(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_bool_t *value );
 
@@ -229,14 +229,14 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_bool(
  * @brief Initializes the JSON decoding system
  *
  * @note specifying the flag IOT_JSON_FLAG_DYNAMIC indicates to use dynamic
- * memory on the heap for allocating the base JSON decoder and JSON tokens.
+ * memory on the heap for allocating the JSON decoder object and JSON tokens.
  * In this case, the parameters @c buf and @c len are ignored.
  *
  * @param[in,out]  buf                 memory to use for the base parser
  * @param[in]      len                 amount of memory in the buf parameter
  * @param[in]      flags               flags for indicating parsing support
  *
- * @return a valid base JSON decoder
+ * @return a valid JSON decoder object
  *
  * @see iot_json_decode_parse
  * @see iot_json_decode_terminate
@@ -249,7 +249,7 @@ IOT_API IOT_SECTION iot_json_decoder_t *iot_json_decode_initialize(
 /**
  * @brief Returns the associated integer value
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON integer
  * @param[in,out]  value               returned integer value
  *
@@ -263,14 +263,14 @@ IOT_API IOT_SECTION iot_json_decoder_t *iot_json_decode_initialize(
  * @see iot_json_encode_integer
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_integer(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_int64_t *value );
 
 /**
  * @brief Returns the associated integer or real number value
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON integer or JSON real number
  * @param[in,out]  value               returned number value
  *
@@ -284,14 +284,14 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_integer(
  * @see iot_json_decode_type
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_number(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_float64_t *value );
 
 /**
  * @brief Returns the item mathcing the given key in an object
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      object              JSON object to search through
  * @param[in]      key                 item key to find
  *
@@ -301,17 +301,17 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_number(
  * @see iot_json_decode_object_iterator_key
  */
 IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	iot_json_item_t *object,
 	const char *key );
 
 /**
  * @brief Returns an iterator for iterating through a JSON object
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON object to create iterator for
  *
- * @retval NULL    item is not a JSON object or @c item or @c json is NULL or
+ * @retval NULL    item is not a JSON object or @c item or @c decoder is NULL or
  *                 JSON object contains no elements
  * @retval !NULL   pointer to an iterator to iterate through the given object
  *
@@ -319,19 +319,19 @@ IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find(
  * @see iot_json_decode_object_size
  */
 IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	iot_json_item_t *item );
 
 /**
  * @brief Returns key for the object that an iterator currently points to
  *
  * @note The returned key is read-only and must not be modified or freed by
- * the user. It is valid as long as the @c json object remains in scope.
+ * the user. It is valid as long as the @c decoder object remains in scope.
  *
  * @warning The returned string is not expected to be null-terminated,
  * to determine the length use the value returned via the @c key_len parameter
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON object to currently being iterated
  * @param[in]      iter                iterator to retieve key for
  * @param[out]     key                 returned string
@@ -346,7 +346,7 @@ IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator(
  * @see iot_json_decode_object_iterator_value
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_key(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_json_object_iterator_t *iter,
 	const char **key,
@@ -355,7 +355,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_key(
 /**
  * @brief Returns an iterator pointing to the next item in a JSON object
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON object to currently being iterated
  * @param[in,out]  iter                current JSON iterator
  *
@@ -371,14 +371,14 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_key(
  * @see iot_json_decode_object_size
  */
 IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator_next(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	iot_json_item_t *item,
 	iot_json_object_iterator_t *iter );
 
 /**
  * @brief Returns value for the object that an iterator currently points to
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON object to currently being iterated
  * @param[in]      iter                iterator to retieve key for
  * @param[in,out]  out                 JSON object that is at the iterator
@@ -391,7 +391,7 @@ IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator_
  * @see iot_json_decode_object_iterator_next
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_value(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_json_object_iterator_t *iter,
 	iot_json_item_t **out );
@@ -399,7 +399,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_value(
 /**
  * @brief Returns the number of elements in an object
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON object
  *
  * @return Returns the number of elements in an array, or 0 if object is NULL
@@ -409,19 +409,19 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_value(
  * @see iot_json_decode_object_iterator
  */
 IOT_API IOT_SECTION size_t iot_json_decode_object_size(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *object );
 
 /**
- * @brief Parses a given JSON stringand returns the root element
+ * @brief Parses a given JSON string and returns the root element
  *
  * @note the JSON string provided in the @c js parameter may not be checked for
  * the null-terminating character, always indicated the amount of valid
  * characters using the @c len parameter
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      js                  pointer to a string containing JSON text
- * @param[in]      len                 length of the json string
+ * @param[in]      len                 length of the JSON string
  * @param[out]     root                the root element
  * @param[in,out]  error               error text on failure (optional)
  * @param[in]      error_len           size of the error string buffer
@@ -435,7 +435,7 @@ IOT_API IOT_SECTION size_t iot_json_decode_object_size(
  * @see iot_json_decode_initialize
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_parse(
-	iot_json_decoder_t *json,
+	iot_json_decoder_t *decoder,
 	const char* js,
 	size_t len,
 	iot_json_item_t **root,
@@ -445,7 +445,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_parse(
 /**
  * @brief Returns the associated real number value
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON real number
  * @param[in,out]  value               returned real number value
  *
@@ -459,7 +459,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_parse(
  * @see iot_json_encode_real
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_real(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	iot_float64_t *value );
 
@@ -470,12 +470,12 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_real(
  * encoded string, or NULL if string is not a JSON string.
  *
  * @note The returned value is read-only and must not be modified or freed by
- * the user. It is valid as long as the @c json object remains in scope.
+ * the user. It is valid as long as the @c decoder object remains in scope.
  *
  * @warning The returned string not expected to be null-terminated, to determine
  * the length use the value returned via the @c value_len parameter
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON string
  * @param[out]     value               returned string
  * @param[out]     value_len           length of the returned string
@@ -488,7 +488,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_real(
  * @see iot_json_encode_string
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_string(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
 	const char **value,
 	size_t *value_len );
@@ -496,21 +496,21 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_string(
 /**
  * @brief Frees memory assocated with a JSON decoder
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  *
  * @see iot_json_decode_initialize
  */
 IOT_API IOT_SECTION void iot_json_decode_terminate(
-	iot_json_decoder_t *json );
+	iot_json_decoder_t *decoder );
 
 /**
  * @brief Returns the type pointed to by @c item
  *
- * @param[in]      json                base JSON decoder
+ * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON item
  *
  * @return the type of JSON object that @c item points to or IOT_JSON_TYPE_NULL
- * if @c item or @c json is NULL or @c item is not a valid pointer
+ * if @c item or @c decoder is NULL or @c item is not a valid pointer
  *
  * @see iot_json_decode_bool
  * @see iot_json_decode_integer
@@ -518,19 +518,19 @@ IOT_API IOT_SECTION void iot_json_decode_terminate(
  * @see iot_json_decode_string
  */
 IOT_API IOT_SECTION iot_json_type_t iot_json_decode_type(
-	const iot_json_decoder_t *json,
+	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item );
 
 
 /* ENCODE SUPPORT */
 /********************/
-/** @brief Represents a base JSON encoder */
+/** @brief Represents a JSON encoder object */
 typedef struct iot_json_encoder iot_json_encoder_t;
 
 /**
  * @brief Ends the encoding of a JSON array
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  *
  * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
  * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
@@ -540,12 +540,12 @@ typedef struct iot_json_encoder iot_json_encoder_t;
  * @see iot_json_encode_array_start
  */
 iot_status_t iot_json_encode_array_end(
-	iot_json_encoder_t *json );
+	iot_json_encoder_t *encoder );
 
 /**
  * @brief Starts the encoding of a new JSON array
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 (optional) parent JSON object key
  *
  * @note @c key should be NULL when not inside a JSON object.  If defining a key
@@ -565,13 +565,13 @@ iot_status_t iot_json_encode_array_end(
  * @see iot_json_encode_array_end
  */
 iot_status_t iot_json_encode_array_start(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key );
 
 /**
  * @brief Encodes a boolean
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 (optional) parent JSON object key
  * @param[in]      value               boolean value
  *
@@ -591,32 +591,32 @@ iot_status_t iot_json_encode_array_start(
  * @see iot_json_decode_bool
  */
 iot_status_t iot_json_encode_bool(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_bool_t value );
 
 /**
  * @brief Outputs a JSON encoded string produced by the JSON encoder
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  *
  * @return string in JSON format
  */
 const char *iot_json_encode_dump(
-	iot_json_encoder_t *json );
+	iot_json_encoder_t *encoder );
 
 /**
  * @brief Initializes the JSON encoding system
  *
  * @note specifying the flag IOT_JSON_FLAG_DYNAMIC indicates to use dynamic
- * memory on the heap for allocating the base JSON decoder and JSON tokens.
+ * memory on the heap for allocating the JSON encoder object and JSON tokens.
  * In this case, the parameters @c buf and @c len are ignored.
  *
  * @param[in,out]  buf                 memory to use for the base parser
  * @param[in]      len                 amount of memory in the buf parameter
  * @param[in]      flags               flags for indicating parsing support
  *
- * @return a valid base JSON encoder
+ * @return a valid JSON encoder object
  *
  * @see iot_json_encode_parse
  * @see iot_json_encode_terminate
@@ -629,7 +629,7 @@ iot_json_encoder_t *iot_json_encode_initialize(
 /**
  * @brief Encodes an integer number
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 (optional) parent JSON object key
  * @param[in]      value               integer number
  *
@@ -649,14 +649,14 @@ iot_json_encoder_t *iot_json_encode_initialize(
  * @see iot_json_decode_integer
  */
 iot_status_t iot_json_encode_integer(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_int64_t value );
 
 /**
  * @brief Ends the encoding of a JSON object
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  *
  * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
  * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
@@ -666,12 +666,12 @@ iot_status_t iot_json_encode_integer(
  * @see iot_json_encode_object_start
  */
 iot_status_t iot_json_encode_object_end(
-	iot_json_encoder_t *json );
+	iot_json_encoder_t *encoder );
 
 /**
  * @brief Starts the encoding of a new JSON object
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 (optional) parent JSON object key
  *
  * @note @c key should be NULL when not inside a JSON object.  If defining a key
@@ -691,13 +691,13 @@ iot_status_t iot_json_encode_object_end(
  * @see iot_json_encode_object_end
  */
 iot_status_t iot_json_encode_object_start(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key );
 
 /**
  * @brief Encodes a floating-point number
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 (optional) parent JSON object key
  * @param[in]      value               floating-point number
  *
@@ -717,14 +717,14 @@ iot_status_t iot_json_encode_object_start(
  * @see iot_json_decode_real
  */
 iot_status_t iot_json_encode_real(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_float64_t value );
 
 /**
  * @brief Encodes a string
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 (optional) parent JSON object key
  * @param[in]      value               string value
  *
@@ -744,19 +744,19 @@ iot_status_t iot_json_encode_real(
  * @see iot_json_decode_string
  */
 iot_status_t iot_json_encode_string(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	const char *value );
 
 /**
  * @brief Frees memory assocated with a JSON encoder
  *
- * @param[in]      json                base JSON encoder
+ * @param[in]      encoder             JSON encoder object
  *
  * @see iot_json_encode_initialize
  */
 void iot_json_encode_terminate(
-	iot_json_encoder_t *json );
+	iot_json_encoder_t *encoder );
 
 #ifdef __cplusplus
 };

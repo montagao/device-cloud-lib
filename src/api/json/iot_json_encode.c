@@ -37,12 +37,12 @@ struct iot_json_encoder
 /**
  * @brief helper function for encoding primative types with jansson
  *
- * @param[in]      json                object being encodeded
+ * @param[in]      encoder             JSON encoder object
  * @param[in]      key                 key for the new object
  * @param[in]      obj                 new object (steals the reference)
  */
 static IOT_SECTION iot_status_t iot_json_encode_key(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	json_t *obj );
 
@@ -61,14 +61,14 @@ typedef unsigned long iot_json_encode_struct_t;
 #define JSON_MAX_DEPTH                 ((sizeof(iot_json_encode_struct_t)* 8)/JSON_STRUCT_BITS)
 
 /**
- * @brief internal structure for composing json messages (16 bytes)
+ * @brief internal structure for composing JSON messages (16 bytes)
  */
 struct iot_json_encoder
 {
 	char *buf;                       /**< @brief start of write buffer */
 	char *cur;                       /**< @brief position in write buffer */
 	unsigned int flags;              /**< @brief output flags */
-	size_t len;                      /**< @brief size of json buffer */
+	size_t len;                      /**< @brief size of JSON buffer */
 	iot_json_encode_struct_t structs;    /**< @brief array of structures */
 };
 
@@ -80,12 +80,12 @@ static const char JSON_CHARS_END[] = { ']', '}', '}' };
 /**
  * @brief determines the current depth of structures at the current position
  *
- * @param[in]      json                object being encoded
+ * @param[in]      encoder             JSON encoder object
  *
  * @return the depth at the current position
  */
 static IOT_SECTION unsigned int iot_json_encode_depth(
-	const iot_json_encoder_t *json );
+	const iot_json_encoder_t *encoder );
 
 /**
  * @brief calculated the number number of printable characters in an integer
@@ -102,15 +102,15 @@ static IOT_SECTION size_t iot_json_encode_intlen(
 /**
  * @brief helper function to start a new object
  *
- * @param[in,out]  json                destination json object
+ * @param[in,out]  encoder             JSON encoder object
  * @param[in]      key                 (optional) key for the new item
  * @param[in]      value_len           length of the value for the new object
  * @param[out]     added_parent        (optional) whether this call required
- *                                     adding a new json object to ensure valid
- *                                     json remained
+ *                                     adding a new parent JSON object to ensure
+ *                                     the output remains a valid JSON string
  */
 static IOT_SECTION iot_status_t iot_json_encode_key(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	size_t value_len,
 	iot_bool_t *added_parent );
@@ -120,7 +120,7 @@ static IOT_SECTION iot_status_t iot_json_encode_key(
  *        in JSON
  *
  * @note This function handles adding counts for extra characters required to
- *       black-slash characters in json string
+ *       black-slash characters in JSON string
  *
  * @param[in]      str                 sring to get length of
  *
@@ -147,42 +147,42 @@ static IOT_SECTION char *iot_json_encode_strncpy(
 	size_t num );
 
 /**
- * @brief helper function for starting a new object or array json structure
+ * @brief helper function for starting a new JSON object or array structure
  *
- * @param[in]      json                object being encoded
+ * @param[in,out]  encoder             JSON encoder object
  * @param[in]      s                   type of object to start
  */
 static IOT_SECTION iot_status_t iot_json_encode_struct_end(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	iot_json_type_t s );
 
 /**
  * @brief helper function for ending a new object or array json structure
  *
- * @param[in]      json                object being encoded
+ * @param[in,out]  encoder             JSON encoder object
  * @param[in]      s                   type of object to start
  */
 static iot_status_t iot_json_encode_struct_start(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_json_type_t s );
 #endif /* else IOT_JSON_JANSSON */
 
 #ifdef IOT_JSON_JANSSON
 iot_status_t iot_json_encode_key(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	json_t *obj )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( json && obj )
+	if ( encoder && obj )
 	{
 		json_type parent_type = JSON_NULL;
 		json_t *j_parent = NULL;
 		result = IOT_STATUS_FULL;
-		if ( json->depth > 0u )
+		if ( encoder->depth > 0u )
 		{
-			j_parent = json->j_cur[json->depth - 1u];
+			j_parent = encoder->j_cur[encoder->depth - 1u];
 			parent_type = json_typeof( j_parent );
 		}
 		else if ( !key && ( json_typeof( obj ) != JSON_ARRAY &&
@@ -193,12 +193,13 @@ iot_status_t iot_json_encode_key(
 		}
 
 		/* trying to add past the maximum allowed depth */
-		if ( result == IOT_STATUS_FULL && json->depth < JSON_MAX_DEPTH )
+		if ( result == IOT_STATUS_FULL &&
+			encoder->depth < JSON_MAX_DEPTH )
 		{
 			unsigned int items_to_add = 0u;
-			json_t **ptr = json->j_cur;
+			json_t **ptr = encoder->j_cur;
 
-			if ( ( key && parent_type != JSON_OBJECT ) || !json->j_cur )
+			if ( ( key && parent_type != JSON_OBJECT ) || !encoder->j_cur )
 				++items_to_add;
 
 			if ( json_is_object( obj ) || json_is_array( obj ) )
@@ -207,12 +208,12 @@ iot_status_t iot_json_encode_key(
 			result = IOT_STATUS_SUCCESS;
 			if ( items_to_add > 0u )
 			{
-				ptr = (json_t**)iot_json_realloc( json->j_cur,
-					sizeof(json_t*) * (json->depth + items_to_add + 1) );
+				ptr = (json_t**)iot_json_realloc( encoder->j_cur,
+					sizeof(json_t*) * (encoder->depth + items_to_add + 1) );
 				result = IOT_STATUS_NO_MEMORY;
 				if ( ptr )
 				{
-					json->j_cur = ptr;
+					encoder->j_cur = ptr;
 					if ( key && parent_type != JSON_OBJECT )
 					{
 						json_t *new_parent = json_object();
@@ -220,14 +221,14 @@ iot_status_t iot_json_encode_key(
 							json_array_append_new(
 								j_parent, new_parent );
 						j_parent = new_parent;
-						json->j_cur[json->depth] = j_parent;
-						++json->depth;
+						encoder->j_cur[encoder->depth] = j_parent;
+						++encoder->depth;
 					}
 
 					if ( j_parent || !key )
 					{
-						json->j_cur[json->depth] = obj;
-						++json->depth;
+						encoder->j_cur[encoder->depth] = obj;
+						++encoder->depth;
 						result = IOT_STATUS_SUCCESS;
 					}
 				}
@@ -254,69 +255,69 @@ iot_status_t iot_json_encode_key(
 #endif /* ifdef IOT_JSON_JANSSON */
 
 iot_status_t iot_json_encode_array_end(
-	iot_json_encoder_t *json )
+	iot_json_encoder_t *encoder )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 #ifdef IOT_JSON_JANSSON
-	if ( json )
+	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
-		if ( json->depth > 0u )
+		if ( encoder->depth > 0u )
 		{
-			json_t *const j_obj = json->j_cur[json->depth - 1u];
+			json_t *const j_obj = encoder->j_cur[encoder->depth - 1u];
 			if ( json_typeof( j_obj ) == JSON_ARRAY )
 			{
-				--json->depth;
+				--encoder->depth;
 				result = IOT_STATUS_SUCCESS;
 			}
 		}
 	}
 #else /* ifdef IOT_JSON_JANSSON */
-	result = iot_json_encode_struct_end( json, IOT_JSON_TYPE_ARRAY );
+	result = iot_json_encode_struct_end( encoder, IOT_JSON_TYPE_ARRAY );
 #endif /* else IOT_JSON_JANSSON */
 	return result;
 }
 
 iot_status_t iot_json_encode_array_start(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key )
 {
 	iot_status_t result;
 #ifdef IOT_JSON_JANSSON
-	result = iot_json_encode_key( json, key, json_array() );
+	result = iot_json_encode_key( encoder, key, json_array() );
 #else /* ifdef IOT_JSON_JANSSON */
-	result = iot_json_encode_struct_start( json, key, IOT_JSON_TYPE_ARRAY );
+	result = iot_json_encode_struct_start( encoder, key, IOT_JSON_TYPE_ARRAY );
 #endif /* else IOT_JSON_JANSSON */
 	return result;
 }
 
 iot_status_t iot_json_encode_bool(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_bool_t value )
 {
 	iot_status_t result;
 #ifdef IOT_JSON_JANSSON
-	result = iot_json_encode_key( json, key, json_boolean( value ) );
+	result = iot_json_encode_key( encoder, key, json_boolean( value ) );
 #else /* ifdef IOT_JSON_JANSSON */
 	/* can't add boolean as root element */
-	if ( !key && ( json && json->structs == 0u ) )
+	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
 	else
 	{
 		iot_bool_t added_parent = IOT_FALSE;
 		const size_t value_len = 5u + ( value ? -1 : 0 );
-		result = iot_json_encode_key( json, key, value_len + 2u, &added_parent );
+		result = iot_json_encode_key( encoder, key, value_len + 2u, &added_parent );
 		if ( result == IOT_STATUS_SUCCESS )
 		{
 			if ( value )
-				os_strncpy( json->cur, "true", value_len );
+				os_strncpy( encoder->cur, "true", value_len );
 			else
-				os_strncpy( json->cur, "false", value_len );
-			json->cur += value_len;
+				os_strncpy( encoder->cur, "false", value_len );
+			encoder->cur += value_len;
 
 			if ( added_parent )
-				result = iot_json_encode_struct_end( json,
+				result = iot_json_encode_struct_end( encoder,
 					IOT_JSON_TYPE_OBJECT << 1u );
 		}
 	}
@@ -325,10 +326,10 @@ iot_status_t iot_json_encode_bool(
 }
 
 #ifndef IOT_JSON_JANSSON
-unsigned int iot_json_encode_depth( const iot_json_encoder_t *json )
+unsigned int iot_json_encode_depth( const iot_json_encoder_t *encoder )
 {
 	unsigned int i = 0u;
-	iot_json_encode_struct_t j = json->structs;
+	iot_json_encode_struct_t j = encoder->structs;
 	while ( j )
 	{
 		if ( j & 0x1 ) ++i;
@@ -339,19 +340,19 @@ unsigned int iot_json_encode_depth( const iot_json_encoder_t *json )
 #endif /* ifndef IOT_JSON_JANSSON */
 
 const char *iot_json_encode_dump(
-	iot_json_encoder_t *json )
+	iot_json_encoder_t *encoder )
 {
 	const char *result = NULL;
 #ifdef IOT_JSON_JANSSON
 	/* setup jansson flags */
 	size_t flags = JSON_PRESERVE_ORDER;
-	if ( json && !( json->flags & IOT_JSON_FLAG_EXPAND ) )
+	if ( encoder && !( encoder->flags & IOT_JSON_FLAG_EXPAND ) )
 		flags |= JSON_COMPACT;
-	if ( json && json->flags >> IOT_JSON_INDENT_OFFSET )
-		flags |= JSON_INDENT( json->flags >> IOT_JSON_INDENT_OFFSET );
+	if ( encoder && encoder->flags >> IOT_JSON_INDENT_OFFSET )
+		flags |= JSON_INDENT( encoder->flags >> IOT_JSON_INDENT_OFFSET );
 
 	/* if previous dump free memory */
-	if ( json && json->output )
+	if ( encoder && encoder->output )
 	{
 #ifdef IOT_STACK_ONLY
 		json_free_t free_fn = os_free;
@@ -359,24 +360,24 @@ const char *iot_json_encode_dump(
 		json_get_alloc_funcs( NULL, &free_fn );
 #endif /* JANSSON_VERSION_HEX >= 0x020800 */
 		if ( free_fn )
-			free_fn( json->output );
+			free_fn( encoder->output );
 #else /* ifdef IOT_STACK_ONLY */
-		iot_json_free( json->output );
+		iot_json_free( encoder->output );
 #endif /* else IOT_STACK_ONLY */
 	}
 
-	if ( json && json->j_cur )
-		result = json->output = json_dumps( json->j_cur[0u], flags );
+	if ( encoder && encoder->j_cur )
+		result = encoder->output = json_dumps( encoder->j_cur[0u], flags );
 #else /* ifdef IOT_JSON_JANSSON */
-	if ( json )
+	if ( encoder )
 	{
 		/* complete any open objects in the output string */
-		char *p_cur = json->cur;
+		char *p_cur = encoder->cur;
 		if ( p_cur )
 		{
-			unsigned int indent = (json->flags >> IOT_JSON_INDENT_OFFSET);
-			unsigned int depth = iot_json_encode_depth( json );
-			iot_json_encode_struct_t s = json->structs;
+			unsigned int indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
+			unsigned int depth = iot_json_encode_depth( encoder );
+			iot_json_encode_struct_t s = encoder->structs;
 
 			while ( s )
 			{
@@ -408,7 +409,7 @@ const char *iot_json_encode_dump(
 			}
 			*p_cur = '\0';
 		}
-		result = json->buf;
+		result = encoder->buf;
 	}
 #endif /* else IOT_JSON_JANSSON */
 	return result;
@@ -419,7 +420,7 @@ iot_json_encoder_t *iot_json_encode_initialize(
 	size_t len,
 	unsigned int flags )
 {
-	struct iot_json_encoder *json = NULL;
+	struct iot_json_encoder *encoder = NULL;
 
 #ifdef IOT_JSON_JANSSON
 	size_t extra_space = 0u;
@@ -441,49 +442,49 @@ iot_json_encoder_t *iot_json_encode_initialize(
 #ifndef IOT_STACK_ONLY
 		if ( flags & IOT_JSON_FLAG_DYNAMIC )
 		{
-			json = (struct iot_json_encoder *)iot_json_realloc(
+			encoder = (struct iot_json_encoder *)iot_json_realloc(
 				NULL, sizeof(struct iot_json_encoder) + extra_space );
-			if ( json )
-				os_memzero( json, sizeof( struct iot_json_encoder ) );
+			if ( encoder )
+				os_memzero( encoder, sizeof( struct iot_json_encoder ) );
 		}
 		else
 		{
 #endif /* ifndef IOT_STACK_ONLY */
-			json = (struct iot_json_encoder*)(buf);
-			os_memzero( json, sizeof( struct iot_json_encoder ) );
+			encoder = (struct iot_json_encoder*)(buf);
+			os_memzero( encoder, sizeof( struct iot_json_encoder ) );
 #ifndef IOT_JSON_JANSSON
-			json->buf = buf + sizeof(struct iot_json_encoder);
-			json->cur = json->buf;
-			json->len = len - sizeof(struct iot_json_encoder);
+			encoder->buf = buf + sizeof(struct iot_json_encoder);
+			encoder->cur = encoder->buf;
+			encoder->len = len - sizeof(struct iot_json_encoder);
 #endif /* ifndef IOT_JSON_JANSSON */
 #ifndef IOT_STACK_ONLY
 		}
 
-		if ( json )
+		if ( encoder )
 		{
 #endif /* ifndef IOT_STACK_ONLY */
 #ifndef IOT_JSON_JANSSON
-			json->structs = 0u;
+			encoder->structs = 0u;
 #endif /* else IOT_JSON_JANSSON */
-			json->flags = flags;
+			encoder->flags = flags;
 #ifndef IOT_STACK_ONLY
 		}
 #endif /* ifndef IOT_STACK_ONLY */
 	}
-	return json;
+	return encoder;
 }
 
 iot_status_t iot_json_encode_integer(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_int64_t value )
 {
 	iot_status_t result;
 #ifdef IOT_JSON_JANSSON
-	result = iot_json_encode_key( json, key, json_integer( value ) );
+	result = iot_json_encode_key( encoder, key, json_integer( value ) );
 #else /* ifdef IOT_JSON_JANSSON */
 	/* can't add boolean as root element */
-	if ( !key && ( json && json->structs == 0u ) )
+	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
 	else
 	{
@@ -496,32 +497,32 @@ iot_status_t iot_json_encode_integer(
 			pos_value = (iot_uint64_t)value;
 
 		value_len = iot_json_encode_intlen( pos_value, value < 0 );
-		result = iot_json_encode_key( json, key, value_len,
+		result = iot_json_encode_key( encoder, key, value_len,
 			&added_parent );
 		if ( result == IOT_STATUS_SUCCESS )
 		{
-			char *dest = &json->cur[value_len - 1u];
+			char *dest = &encoder->cur[value_len - 1u];
 			if ( value <= 0 )
 			{
 				if ( value < 0 )
 				{
-					*json->cur = '-';
+					*encoder->cur = '-';
 					value *= -1;
 				}
 				else
-					*json->cur = '0';
-				++json->cur;
+					*encoder->cur = '0';
+				++encoder->cur;
 			}
 			while ( pos_value > 0 )
 			{
 				*dest = (pos_value % 10 + '0');
 				pos_value /= 10;
 				--dest;
-				++json->cur;
+				++encoder->cur;
 			}
 
 			if ( added_parent )
-				result = iot_json_encode_struct_end( json,
+				result = iot_json_encode_struct_end( encoder,
 					IOT_JSON_TYPE_OBJECT << 1u );
 		}
 	}
@@ -544,31 +545,31 @@ size_t iot_json_encode_intlen( iot_uint64_t i, iot_bool_t neg )
 }
 
 iot_status_t iot_json_encode_key(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	size_t value_len,
 	iot_bool_t *added_parent )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( json )
+	if ( encoder )
 	{
 		size_t extra_space = 0u;
 		size_t key_len = 0u;
 		result = IOT_STATUS_SUCCESS;
 
-		if ( key && !( json->structs & IOT_JSON_TYPE_OBJECT ) )
+		if ( key && !( encoder->structs & IOT_JSON_TYPE_OBJECT ) )
 		{
-			if ( json->structs )
+			if ( encoder->structs )
 			{
-				result = iot_json_encode_struct_start( json,
+				result = iot_json_encode_struct_start( encoder,
 					NULL, IOT_JSON_TYPE_OBJECT << 1 );
 				if ( added_parent )
 					*added_parent = IOT_TRUE;
 			} else /* add root item if not there */
-				result = iot_json_encode_struct_start( json,
+				result = iot_json_encode_struct_start( encoder,
 					NULL, IOT_JSON_TYPE_OBJECT );
 		}
-		else if ( !key && json->structs & IOT_JSON_TYPE_OBJECT )
+		else if ( !key && encoder->structs & IOT_JSON_TYPE_OBJECT )
 			key = ""; /* we are inside object we must have a key */
 
 		if ( key )
@@ -579,10 +580,10 @@ iot_status_t iot_json_encode_key(
 
 		if ( result == IOT_STATUS_SUCCESS )
 		{
-			size_t space = json->len - (json->cur - json->buf);
+			size_t space = encoder->len - (encoder->cur - encoder->buf);
 			iot_bool_t add_comma = 0;
-			unsigned int indent = (json->flags >> IOT_JSON_INDENT_OFFSET);
-			const unsigned int depth = iot_json_encode_depth( json );
+			unsigned int indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
+			const unsigned int depth = iot_json_encode_depth( encoder );
 
 			/* space required for closing current level */
 			if ( indent )
@@ -593,19 +594,19 @@ iot_status_t iot_json_encode_key(
 			}
 
 			/* space required for initial ',' + optional space */
-			if ( json->cur > json->buf &&
-				*(json->cur - 1) != JSON_CHARS_START[0] &&
-				*(json->cur - 1) != JSON_CHARS_START[1] &&
-				*(json->cur - 1) != JSON_CHARS_START[2] )
+			if ( encoder->cur > encoder->buf &&
+				*(encoder->cur - 1) != JSON_CHARS_START[0] &&
+				*(encoder->cur - 1) != JSON_CHARS_START[1] &&
+				*(encoder->cur - 1) != JSON_CHARS_START[2] )
 			{
 				add_comma = 1;
 				++extra_space;
-				if ( !indent && ( json->flags & IOT_JSON_FLAG_EXPAND ) )
+				if ( !indent && ( encoder->flags & IOT_JSON_FLAG_EXPAND ) )
 					++extra_space;
 			}
 
 			/* space required to add space around `:` */
-			if ( json->flags & IOT_JSON_FLAG_EXPAND )
+			if ( encoder->flags & IOT_JSON_FLAG_EXPAND )
 				++extra_space;
 
 			/* how much space is required to indent/close the object */
@@ -613,16 +614,18 @@ iot_status_t iot_json_encode_key(
 				extra_space += ( indent * 2u * depth ) + 1u; /* +1 for '\n' */
 
 #ifndef IOT_STACK_ONLY
-			if ( json->flags & IOT_JSON_FLAG_DYNAMIC )
+			if ( encoder->flags & IOT_JSON_FLAG_DYNAMIC )
 			{
 				const size_t new_space =
-					json->len + key_len + value_len + extra_space;
-				void *const new_buf = iot_json_realloc( json->buf, new_space + 1u );
+					encoder->len + key_len + value_len + extra_space;
+				void *const new_buf = iot_json_realloc(
+					encoder->buf, new_space + 1u );
 				if ( new_buf )
 				{
-					json->cur = (char*)new_buf + (json->cur - json->buf);
-					json->buf = new_buf;
-					json->len = new_space;
+					encoder->cur = (char*)new_buf +
+						(encoder->cur - encoder->buf);
+					encoder->buf = new_buf;
+					encoder->len = new_space;
 					space = new_space;
 				}
 			}
@@ -632,42 +635,42 @@ iot_status_t iot_json_encode_key(
 			{
 				if ( add_comma )
 				{
-					*json->cur = ',';
-					++json->cur;
-					if ( !indent && ( json->flags & IOT_JSON_FLAG_EXPAND ) )
+					*encoder->cur = ',';
+					++encoder->cur;
+					if ( !indent && ( encoder->flags & IOT_JSON_FLAG_EXPAND ) )
 					{
-						*json->cur = ' ';
-						++json->cur;
+						*encoder->cur = ' ';
+						++encoder->cur;
 					}
 				}
 				if ( indent )
 				{
 					if ( depth > 0u )
 					{
-						*json->cur = '\n';
-						++json->cur;
+						*encoder->cur = '\n';
+						++encoder->cur;
 					}
 					indent *= depth;
 					while ( indent )
 					{
-						*json->cur = ' ';
-						++json->cur;
+						*encoder->cur = ' ';
+						++encoder->cur;
 						--indent;
 					}
 				}
 				if ( key )
 				{
-					*json->cur = '"';
-					++json->cur;
+					*encoder->cur = '"';
+					++encoder->cur;
 					iot_json_encode_strncpy(
-						json->cur, key, key_len );
-					json->cur += key_len;
-					os_strncpy( json->cur, "\":", 2u );
-					json->cur += 2u;
-					if ( json->flags & IOT_JSON_FLAG_EXPAND )
+						encoder->cur, key, key_len );
+					encoder->cur += key_len;
+					os_strncpy( encoder->cur, "\":", 2u );
+					encoder->cur += 2u;
+					if ( encoder->flags & IOT_JSON_FLAG_EXPAND )
 					{
-						*json->cur = ' ';
-						++json->cur;
+						*encoder->cur = ' ';
+						++encoder->cur;
 					}
 				}
 				result = IOT_STATUS_SUCCESS;
@@ -681,55 +684,55 @@ iot_status_t iot_json_encode_key(
 #endif /* ifndef IOT_JSON_JANSSON */
 
 iot_status_t iot_json_encode_object_end(
-	iot_json_encoder_t *json )
+	iot_json_encoder_t *encoder )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 #ifdef IOT_JSON_JANSSON
-	if ( json )
+	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
-		if ( json->depth > 0u )
+		if ( encoder->depth > 0u )
 		{
-			json_t *const j_obj = json->j_cur[json->depth - 1u];
+			json_t *const j_obj = encoder->j_cur[encoder->depth - 1u];
 			if ( json_typeof( j_obj ) == JSON_OBJECT )
 			{
-				--json->depth;
+				--encoder->depth;
 				result = IOT_STATUS_SUCCESS;
 			}
 		}
 	}
 #else /* ifdef IOT_JSON_JANSSON */
-	result = iot_json_encode_struct_end( json, IOT_JSON_TYPE_OBJECT );
+	result = iot_json_encode_struct_end( encoder, IOT_JSON_TYPE_OBJECT );
 #endif /* else IOT_JSON_JANSSON */
 	return result;
 }
 
 iot_status_t iot_json_encode_object_start(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key )
 {
 	iot_status_t result;
 #ifdef IOT_JSON_JANSSON
-	result = iot_json_encode_key( json, key, json_object() );
+	result = iot_json_encode_key( encoder, key, json_object() );
 #else /* ifdef IOT_JSON_JANSSON */
-	result = iot_json_encode_struct_start( json, key, IOT_JSON_TYPE_OBJECT );
+	result = iot_json_encode_struct_start( encoder, key, IOT_JSON_TYPE_OBJECT );
 #endif /* else IOT_JSON_JANSSON */
 	return result;
 }
 
 iot_status_t iot_json_encode_real(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_float64_t value )
 {
 	iot_status_t result;
 #ifdef IOT_JSON_JANSSON
-	result = iot_json_encode_key( json, key, json_real( (double)value ) );
+	result = iot_json_encode_key( encoder, key, json_real( (double)value ) );
 #else /* ifdef IOT_JSON_JANSSON */
 /** @brief number of decimals to display for real data */
 #define JSON_ENCODE_MAX_DECIMALS 6
 	/* can't add boolean as root element */
-	if ( !key && ( json && json->structs == 0u ) )
+	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
 	else
 	{
@@ -749,38 +752,38 @@ iot_status_t iot_json_encode_real(
 
 		int_len = iot_json_encode_intlen( i, value < 0.0 );
 		value_len = int_len + JSON_ENCODE_MAX_DECIMALS + 1u;
-		result = iot_json_encode_key( json, key, value_len, &added_parent );
+		result = iot_json_encode_key( encoder, key, value_len, &added_parent );
 		if ( result == IOT_STATUS_SUCCESS )
 		{
-			char *dest = &json->cur[int_len - 1u];
+			char *dest = &encoder->cur[int_len - 1u];
 			if ( value < 0.0 || i == 0 )
 			{
 				if ( value < 0.0 )
-					*json->cur = '-';
+					*encoder->cur = '-';
 				else
-					*json->cur = '0';
-				++json->cur;
+					*encoder->cur = '0';
+				++encoder->cur;
 			}
 			while ( i > 0u )
 			{
 				*dest = (i % 10 + '0');
 				i /= 10;
 				--dest;
-				++json->cur;
+				++encoder->cur;
 			}
 
-			*json->cur++ = '.';
+			*encoder->cur++ = '.';
 			i = 0u;
 			do {
 				int j;
 				frac *= 10.0;
 				j = (int)(frac);
-				*json->cur++ = '0' + j;
+				*encoder->cur++ = '0' + j;
 				frac -= j;
 				++i;
 			} while ( frac > 0.0 && i < JSON_ENCODE_MAX_DECIMALS );
 			if ( added_parent )
-				result = iot_json_encode_struct_end( json,
+				result = iot_json_encode_struct_end( encoder,
 					IOT_JSON_TYPE_OBJECT << 1u );
 		}
 	}
@@ -789,16 +792,16 @@ iot_status_t iot_json_encode_real(
 }
 
 iot_status_t iot_json_encode_string(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	const char *value )
 {
 	iot_status_t result;
 #ifdef IOT_JSON_JANSSON
-	result = iot_json_encode_key( json, key, json_string( value ) );
+	result = iot_json_encode_key( encoder, key, json_string( value ) );
 #else /* ifdef IOT_JSON_JANSSON */
 	/* can't add boolean as root element */
-	if ( !key && ( json && json->structs == 0u ) )
+	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
 	else
 	{
@@ -808,15 +811,17 @@ iot_status_t iot_json_encode_string(
 		if ( !value )
 			value = "";
 		value_len = iot_json_encode_strlen( value );
-		result = iot_json_encode_key( json, key, value_len + 2u, &added_parent );
-		if ( json && result == IOT_STATUS_SUCCESS )
+		result = iot_json_encode_key( encoder, key, value_len + 2u,
+			&added_parent );
+		if ( encoder && result == IOT_STATUS_SUCCESS )
 		{
-			*json->cur++ = '"';
-			iot_json_encode_strncpy( json->cur, value, value_len );
-			json->cur += value_len;
-			*json->cur++ = '"';
+			*encoder->cur++ = '"';
+			iot_json_encode_strncpy(
+				encoder->cur, value, value_len );
+			encoder->cur += value_len;
+			*encoder->cur++ = '"';
 			if ( added_parent )
-				result = iot_json_encode_struct_end( json,
+				result = iot_json_encode_struct_end( encoder,
 					IOT_JSON_TYPE_OBJECT << 1u );
 		}
 	}
@@ -903,18 +908,18 @@ char *iot_json_encode_strncpy(
 
 #ifndef IOT_JSON_JANSSON
 iot_status_t iot_json_encode_struct_end(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	iot_json_type_t s )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( json )
+	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
-		if ( json->structs & s )
+		if ( encoder->structs & s )
 		{
-			unsigned int depth = iot_json_encode_depth( json ) - 1u;
-			const unsigned int indent = (json->flags >> IOT_JSON_INDENT_OFFSET);
-			size_t space = json->len - (json->cur - json->buf);
+			unsigned int depth = iot_json_encode_depth( encoder ) - 1u;
+			const unsigned int indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
+			size_t space = encoder->len - (encoder->cur - encoder->buf);
 			iot_json_encode_struct_t i;
 
 			/* ] } */
@@ -922,25 +927,25 @@ iot_status_t iot_json_encode_struct_end(
 			for ( i = 0u; i < JSON_STRUCT_BITS; ++i )
 			{
 				if ( ((iot_json_encode_struct_t)(1u) << (i)) &
-					json->structs )
+					encoder->structs )
 				{
 					/* +2 for '\n' + ']' or '}' character */
 					if ( (indent * depth) + 2u > space )
 					{
 #ifndef IOT_STACK_ONLY
-						if ( json->flags & IOT_JSON_FLAG_DYNAMIC )
+						if ( encoder->flags & IOT_JSON_FLAG_DYNAMIC )
 						{
 							const size_t new_space =
 								(depth * indent) + 2u;
 							void *const new_buf = iot_json_realloc(
-								json->buf,
-								json->len + new_space );
+								encoder->buf,
+								encoder->len + new_space );
 							if ( new_buf )
 							{
-								json->cur = (char*)new_buf +
-									(json->cur - json->buf);
-								json->buf = new_buf;
-								json->len += new_space;
+								encoder->cur = (char*)new_buf +
+									(encoder->cur - encoder->buf);
+								encoder->buf = new_buf;
+								encoder->len += new_space;
 								space += new_space;
 							}
 							else
@@ -957,22 +962,22 @@ iot_status_t iot_json_encode_struct_end(
 						if ( indent )
 						{
 							unsigned int j = indent * depth;
-							*json->cur++ = '\n';
+							*encoder->cur++ = '\n';
 
 							while ( j )
 							{
-								*json->cur++ = ' ';
+								*encoder->cur++ = ' ';
 								--j;
 							}
 							space -= (indent + 1u);
 							--depth;
 						}
-						*json->cur++ = end_ch;
+						*encoder->cur++ = end_ch;
 						--space;
 					}
 				}
 			}
-			json->structs >>= JSON_STRUCT_BITS;
+			encoder->structs >>= JSON_STRUCT_BITS;
 		}
 	}
 
@@ -980,20 +985,20 @@ iot_status_t iot_json_encode_struct_end(
 }
 
 iot_status_t iot_json_encode_struct_start(
-	iot_json_encoder_t *json,
+	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_json_type_t s )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( json )
+	if ( encoder )
 	{
 		result = IOT_STATUS_FULL;
-		if ( iot_json_encode_depth( json ) < JSON_MAX_DEPTH )
+		if ( iot_json_encode_depth( encoder ) < JSON_MAX_DEPTH )
 		{
 			iot_bool_t added_parent = IOT_FALSE;
-			unsigned int indent = (json->flags >> IOT_JSON_INDENT_OFFSET);
+			unsigned int indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
 			/* +2u for '[' & ']' characters */
-			result = iot_json_encode_key( json, key, indent + 2u,
+			result = iot_json_encode_key( encoder, key, indent + 2u,
 				&added_parent );
 			if ( result == IOT_STATUS_SUCCESS )
 			{
@@ -1004,13 +1009,13 @@ iot_status_t iot_json_encode_struct_start(
 					unsigned int i_1 = i - 1u;
 					if ( s & ( (iot_json_encode_struct_t)(1u) << ( i_1 ) ) )
 					{
-						indent = (json->flags >> IOT_JSON_INDENT_OFFSET);
-						*json->cur++ = JSON_CHARS_START[i_1];
+						indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
+						*encoder->cur++ = JSON_CHARS_START[i_1];
 					}
 				}
 				if ( !added_parent )
-					json->structs <<= JSON_STRUCT_BITS;
-				json->structs |= (iot_json_encode_struct_t)s;
+					encoder->structs <<= JSON_STRUCT_BITS;
+				encoder->structs |= (iot_json_encode_struct_t)s;
 			}
 		}
 	}
@@ -1019,36 +1024,36 @@ iot_status_t iot_json_encode_struct_start(
 #endif /* ifndef IOT_JSON_JANSSON */
 
 void iot_json_encode_terminate(
-	iot_json_encoder_t *json )
+	iot_json_encoder_t *encoder )
 {
 #ifdef IOT_JSON_JANSSON
-	if ( json )
+	if ( encoder )
 	{
-		if ( json->output )
+		if ( encoder->output )
 		{
 			json_free_t free_fn = os_free;
 #if JANSSON_VERSION_HEX >= 0x020800
 			json_get_alloc_funcs( NULL, &free_fn );
 #endif /* if JANSSON_VERSION_HEX >= 0x020800 */
 			if ( free_fn )
-				free_fn( json->output );
+				free_fn( encoder->output );
 		}
-		if ( json->j_cur )
-			json_decref( json->j_cur[0] );
-		iot_json_free( json->j_cur );
+		if ( encoder->j_cur )
+			json_decref( encoder->j_cur[0] );
+		iot_json_free( encoder->j_cur );
 	}
 #endif /* ifdef IOT_JSON_JANSSON */
 
 #ifdef IOT_STACK_ONLY
 	(void)json;
 #else /* ifdef IOT_STACK_ONLY */
-	if ( json && ( json->flags & IOT_JSON_FLAG_DYNAMIC ) )
+	if ( encoder && ( encoder->flags & IOT_JSON_FLAG_DYNAMIC ) )
 	{
 #ifndef IOT_JSON_JANSSON
-		if ( json->buf )
-			iot_json_free( json->buf );
+		if ( encoder->buf )
+			iot_json_free( encoder->buf );
 #endif /* ifndef IOT_JSON_JANSSON */
-		iot_json_free( json );
+		iot_json_free( encoder );
 	}
 #endif /* else IOT_STACK_ONLY */
 }
