@@ -51,8 +51,6 @@
 /* FIXME: read this from iot.cfg */
 #ifdef __ANDROID__
 #define IOT_DEFAULT_CERT_PATH "/etc/security/cacerts/ca-certificates.crt"
-#else
-#define IOT_DEFAULT_CERT_PATH "/etc/ssl/certs/ca-certificates.crt"
 #endif
 #define IOT_NAME_FULL                  "Internet of Things"
 #define iot_error(n) "NOTSUPPORTED"

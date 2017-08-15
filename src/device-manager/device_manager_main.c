@@ -23,7 +23,6 @@
 #include "os.h"                       /* for os specific functions */
 #include "api/shared/iot_types.h"     /* for IOT_ACTION_NO_RETURN, IOT_RUNTIME_DIR */
 #include "utilities/app_arg.h"        /* for struct app_arg & functions */
-#include "app_config.h"               /* for reading config file */
 #include "utilities/app_log.h"        /* for app_log function */
 #include "utilities/app_path.h"       /* for app_path_which function */
 
@@ -1105,6 +1104,38 @@ const char *const action_cfg_names[] ={
 	NULL
 };
 
+static iot_status_t device_manager_check_service_listening( int port_number )
+{
+	iot_status_t result = IOT_STATUS_NOT_SUPPORTED;
+#if defined( __ANDROID__ )
+#	define CMD_TEMPLATE  "netstat | grep %d | grep -c LISTEN"
+#else
+#	define CMD_TEMPLATE  "netstat -tln | grep -c %d "
+#endif
+#	define MAX_CMD_LEN 128
+#	define buf_sz 32u
+	char cmd[MAX_CMD_LEN];
+	char buf_std[buf_sz] = "\0";
+	char buf_err[buf_sz] = "\0";
+	char *out_buf[2u] = { buf_std, buf_err };
+	size_t out_len[2u] = { buf_sz, buf_sz };
+	int retval = -1;
+	os_snprintf( cmd, MAX_CMD_LEN, CMD_TEMPLATE, port_number);
+	if ( os_system_run_wait( cmd, &retval, out_buf,
+		out_len, 0u ) == OS_STATUS_SUCCESS &&
+			retval == 0 )
+	{
+		result = IOT_STATUS_SUCCESS;
+		printf("Protocol port %d is listening\n", retval );
+	}
+	else
+		printf("Error: No service for port %d. "
+			"netstat: stdout %s "
+			"stderr %s retVal %d\n",
+			port_number, buf_std, buf_err, retval );
+	return result;
+}
+
 iot_status_t device_manager_config_read(
 	struct device_manager_info *device_manager_info,
 	const char *app_path, const char *config_file )
@@ -1194,45 +1225,26 @@ iot_status_t device_manager_config_read(
 			p_path += os_strlen( "vnc," );
 		}
 
-#if !defined( __ANDROID__ )
+#if !defined( _WIN32 )
+		/* for linux and android, check to see if a port is
+		 * listening */
 		/* check if sshd is available */
-		if ( app_path_which( NULL, 0u, NULL, "sshd" ) > 0u )
+		if ( device_manager_check_service_listening( 22 ) != IOT_STATUS_SUCCESS )
 		{
 			os_strncpy( p_path, "ssh,",
 				REMOTE_LOGIN_PROTOCOL_MAX );
 			p_path += os_strlen( "ssh," );
 		}
 
-#else
-		/* check if telnet is available */
-		if ( app_path_which( NULL, 0u, NULL, "busybox" ) > 0u )
+		/* check if telnetd is available */
+		if ( device_manager_check_service_listening( 23 ) != IOT_STATUS_SUCCESS )
 		{
-			const char cmd[] = "netstat | grep 23 | grep -c LISTEN";
-#define buf_sz 32u
-			char buf_std[buf_sz] = "\0";
-			char buf_err[buf_sz] = "\0";
-			char *out_buf[2u] = { buf_std, buf_err };
-			size_t out_len[2u] = { buf_sz, buf_sz };
-			int retval = -1;
-			if ( os_system_run( cmd, &retval, out_buf,
-				out_len, 0u ) == IOT_STATUS_SUCCESS &&
-					retval >= 0 )
-			{
-				if ( '1' == buf_std[0] )
-				{
-					os_strncpy( p_path, "telnet,",
-						REMOTE_LOGIN_PROTOCOL_MAX );
-					p_path += os_strlen( "telnet," );
-				}
-				else
-					IOT_LOG( NULL, IOT_LOG_ERROR,
-						"No service for port 23. "
-						"netstat: stdout %s "
-						"stderr %s retVal %d\n",
-						buf_std, buf_err, retval );
-			}
+			os_strncpy( p_path, "telnet,",
+				REMOTE_LOGIN_PROTOCOL_MAX );
+			p_path += os_strlen( "telnet," );
 		}
-#endif /* defined( __ANDROID__ ) */
+
+#endif /* !defined( _WIN32) */
 
 		/* remote trailing comma */
 		if ( p_path != device_manager_info->remote_login_protocols )
@@ -1364,7 +1376,7 @@ iot_status_t device_manager_config_read(
 						else
 							printf("%s is disabled\n", action_cfg_names[i]);
 					}
-					printf("mask = %x\n", action_mask);
+					printf("actions enabled mask = 0x%x\n", action_mask);
 					device_manager_info->enabled_actions = action_mask;
 
 					/* get the runtime dir */
@@ -1374,7 +1386,7 @@ iot_status_t device_manager_config_read(
 					iot_json_decode_string( json,
 							j_action_top, &temp,
 							&temp_len  );
-					if ( temp )
+					if ( temp && temp[0] != '\0' )
 					{
 						if ( temp_len > PATH_MAX )
 							temp_len = PATH_MAX;
