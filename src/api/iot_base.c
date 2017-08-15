@@ -802,8 +802,8 @@ iot_status_t iot_base_device_id_set(
 				os_uuid_generate( &uuid );
 				os_uuid_to_string_lower( &uuid,
 					device_id, IOT_ID_MAX_LEN );
+				device_id[IOT_ID_MAX_LEN] = '\0';
 				device_id_len = os_strlen( device_id );
-				device_id[device_id_len - 1u] = '\0';
 				IOT_LOG( NULL, IOT_LOG_INFO,
 					"Generated device id: %s", device_id );
 				fd = os_file_open( file_path,
