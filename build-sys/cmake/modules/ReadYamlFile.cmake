@@ -22,10 +22,10 @@ function( YAML_CONVERT OUT )
 		set( "${OUT}" "${CMAKE_MATCH_1}" PARENT_SCOPE )
 	# False type
 	elseif ( "${ARGN}" MATCHES "^(n|N|no|No|NO|false|False|FALSE|off|Off|OFF)$" )
-		set( "${OUT}" OFF PARENT_SCOPE )
+		set( "${OUT}" "0" PARENT_SCOPE )
 	# True type
 	elseif ( "${ARGN}" MATCHES "^(y|Y|yes|Yes|YES|true|True|TRUE|on|On|ON)$" )
-		set( "${OUT}" ON PARENT_SCOPE )
+		set( "${OUT}" "1" PARENT_SCOPE )
 	# Null type
 	elseif ( "${ARGN}" MATCHES "^(~|null|Null|NULL)$" )
 		set( "${OUT}" "" PARENT_SCOPE )

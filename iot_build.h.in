@@ -16,6 +16,9 @@
 /** @brief GIT sha of the project */
 #define IOT_GIT_SHA                    "@IOT_GIT_SHA@"
 
+/** @brief Name of the project */
+#define IOT_PRODUCT                    "@IOT_PRODUCT@"
+
 /** @brief project version as string */
 #define IOT_VERSION                    "@IOT_VERSION@"
 /** @brief project major version number */
@@ -47,29 +50,33 @@
 /** @brief Number of "worker" threads */
 #define IOT_WORKER_THREADS             @IOT_WORKER_THREADS@
 
-
-/** @brief maximum number of plug-ins that can be loaded */
-#define IOT_PLUGIN_MAX                 @IOT_PLUGIN_MAX@
-
-/** @brief Installation directory */
-#define IOT_BIN_DIR                    "@INSTALL_BIN_DIR@"
+/* DIRECTORIES */
 /** @brief default configuration directory */
-#define IOT_CONFIG_DIR_DEFAULT         "@IOT_CONFIG_DIR_DEFAULT@"
-
-/** @brief Default name of configuration file */
-#define IOT_CFG                        "@IOT_CFG@"
-
+#define IOT_DEFAULT_DIR_CONFIG         "@IOT_DEFAULT_DIR_CONFIG@"
 /** @brief default runtime directory */
-#define IOT_RUNTIME_DIR_DEFAULT        "@IOT_RUNTIME_DIR_DEFAULT@"
+#define IOT_DEFAULT_DIR_RUNTIME        "@IOT_DEFAULT_DIR_RUNTIME@"
 
+/* FILES */
+/** @brief Device manager configuration file name */
+#define IOT_DEFAULT_FILE_CONFIG        "@IOT_DEFAULT_FILE_CONFIG@"
+/** @brief Connection configuration file name */
+#define IOT_DEFAULT_FILE_CONNECT       "@IOT_DEFAULT_FILE_CONNECT@"
+/** @brief File to store the generated device id */
+#define IOT_DEFAULT_FILE_DEVICE_ID     "@IOT_DEFAULT_FILE_DEVICE_ID@"
+
+/* PATHS */
 /** @brief Default path of certificates file */
 #define IOT_DEFAULT_CERT_PATH          "@IOT_DEFAULT_CERT_PATH@"
+/** @brief Sub-directory that binary applications are installed within */
+#define IOT_BIN_DIR                    "@IOT_BIN_DIR@"
 
-/** @brief iot_update app name */
-#define IOT_UPDATE_TARGET               "@IOT_UPDATE_TARGET@"
+/* TARGETS */
+/** @brief name of executable for performing updates */
+#define IOT_TARGET_UPDATE              "@IOT_TARGET_UPDATE@"
 
-/** @brief IOT Control application */
-#define IOT_CONTROL_TARGET              "@IOT_CONTROL_TARGET@"
+/* PLUG-INS */
+/** @brief maximum number of plug-ins that can be loaded */
+#define IOT_PLUGIN_MAX                 @IOT_PLUGIN_MAX@
 
 /* INTERNAL APPLICATION INFORMATION */
 
@@ -81,19 +88,19 @@
 #define IOT_DEVICE_MANAGER_DESCRIPTION "@IOT_DEVICE_MANAGER_DESCRIPTION@"
 
 /** @brief Control application target name (executable name) */
-#define IOT_CONTROL_TARGET                 "@IOT_CONTROL_TARGET@"
+#define IOT_CONTROL_TARGET             "@IOT_CONTROL_TARGET@"
 /** @brief Control application name (short description) */
-#define IOT_CONTROL_NAME                   "@IOT_CONTROL_NAME@"
+#define IOT_CONTROL_NAME               "@IOT_CONTROL_NAME@"
 /** @brief Control application long description */
-#define IOT_CONTROL_DESCRIPTION            "@IOT_CONTROL_DESCRIPTION@"
+#define IOT_CONTROL_DESCRIPTION        "@IOT_CONTROL_DESCRIPTION@"
 
 
 /** @brief Update application name (executable name) */
-#define IOT_UPDATE_TARGET                 "@IOT_UPDATE_TARGET@"
+#define IOT_UPDATE_TARGET              "@IOT_UPDATE_TARGET@"
 /** @brief Update application name (short description) */
-#define IOT_UPDATE_NAME                   "@IOT_UPDATE_NAME@"
+#define IOT_UPDATE_NAME                "@IOT_UPDATE_NAME@"
 /** @brief Update appication long description */
-#define IOT_UPDATE_DESCRIPTION            "@IOT_UPDATE_DESCRIPTION@"
+#define IOT_UPDATE_DESCRIPTION         "@IOT_UPDATE_DESCRIPTION@"
 
 
 /** @brief Websocket target name (executable name) */
@@ -103,51 +110,46 @@
 /** @brief Websocket long description */
 #define IOT_RELAY_DESCRIPTION          "@IOT_RELAY_DESCRIPTION@"
 
-/* FIXME: these will all be config driven.  For now, hard code */
 /** @brief Default state of agent reset action */
-#define IOT_DEFAULT_ENABLE_AGENT_RESET                    @IOT_DEFAULT_ENABLE_AGENT_RESET_C@
+#define IOT_DEFAULT_ENABLE_AGENT_RESET                    @IOT_DEFAULT_ENABLE_AGENT_RESET@
 
 /** @brief Default state of decommission device action */
-#define IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE            @IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE_C@
+#define IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE            @IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE@
 
 /** @brief Default state of device reboot action */
-#define IOT_DEFAULT_ENABLE_DEVICE_REBOOT                  @IOT_DEFAULT_ENABLE_DEVICE_REBOOT_C@
+#define IOT_DEFAULT_ENABLE_DEVICE_REBOOT                  @IOT_DEFAULT_ENABLE_DEVICE_REBOOT@
 
 /** @brief Default state of device shutdown action */
-#define IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN                @IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN_C@
+#define IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN                @IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN@
 
 /** @brief Default state of dump log files action */
-#define IOT_DEFAULT_ENABLE_DUMP_LOG_FILES                 @IOT_DEFAULT_ENABLE_DUMP_LOG_FILES_C@
+#define IOT_DEFAULT_ENABLE_DUMP_LOG_FILES                 @IOT_DEFAULT_ENABLE_DUMP_LOG_FILES@
 
 /** @brief Default state of file transfer related actions */
-#define IOT_DEFAULT_ENABLE_FILE_TRANSFERS                 @IOT_DEFAULT_ENABLE_FILE_TRANSFERS_C@
+#define IOT_DEFAULT_ENABLE_FILE_TRANSFERS                 @IOT_DEFAULT_ENABLE_FILE_TRANSFERS@
 
 /** @brief Default state of remote login related action */
-#define IOT_DEFAULT_ENABLE_REMOTE_LOGIN                   @IOT_DEFAULT_ENABLE_REMOTE_LOGIN_C@
+#define IOT_DEFAULT_ENABLE_REMOTE_LOGIN                   @IOT_DEFAULT_ENABLE_REMOTE_LOGIN@
 
 /** @brief Default state of restore factory images action */
-#define IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES         @IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES_C@
+#define IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES         @IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES@
 
 /** @brief Default state of software update action */
-#define IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE                @IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE_C@
+#define IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE                @IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE@
 
 /** @brief Default state of enable offline action - do not unregister actions */
-#define IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS             @IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS_C@
+#define IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS             @IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS@
 
 /** @brief Default state of enable automation test on Android*/
-#define IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID     @IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID_C@
+#define IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID     @IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID@
 
 /** @brief Default state of uploaded file removal upon success */
-#define IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS              @IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS_C@
-
-/** @brief Default value for SSL validation */
-#define SSL_DEFAULT_VALIDATE                              @IOT_DEFAULT_SSL_VALIDATION_C@
+#define IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS              @IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS@
 
 /** @brief Exectutable suffix */
-#define IOT_EXE_SUFFIX 		                          "@CMAKE_EXECUTABLE_SUFFIX@"
+#define IOT_EXE_SUFFIX                 "@CMAKE_EXECUTABLE_SUFFIX@"
 
 /** @brief Default user running services */
-#define IOT_USER                                          "@IOT_USER@"
+#define IOT_USER                       "@IOT_USER@"
 
-#define IOT_DEFAULT_CERT_PATH                             "@IOT_DEFAULT_CERT_PATH@"
 #endif /* ifndef IOT_BUILD_H */

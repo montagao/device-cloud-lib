@@ -889,8 +889,11 @@ iot_status_t iot_action_free( iot_action_t *action,
 				/* free any heap allocated storage */
 				size_t j;
 				for ( j = 0u; j < action->parameter_count; ++j )
+				{
 					os_free_null(
 						(void **)&action->parameter[j].data.heap_storage );
+					os_free_null( (void **)&action->parameter[j].name );
+				}
 
 				for ( j = 0u; j < action->option_count; ++j )
 				{
@@ -917,6 +920,7 @@ iot_status_t iot_action_free( iot_action_t *action,
 				os_free_null( (void **)&action->option );
 				os_free_null( (void **)&action->name );
 				os_free_null( (void **)&action->parameter );
+				os_free_null( (void **)&action->command );
 				if ( action->is_in_heap == IOT_FALSE )
 				{
 					lib->action_ptr[
@@ -1031,6 +1035,7 @@ iot_status_t iot_action_parameter_add(
 						p->name[ name_len ] = '\0';
 						p->type = param_type;
 						p->data.type = data_type;
+						p->data.heap_storage = NULL;
 						++action->parameter_count;
 					}
 				}
@@ -1374,7 +1379,7 @@ iot_status_t iot_action_register_command( iot_action_t *action,
 		{
 			action->callback = NULL;
 			os_strncpy( buf, command, cmd_len );
-			buf[ PATH_MAX ] = '\0';
+			buf[ cmd_len ] = '\0';
 			result = iot_action_register( action, txn, max_time_out );
 		}
 	}

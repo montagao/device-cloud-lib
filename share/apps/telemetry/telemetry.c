@@ -50,7 +50,7 @@
 /** @brief Whether the application is still running */
 static iot_bool_t running = IOT_TRUE;
 /** @brief Whether or not currently sending telemetry */
-static iot_bool_t send_telemetry = IOT_FALSE;
+static iot_bool_t send_telemetry = IOT_TRUE;
 
 /** @brief Pointer to the boolean telemetry object */
 static iot_telemetry_t *telemetry_boolean = NULL;

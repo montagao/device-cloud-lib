@@ -64,11 +64,11 @@ add_library( "${IOT_LIBRARY_NAME}"
 	${API_HDRS_C}
 	${API_SRCS_C}
 )
-target_link_libraries( "${IOT_LIBRARY_NAME}" "dl"
+target_link_libraries( "${IOT_LIBRARY_NAME}" "dl" "m"
+	${CMAKE_THREAD_LIBS_INIT}
 	${JSON_LIBRARIES}
 	${MQTT_LIBRARIES}
 	${OSAL_LIBRARIES}
-	${CMAKE_THREAD_LIBS_INIT}
 	${PLUGIN_BUILTIN_LIBS}
 	${LibArchive_LIBRARIES}
 )

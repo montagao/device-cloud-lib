@@ -15,9 +15,8 @@ read_yaml_file( ${IOT_CONFIG_FILE} )
 cmake_minimum_required( VERSION 2.8.5 )
 project( ${IOT_PRODUCT} )
 
-set( IOT_USER "iot" )
 if( WIN32 )
-        set( IOT_USER "SYSTEM" )
+	set( IOT_USER "SYSTEM" )
 endif()
 
 # Project information

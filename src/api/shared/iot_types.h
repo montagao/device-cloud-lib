@@ -24,6 +24,9 @@
 /** @brief Run in a single thread */
 #define IOT_FLAG_SINGLE_THREAD                   0x01
 
+/** @brief Type containing information required for file transfer */
+typedef struct iot_file_transfer                 iot_file_transfer_t;
+
 /**
  * @brief Possible types for iot directories
  */
@@ -31,11 +34,11 @@ typedef enum {
 	/**
 	 * @brief Configuration directory (Linux default: "/etc/iot")
 	 */
-	IOT_CONFIG_DIR = 0,
+	IOT_DIR_CONFIG = 0,
 	/**
 	 * @brief Run-time directory (Linux default: "/var/lib/iot")
 	 */
-	IOT_RUNTIME_DIR,
+	IOT_DIR_RUNTIME,
 } iot_dir_type_t;
 
 /**
@@ -354,44 +357,22 @@ struct iot_telemetry
 #endif /* else IOT_STACK_ONLY */
 };
 
+/** @brief structure containing informaiton about a file upload or download */
 struct iot_file_transfer
 {
-	/** @brief pointer to plugin data */
-	void *plugin_data;
-	/** @brief curl handle */
-	CURL *lib_curl;
-	/** @brief message id */
-	unsigned int msg_id;
-	/** @brief cloud's file name */
-	char name[ PATH_MAX + 1u ];
-	/** @brief local file path */
-	char path[ PATH_MAX + 1u ];
-	/** @brief url of cloud's file */
-	char url[ PATH_MAX + 1u ];
-	/** @brief crc32 checksum */
-	iot_uint64_t crc32;
-	/** @brief file size */
-	iot_uint64_t size;
-	/** @brief file operation (get/put) */
-	iot_operation_t op;
-	/** @brief flag to cancel transfer */
-	iot_bool_t cancel;
-	/** @brief last time progress was sent */
-	double last_update_time;
-	/** @brief total byte transfered in previous session(s) */
-	long prev_byte;
-	/** @brief next time transfer is retried */
-	iot_timestamp_t retry_time;
-	/** @brief time when transfer expired */
-	iot_timestamp_t expiry_time;
-	/** @brief Use global file store */
-	iot_bool_t use_global_store;
 	/** @brief progress function callback */
 	iot_file_progress_callback_t *callback;
+	/** @brief flags for the transfer */
+	iot_file_flags_t flags;
+	/** @brief cloud's file name */
+	const char *name;
+	/** @brief local file path */
+	const char *path;
 	/** @brief callback's user data */
 	void *user_data;
 };
 
+/** @brief structure containing information about a file transfer progress */
 struct iot_file_progress
 {
 	/** @brief flag for transfer completion */
@@ -424,8 +405,47 @@ struct iot_message
 	/** @brief data payload */
 	struct iot_data payload;
 };
-#endif
+/**
+ * @brief information about the cloud being connected to
+ */
+struct iot_cloud
+{
+	/** @brief host name or address */
+	char host[ IOT_HOST_MAX_LEN + 1u ];
+	/** @brief port to connect to */
+	iot_uint16_t port;
+	/** @brief application token */
+	char token[ IOT_TOKEN_MAX_LEN + 1u ];
+};
 
+/** @brief Structure containing information about proxy server used */
+struct iot_proxy
+{
+	/** @brief Proxy to use */
+	char host[ IOT_HOST_MAX_LEN + 1u ];
+	/** @brief Port number the proxy server listens to */
+	long port;
+	/** @brief Proxy protocol type to use */
+	char type[ IOT_PROXY_TYPE_MAX_LEN + 1u ];
+	/** @brief User name to use for proxy authentication */
+	char username[ IOT_USERNAME_MAX_LEN + 1u ];
+	/** @brief Password to use with proxy authentication */
+	char password[ IOT_PASSWORD_MAX_LEN + 1u ];
+};
+/** @brief structure for holding connection data */
+struct iot_connection {
+	/** @brief information about cloud connection */
+	struct iot_cloud cloud;
+	/** @brief if validating certification or not */
+	char validate_cert[ IOT_VALIDATE_CERT_MAX_LEN  + 1u ];
+	/** @brief certificate file to use with full path */
+	char cert_file[ PATH_MAX + 1u ];
+	/** @brief information about proxy server used */
+	struct iot_proxy proxy;
+	/** @brief confile file to save the information */
+	char config_file[ PATH_MAX + 1u ];
+};
+#endif
 /**
  * @brief structure holding data for eanble plug-ins
  */
@@ -1377,5 +1397,18 @@ IOT_API IOT_SECTION iot_status_t iot_configuration_file_set(
 IOT_SECTION IOT_API const char *iot_telemetry_name_get(
 	const iot_telemetry_t *t );
 
+/**
+ * @brief Gets the device uuid
+ *
+ * @param[in]      filename            device uuid filename
+ * @param[in,out]  buf                 buffer to return uuid string
+ * @param[in]      len                 buffer length
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          on failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_SECTION iot_status_t iot_get_device_uuid( const char *filename,
+	char *buf, size_t len);
 #endif /* ifndef IOT_TYPES_H */
 

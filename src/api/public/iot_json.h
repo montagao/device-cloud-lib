@@ -297,6 +297,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_number(
  *
  * @return pointer to the JSON item matching the key given or NULL if not found
  *
+ * @see iot_json_decode_object_find_len
  * @see iot_json_decode_object_iterator
  * @see iot_json_decode_object_iterator_key
  */
@@ -304,6 +305,26 @@ IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find(
 	const iot_json_decoder_t *decoder,
 	iot_json_item_t *object,
 	const char *key );
+
+/**
+ * @brief Returns the item mathcing the given key in an object
+ *
+ * @param[in]      decoder             JSON decoder object
+ * @param[in]      object              JSON object to search through
+ * @param[in]      key                 item key to find
+ * @param[in]      key_len             length of key (set to 0 for NULL-terminated)
+ *
+ * @return pointer to the JSON item matching the key given or NULL if not found
+ *
+ * @see iot_json_decode_object_find
+ * @see iot_json_decode_object_iterator
+ * @see iot_json_decode_object_iterator_key
+ */
+IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find_len(
+	const iot_json_decoder_t *decoder,
+	iot_json_item_t *object,
+	const char *key,
+	size_t key_len );
 
 /**
  * @brief Returns an iterator for iterating through a JSON object

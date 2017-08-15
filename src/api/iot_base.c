@@ -163,70 +163,6 @@ static IOT_SECTION iot_status_t iot_base_configuration_parse(
 	const char *buf,
 	const size_t len );
 
-#if 0
-/**
- * @brief Decode config boolean setting
- *
- * @param[in]      json_decoder        base JSON decoder
- * @param[in]      item                JSON array to currently being iterated
- * @param[in]      itr                 iterator to retieve setting for
- * @param[in]      key                 key to retieve setting for
- * @param[out]     value_p             output destination
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FAILURE          on failure
- * @retval IOT_STATUS_SUCCESS          on success
- */
-static IOT_SECTION iot_status_t iot_base_decode_config_read_boolean(
-	iot_json_decoder_t *json_decoder,
-	iot_json_item_t *item,
-	iot_json_item_t *itr,
-	const char *key,
-	iot_bool_t *value_p );
-
-/**
- * @brief Decode config integer setting
- *
- * @param[in]      json_decoder        base JSON decoder
- * @param[in]      item                JSON array to currently being iterated
- * @param[in]      itr                 iterator to retieve setting for
- * @param[in]      key                 key to retieve setting for
- * @param[out]     value_p             output destination
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FAILURE          on failure
- * @retval IOT_STATUS_SUCCESS          on success
- */
-static iot_status_t iot_base_decode_config_read_integer(
-	iot_json_decoder_t *json_decoder,
-	iot_json_item_t *item,
-	iot_json_item_t *itr,
-	const char *key,
-	iot_int64_t *value_p );
-
-/**
- * @brief Decode config string setting
- *
- * @param[in]      json_decoder        base JSON decoder
- * @param[in]      item                JSON array to currently being iterated
- * @param[in]      itr                 iterator to retieve setting for
- * @param[in]      key                 key to retieve setting for
- * @param[out]     buf                 output destination
- * @param[in]      len                 max length of the returned string
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_FAILURE          on failure
- * @retval IOT_STATUS_SUCCESS          on success
- */
-static IOT_SECTION iot_status_t iot_base_decode_config_read_string(
-	iot_json_decoder_t *json_decoder,
-	iot_json_item_t *item,
-	iot_json_item_t *itr,
-	const char *key,
-	char *buf,
-	const size_t len);
-#endif
-
 /**
  * @brief Sets the device id from a file (or generates one if file doesn't exist)
  *
@@ -430,10 +366,18 @@ iot_status_t iot_connect(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( lib )
 	{
+		const char *log_level = NULL;
+
 		result = iot_base_configuration_load( lib, &max_time_out );
 		if ( result != IOT_STATUS_SUCCESS )
 			IOT_LOG( lib, IOT_LOG_ERROR, "%s",
 				"Failed getting connect configuration" );
+
+		/* set log level */
+		iot_option_get( lib, "log_level", IOT_FALSE,
+			IOT_TYPE_STRING, &log_level );
+		if ( log_level )
+			iot_log_level_set_string( lib, log_level );
 
 		result = iot_plugin_perform( lib,
 			NULL, &max_time_out,
@@ -472,31 +416,28 @@ size_t iot_directory_name_get(
 	size_t buf_len )
 {
 	size_t result = 0u;
-	if ( buf && buf_len > 0u )
+	const char *dir_fmt = NULL;
+	switch( type )
 	{
-		const char *dir_fmt = NULL;
-		switch( type )
-		{
-			case IOT_CONFIG_DIR:
-				dir_fmt = IOT_CONFIG_DIR_DEFAULT;
-				break;
-			case IOT_RUNTIME_DIR:
-				dir_fmt = IOT_RUNTIME_DIR_DEFAULT;
-				break;
-			default:
-				break;
-		}
+		case IOT_DIR_CONFIG:
+			dir_fmt = IOT_DEFAULT_DIR_CONFIG;
+			break;
+		case IOT_DIR_RUNTIME:
+			dir_fmt = IOT_DEFAULT_DIR_RUNTIME;
+			break;
+		default:
+			break;
+	}
 
-		if ( dir_fmt )
+	if ( dir_fmt )
+	{
+		result = os_strlen( dir_fmt );
+		if ( buf && buf_len > 0u )
 		{
-			result = os_strlen( dir_fmt );
-			if ( buf_len > 0u )
-			{
-				os_strncpy( buf, dir_fmt, buf_len  - 1u );
-				/** @todo expand environment variables in
-				 * path here */
-				buf[ buf_len - 1u ] = '\0';
-			}
+			os_strncpy( buf, dir_fmt, buf_len - 1u );
+			/** @todo expand environment variables in
+			 * path here */
+			buf[ buf_len - 1u ] = '\0';
 		}
 	}
 	return result;
@@ -523,15 +464,15 @@ iot_status_t iot_base_configuration_load(
 		else
 		{
 			/* default configuration file */
-			file_path_len = iot_directory_name_get( IOT_CONFIG_DIR,
+			file_path_len = iot_directory_name_get( IOT_DIR_CONFIG,
 				file_path, PATH_MAX );
 			if ( file_path_len < PATH_MAX )
 			{
 				os_snprintf( &file_path[file_path_len],
 					PATH_MAX - file_path_len, "/%s",
-					IOT_DEFAULT_FILENAME_IOT_CONNECT );
+					IOT_DEFAULT_FILE_CONNECT );
 				file_path_len +=
-					os_strlen( IOT_DEFAULT_FILENAME_IOT_CONNECT ) + 1u;
+					os_strlen( IOT_DEFAULT_FILE_CONNECT ) + 1u;
 			}
 		}
 
@@ -766,7 +707,7 @@ iot_status_t iot_base_device_id_set(
 		size_t file_path_len;
 
 		result = IOT_STATUS_FAILURE;
-		file_path_len = iot_directory_name_get( IOT_RUNTIME_DIR,
+		file_path_len = iot_directory_name_get( IOT_DIR_RUNTIME,
 			file_path, PATH_MAX );
 		if ( file_path_len < PATH_MAX )
 		{
@@ -776,7 +717,7 @@ iot_status_t iot_base_device_id_set(
 			/* determine full path to the device id file */
 			os_snprintf( &file_path[file_path_len],
 				PATH_MAX - file_path_len, "/%s",
-				IOT_DEFAULT_FILENAME_DEVICE_ID );
+				IOT_DEFAULT_FILE_DEVICE_ID );
 
 			fd = os_file_open( file_path, OS_READ );
 			*device_id = '\0';
@@ -1085,7 +1026,7 @@ iot_status_t iot_log_level_set_string(
 		while( !log_level_found && log_level_index <
 			sizeof(IOT_LOG_LEVEL_MAP)/sizeof(const char * ) )
 		{
-			if ( os_strcmp( log_level_str,
+			if ( os_strcasecmp( log_level_str,
 				IOT_LOG_LEVEL_MAP[log_level_index] ) == 0)
 			{
 				result = iot_log_level_set( lib,

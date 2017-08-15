@@ -19,6 +19,34 @@
 #include <jsmn.h>
 #endif /* else IOT_JSON_JANSSON */
 
+#ifdef IOT_JSON_JANSSON
+	/** @brief base structure used for decoding with JANSSON */
+	struct iot_json_decoder
+	{
+		/** @brief output flags */
+		unsigned int flags;
+		/** @brief pointer to the root object */
+		json_t *j_root;
+	};
+#else /* ifdef IOT_JSON_JANSSON */
+	/** @brief base structure used for decoding with JSMN */
+	struct iot_json_decoder
+	{
+		/** @brief start of the buffer */
+		const char *buf;
+		/** @brief size of json buffer */
+		size_t len;
+		/** @brief output flags */
+		unsigned int flags;
+		/** @brief current number of objects */
+		unsigned int objs;
+		/** @brief maximum number of objects */
+		unsigned int size;
+		/** @brief pointer to first token */
+		jsmntok_t *tokens;
+	};
+#endif
+
 /* functions */
 #ifndef IOT_STACK_ONLY
 /**

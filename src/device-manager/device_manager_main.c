@@ -1093,19 +1093,18 @@ iot_status_t device_manager_config_read(
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 
-	printf("  * Checking for configuration file %s ...\n", IOT_CFG );
+	printf("  * Checking for configuration file %s ...\n",
+		IOT_DEFAULT_FILE_CONFIG );
 	if ( device_manager_info && app_path )
 	{
+		size_t cfg_dir_len;
+		char default_iot_cfg_path[PATH_MAX + 1u];
+		os_file_t fd;
 		struct device_manager_file_io_info *const file_io =
 			&device_manager_info->file_io_info;
-		/*struct app_config *config = NULL;*/
 		char install_dir[PATH_MAX + 1u];
-		/*char temp_string[PATH_MAX + 1u];*/
-		char default_iot_cfg_path[PATH_MAX + 1u];
 		char *p_path;
 		iot_bool_t has_rdp = IOT_FALSE;
-		os_file_t fd;
-
 
 		/* Find install dir to be used later */
 		os_strncpy( install_dir, app_path, PATH_MAX );
@@ -1116,9 +1115,9 @@ iot_status_t device_manager_config_read(
 			os_strncpy( install_dir, ".", PATH_MAX );
 
 		/* Default values */
-		os_strncpy( device_manager_info->runtime_dir,
-			IOT_RUNTIME_DIR_DEFAULT, PATH_MAX );
-		os_env_expand( device_manager_info->runtime_dir, PATH_MAX );
+		iot_directory_name_get( IOT_DIR_RUNTIME,
+			device_manager_info->runtime_dir,
+			PATH_MAX );
 		device_manager_info->runtime_dir[PATH_MAX] = '\0';
 
 		/* set the default value for remote login.  Can be
@@ -1241,8 +1240,12 @@ iot_status_t device_manager_config_read(
 		result = IOT_STATUS_NOT_FOUND;
 
 		/* set the default path */
-		os_snprintf( default_iot_cfg_path, PATH_MAX, "%s%c%s",
-			IOT_CONFIG_DIR_DEFAULT, OS_DIR_SEP, IOT_CFG );
+		cfg_dir_len = iot_directory_name_get( IOT_DIR_CONFIG,
+			default_iot_cfg_path, PATH_MAX );
+		os_snprintf( &default_iot_cfg_path[cfg_dir_len],
+			PATH_MAX - cfg_dir_len, "%c%s",
+			OS_DIR_SEP, IOT_DEFAULT_FILE_CONFIG );
+		default_iot_cfg_path[PATH_MAX] = '\0';
 
 		if ( !config_file || config_file[0] == '\0' )
 			config_file = default_iot_cfg_path;

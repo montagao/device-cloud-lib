@@ -18,13 +18,20 @@
 #include "iot_plugin.h"            /* for plug-in support */
 
 #include "shared/iot_types.h"      /* for struct iot */
-#include "os.h"                    /* operating system abstraction */
 
+#include <os.h>                    /* operating system abstraction */
 #include <archive.h>               /* for archiving functions */
 #include <archive_entry.h>         /* for adding files to an archive */
 
-#define IOT_DEFAULT_DOWNLOAD_DIR IOT_RUNTIME_DIR_DEFAULT "/download"
-#define IOT_DEFAULT_UPLOAD_DIR   IOT_RUNTIME_DIR_DEFAULT "/upload"
+/**
+ * @brief Default download subdirectory
+ */
+#define IOT_DEFAULT_DIR_DOWNLOAD       "download"
+
+/**
+ * @brief Default update subdirectory
+ */
+#define IOT_DEFAULT_DIR_UPLOAD         "upload"
 
 /**
  * @brief Transfer a file/directory to/from cloud
@@ -33,7 +40,7 @@
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
- * @param[in]      use_global_store    Use global file store
+ * @param[in]      flags               flags to control file transfer
  * @param[in]      file_name           cloud's file name (optional)
  *                                     if file name is not given, local file
  *                                     name will be used, if it is a directory,
@@ -61,7 +68,7 @@ static iot_status_t iot_file_transfer(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
-	iot_bool_t use_global_store,
+	iot_file_flags_t flags,
 	iot_operation_t op,
 	const char * const file_name,
 	const char * const file_path,
@@ -69,191 +76,29 @@ static iot_status_t iot_file_transfer(
 	void *user_data );
 
 /**
- * @brief Transfer a file/directory to/from cloud
+ * @brief Build an archive from a directory for the cloud
  *
- * @param[in,out]  path                path to the directory to archive
- *                                     and path to the archived file
- * @param[out]     len                 length of the buffer
+ * @param[in]      archive_path        name of the archive file to produce
+ * @param[in]      path                path to the directory to archive
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
  * @retval IOT_STATUS_FAILURE          internal system failure
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
 static iot_status_t iot_file_archive_directory(
-	char *path, size_t len );
+	const char *archvie_file,
+	const char *path );
 
-iot_status_t iot_file_send(
-	iot_t *handle,
-	iot_transaction_t *txn,
-	iot_millisecond_t max_time_out,
-	iot_file_store_t storage,
-	const char *file_name,
-	const char *file_path,
-	iot_file_progress_callback_t *func,
-	void *user_data )
+
+iot_status_t iot_file_archive_directory(
+	const char *archive_path,
+	const char *path )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-
-	/* Need a flag to indicate to the subsystem to use the global
-	 * file store or private one in the thing scope */
-	iot_bool_t use_global_store = IOT_FALSE;
-
-	if ( storage & IOT_FILE_FLAG_GLOBAL )
-		use_global_store = IOT_TRUE;
-
-	if ( handle && file_path )
-		result = iot_file_transfer(
-			handle, txn, max_time_out,
-			use_global_store, IOT_OPERATION_FILE_PUT,
-			file_name, file_path,
-			func, user_data );
-	return result;
-}
-
-iot_status_t iot_file_receive(
-	iot_t *handle,
-	iot_transaction_t *txn,
-	iot_millisecond_t max_time_out,
-	iot_file_store_t storage,
-	const char *file_name,
-	const char *file_path,
-	iot_file_progress_callback_t *func,
-	void *user_data )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-
-	/* Need a flag to indicate to the subsystem to use the global
-	 * file store or private one in the thing scope */
-	iot_bool_t use_global_store = IOT_FALSE;
-
-	if ( storage & IOT_FILE_FLAG_GLOBAL )
-		use_global_store = IOT_TRUE;
-
-	if ( handle && file_path )
-		result = iot_file_transfer(
-			handle, txn, max_time_out,
-			use_global_store, IOT_OPERATION_FILE_GET,
-			file_name, file_path,
-			func, user_data );
-	return result;
-}
-
-iot_status_t iot_file_transfer(
-	iot_t *handle,
-	iot_transaction_t *txn,
-	iot_millisecond_t max_time_out,
-	iot_bool_t use_global_store,
-	iot_operation_t op,
-	const char * const file_name,
-	const char * const file_path,
-	iot_file_progress_callback_t *func,
-	void *user_data )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( handle && file_path )
-	{
-		iot_file_transfer_t transfer;
-
-		result = IOT_STATUS_FAILURE;
-		os_memzero( &transfer, sizeof( iot_file_transfer_t ) );
-		transfer.op = op;
-		transfer.callback = func;
-		transfer.user_data = user_data;
-		transfer.use_global_store = use_global_store;
-
-		/* Use default directories if the
-		 * path provided is not absolute */
-		if ( file_path && file_path[0] == OS_DIR_SEP )
-			os_strncpy( transfer.path, file_path, PATH_MAX );
-		else
-			os_snprintf( transfer.path, PATH_MAX, "%s%c%s",
-				(op == IOT_OPERATION_FILE_PUT)?
-					IOT_DEFAULT_UPLOAD_DIR :
-					IOT_DEFAULT_DOWNLOAD_DIR,
-				OS_DIR_SEP,
-				file_path );
-
-		/* Use the file_name to rename it on the cloud */
-		if ( file_name && file_name[0] != '\0' )
-			os_strncpy( transfer.name, file_name, PATH_MAX );
-		else
-		{
-			/* if it's a directory, use the path's name
-			 * with dashes and tar extension */
-			if ( os_directory_exists( transfer.path ) )
-			{
-				size_t i = 0u;
-				os_snprintf( transfer.name, PATH_MAX,
-					"%s.tar", transfer.path + 1u );
-
-				while( transfer.name[i] != '\0' )
-				{
-					if ( transfer.name[i] == OS_DIR_SEP )
-						transfer.name[i] = '-';
-					++i;
-				}
-				if ( i > 0 && transfer.name[i - 1] == OS_DIR_SEP )
-					transfer.name[i - 1] = '\0';
-			}
-			else
-				/* If name was not defined, take it
-				 * from the basename(path)*/
-				os_strncpy( transfer.name,
-						os_strrchr( transfer.path, OS_DIR_SEP ) + 1u,
-						PATH_MAX );
-		}
-
-		if ( op == IOT_OPERATION_FILE_PUT )
-		{
-			if ( os_directory_exists( transfer.path ) )
-				result = iot_file_archive_directory( transfer.path, PATH_MAX );
-			else if ( os_file_exists( transfer.path) )
-				result = IOT_STATUS_SUCCESS;
-			else
-				os_printf( "Error: %s does not exist\n",
-					transfer.path );
-		}
-		else
-		{
-			/* Check if the directory exists and writable */
-			char dir[ PATH_MAX ];
-			os_strncpy( dir, transfer.path, PATH_MAX );
-			*os_strrchr( dir, OS_DIR_SEP ) = '\0';
-
-			if ( os_file_exists( dir ) )
-				result = IOT_STATUS_SUCCESS;
-			else
-			{
-				/* Create it if it doesn't exists */
-				os_printf( "Info: Creating directory %s\n", dir );
-				result = os_directory_create_nowait( dir );
-				if ( result != IOT_STATUS_SUCCESS )
-					os_printf( "Error: Failed to create dir %s\n", dir );
-			}
-		}
-
-		/* send the request */
-		if ( result == IOT_STATUS_SUCCESS )
-			result = iot_plugin_perform( handle,
-				txn, &max_time_out,
-				IOT_OPERATION_FILE_PUT, &transfer, NULL );
-	}
-	return result;
-}
-
-iot_status_t iot_file_archive_directory( char *path, size_t len )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( path && len )
+	if ( archive_path && path )
 	{
 		os_dir_t dir;
 		struct archive *archive;
-		char archive_path[ PATH_MAX + 1u ];
-
-		/* get a temporary file name */
-		os_snprintf( archive_path, PATH_MAX, "%s%cfileXXXXXX.tar",
-			IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP );
-		os_file_temp( archive_path, 4 );
 
 		/* compress all files in upload directories */
 		archive = archive_write_new();
@@ -261,7 +106,7 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 		archive_write_set_format_pax_restricted( archive );
 		archive_write_open_filename( archive, archive_path );
 
-		if ( os_directory_open( path, &dir ) == OS_STATUS_SUCCESS)
+		if ( os_directory_open( path, &dir ) == OS_STATUS_SUCCESS )
 		{
 			char file_name[ PATH_MAX + 1u ];
 			iot_bool_t walk_directory = IOT_TRUE;
@@ -318,9 +163,251 @@ iot_status_t iot_file_archive_directory( char *path, size_t len )
 
 		archive_write_close( archive );
 		archive_write_free( archive );
+	}
+	return result;
+}
 
+iot_status_t iot_file_download(
+	iot_t *handle,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	iot_file_flags_t flags,
+	const char *file_name,
+	const char *file_path,
+	iot_file_progress_callback_t *func,
+	void *user_data )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+
+	if ( handle && file_path )
+		result = iot_file_transfer(
+			handle, txn, max_time_out,
+			flags, IOT_OPERATION_FILE_DOWNLOAD,
+			file_name, file_path,
+			func, user_data );
+	return result;
+}
+
+iot_status_t iot_file_transfer(
+	iot_t *handle,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	iot_file_flags_t flags,
+	iot_operation_t op,
+	const char * const file_name,
+	const char * const file_path,
+	iot_file_progress_callback_t *func,
+	void *user_data )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( handle && file_path )
+	{
+		char *heap_name = NULL;
+		char *heap_path = NULL;
+		iot_file_transfer_t transfer;
+
+		result = IOT_STATUS_FAILURE;
+		os_memzero( &transfer, sizeof( iot_file_transfer_t ) );
+		transfer.callback = func;
+		transfer.user_data = user_data;
+		transfer.flags = flags;
+
+		/* Use default directory if the path provided is not absolute */
+		/** @todo update this to be a real absolute path check */
+		if ( file_path[0] == OS_DIR_SEP )
+			transfer.path = file_path;
+		else
+		{
+			const char *subdir = IOT_DEFAULT_DIR_DOWNLOAD;
+			size_t heap_len = 0u;
+
+			if ( op == IOT_OPERATION_FILE_UPLOAD )
+				subdir = IOT_DEFAULT_DIR_UPLOAD;
+
+			heap_len += iot_directory_name_get(
+				IOT_DIR_RUNTIME, NULL, 0u );
+			/* +1 for directory seperator */
+			heap_len += os_strlen( subdir ) + 1u;
+			/* +1 for directory seperator */
+			heap_len += os_strlen( file_path ) + 1u;
+
+			heap_path = os_malloc( heap_len + 1u );
+			if ( heap_path )
+			{
+				size_t dir_len;
+				dir_len = iot_directory_name_get(
+					IOT_DIR_RUNTIME, heap_path,
+					heap_len );
+				os_snprintf( &heap_path[dir_len],
+					heap_len - dir_len,
+					"%c%s%c%s",
+					OS_DIR_SEP, subdir,
+					OS_DIR_SEP, file_path );
+				heap_path[heap_len] = '\0';
+				transfer.path = heap_path;
+			}
+		}
+
+		/* Use the file_name to rename it on the cloud */
+		if ( file_name && file_name[0] != '\0' )
+			transfer.name = file_name;
+		else
+		{
+			/* if it's a directory, use the path's name
+			 * with dashes and tar extension */
+			if ( os_directory_exists( transfer.path ) )
+			{
+				const char *const ext = ".tar";
+				size_t path_len = os_strlen(
+					transfer.path );
+				const size_t heap_len = path_len +
+					os_strlen( ext );
+
+				heap_name = os_malloc( heap_len + 1u );
+				if ( heap_name )
+				{
+					char *pos;
+
+					strncpy( heap_name, transfer.path,
+						heap_len );
+
+					/* remove ending slashes */
+					while ( path_len > 0u &&
+						heap_name[path_len - 1u] == OS_DIR_SEP )
+					{
+						heap_name[path_len - 1u] = '\0';
+						--path_len;
+					}
+
+					/* add extension to end of name */
+					strncpy( &heap_name[path_len],
+						ext, heap_len - path_len + 1u);
+					pos = heap_name;
+
+#ifdef _WIN32
+					/* if string starts with "C:" */
+					if ( heap_len > 1u &&
+						pos[1] == ':' )
+						pos += 2;
+#endif /* ifdef _WIN32 */
+
+					/* remove root directory seperators */
+					while ( pos && *pos == OS_DIR_SEP )
+						++pos;
+
+					/* convert any directory seperators to
+					   dashes */
+					transfer.name = pos;
+					while( pos && *pos != '\0' )
+					{
+						if ( *pos == OS_DIR_SEP )
+							*pos = '-';
+						++pos;
+					}
+				}
+			}
+			else
+				transfer.name = os_strrchr( transfer.path,
+					OS_DIR_SEP ) + 1u;
+		}
+
+		if ( op == IOT_OPERATION_FILE_UPLOAD )
+		{
+			if ( os_directory_exists( transfer.path ) )
+			{
+				size_t archive_len = 0u;
+				char *archive_path = NULL;
+				const char *const ext = ".tar";
+				const char *const file_name_format =
+					"fileXXXXXX";
+
+				/* get runtime directory name */
+				archive_len = iot_directory_name_get(
+					IOT_DIR_RUNTIME, NULL, 0u );
+
+				/* +1 for directory seperator */
+				archive_len += os_strlen( file_name_format ) +
+					os_strlen( ext ) + 1u;
+
+				/* get a temporary file name */
+				archive_path = os_malloc( archive_len + 1u );
+
+				result = IOT_STATUS_NO_MEMORY;
+				if ( archive_path )
+				{
+					const size_t dir_len =
+						iot_directory_name_get(
+							IOT_DIR_RUNTIME,
+							archive_path,
+							archive_len );
+					os_snprintf( &archive_path[dir_len],
+						archive_len - dir_len + 1u,
+						"%c%s%s", OS_DIR_SEP,
+						file_name_format, ext );
+					archive_path[ archive_len ] = '\0';
+					os_file_temp( archive_path,
+						os_strlen(ext) );
+
+					result = iot_file_archive_directory(
+						archive_path, transfer.path );
+					if ( result == IOT_STATUS_SUCCESS )
+					{
+						transfer.path = archive_path;
+						os_free( heap_path );
+						heap_path = archive_path;
+					}
+					else
+						os_free( archive_path );
+				}
+			}
+			else if ( os_file_exists( transfer.path ) )
+				result = IOT_STATUS_SUCCESS;
+			else
+				os_printf( "Error: %s does not exist\n",
+					transfer.path );
+		}
+		else
+		{
+			/* Check if the directory exists and writable */
+			char dir[ PATH_MAX ];
+			os_strncpy( dir, transfer.path, PATH_MAX );
+			*os_strrchr( dir, OS_DIR_SEP ) = '\0';
+
+			if ( os_file_exists( dir ) )
+				result = IOT_STATUS_SUCCESS;
+			else
+			{
+				/* Create it if it doesn't exists */
+				os_printf( "Info: Creating directory %s\n", dir );
+				result = os_directory_create_nowait( dir );
+				if ( result != IOT_STATUS_SUCCESS )
+					os_printf( "Error: Failed to create dir %s\n", dir );
+			}
+		}
+
+		/* send the request */
 		if ( result == IOT_STATUS_SUCCESS )
-			os_strncpy( path, archive_path, len );
+			result = iot_plugin_perform( handle,
+				txn, &max_time_out, op, &transfer, NULL );
+
+		/* clean up memory on the heap */
+		if ( heap_name )
+			os_free( heap_name );
+		if ( heap_path )
+			os_free( heap_path );
+	}
+	return result;
+}
+
+iot_status_t iot_file_progress_is_completed(
+	iot_file_progress_t *progress,
+	iot_bool_t *is_completed )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( progress && is_completed )
+	{
+		*is_completed = progress->completed;
+		result = IOT_STATUS_SUCCESS;
 	}
 	return result;
 }
@@ -351,15 +438,24 @@ iot_status_t iot_file_progress_status_get(
 	return result;
 }
 
-iot_status_t iot_file_progress_is_completed(
-	iot_file_progress_t *progress,
-	iot_bool_t *is_completed )
+iot_status_t iot_file_upload(
+	iot_t *handle,
+	iot_transaction_t *txn,
+	iot_millisecond_t max_time_out,
+	iot_file_flags_t flags,
+	const char *file_name,
+	const char *file_path,
+	iot_file_progress_callback_t *func,
+	void *user_data )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( progress && is_completed )
-	{
-		*is_completed = progress->completed;
-		result = IOT_STATUS_SUCCESS;
-	}
+
+	if ( handle && file_path )
+		result = iot_file_transfer(
+			handle, txn, max_time_out,
+			flags, IOT_OPERATION_FILE_UPLOAD,
+			file_name, file_path,
+			func, user_data );
 	return result;
 }
+

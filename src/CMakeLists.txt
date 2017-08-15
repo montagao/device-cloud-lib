@@ -8,7 +8,8 @@
 #
 
 add_subdirectory( "api" )
+add_subdirectory( "control" )
+add_subdirectory( "device-manager" )
 add_subdirectory( "relay" )
 add_subdirectory( "software-update" )
 add_subdirectory( "utilities" )
-add_subdirectory( "device-manager" )

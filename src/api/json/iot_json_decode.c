@@ -17,32 +17,7 @@
 
 #ifdef IOT_JSON_JANSSON
 #	include "os.h" /* for os_memzero  */
-	/** @brief base structure used for decoding with JANSSON */
-	struct iot_json_decoder
-	{
-		/** @brief output flags */
-		unsigned int flags;
-		/** @brief pointer to the root object */
-		json_t *j_root;
-	};
 #else /* ifdef IOT_JSON_JANSSON */
-	/** @brief base structure used for decoding with JSMN */
-	struct iot_json_decoder
-	{
-		/** @brief start of the buffer */
-		const char *buf;
-		/** @brief size of json buffer */
-		size_t len;
-		/** @brief output flags */
-		unsigned int flags;
-		/** @brief current number of objects */
-		unsigned int objs;
-		/** @brief maximum number of objects */
-		unsigned int size;
-		/** @brief pointer to first token */
-		jsmntok_t *tokens;
-	};
-
 /**
  * @brief helper function for decoding real numbers with JSMN
  *
@@ -526,10 +501,39 @@ iot_json_item_t *iot_json_decode_object_find(
 	const char *key )
 {
 	iot_json_item_t *result = NULL;
+#ifdef IOT_JSON_JANSSON
+	if ( decoder && object && key )
+		result = json_object_get( object, key );
+#else
+	result = iot_json_decode_object_find_len( decoder, object, key, 0u );
+#endif
+	return result;
+}
+
+iot_json_item_t *iot_json_decode_object_find_len(
+	const iot_json_decoder_t *decoder,
+	iot_json_item_t *object,
+	const char *key,
+	size_t key_len )
+{
+	iot_json_item_t *result = NULL;
 	if ( decoder && object && key )
 	{
 #ifdef IOT_JSON_JANSSON
-		result = json_object_get( object, key );
+		if ( key_len > 0u )
+		{
+			char *buf = NULL;
+			buf = iot_json_realloc( NULL, key_len + 1u );
+			if ( buf )
+			{
+				os_strncpy( buf, key, key_len );
+				buf[key_len] = '\0';
+				result = json_object_get( object, buf );
+				iot_json_free( buf );
+			}
+		}
+		else
+			result = json_object_get( object, key );
 #else
 		jsmntok_t *cur = object;
 		if ( cur && cur->type == JSMN_OBJECT )
@@ -548,7 +552,11 @@ iot_json_item_t *iot_json_decode_object_find(
 				{
 					/* compare key */
 					size_t k = 0u;
-					const size_t key_len = cur->end - cur->start;
+					const size_t k_len = cur->end - cur->start;
+					if ( key_len == 0u )
+						key_len = k_len;
+					else if ( key_len > k_len )
+						key_len = k_len;
 					while ( k < key_len &&
 						decoder->buf[cur->start + k] == key[k] )
 						++k;
@@ -837,11 +845,11 @@ iot_status_t iot_json_decode_parse(
 		}
 
 		/* copy error text */
-		if ( error && error_len > 0u )
+		if ( error && error_len > 0u && error_text )
 		{
 			size_t j = 0u;
 			--error_len;
-			while ( j < error_len && error_text != '\0' )
+			while ( j < error_len && *error_text != '\0' )
 			{
 				*error = *error_text;
 				++error;

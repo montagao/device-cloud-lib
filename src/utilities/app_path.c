@@ -14,13 +14,13 @@
 #include "app_path.h"
 
 #include "os.h"           /* for os_* functions */
-#include "iot_build.h"                 /* for IOT_BIN_DIR */
+#include "iot_build.h"    /* for IOT_BIN_DIR */
 
 /** @brief Maximum path length for app_path_create */
 #define APP_PATH_CREATE_MAX_LEN 128u
 
-iot_status_t app_path_create( 
-	const char *path_in,  
+iot_status_t app_path_create(
+	const char *path_in,
 	unsigned int timeout )
 {
 	char path[APP_PATH_CREATE_MAX_LEN + 1u];
@@ -49,8 +49,8 @@ iot_status_t app_path_create(
 
 		token = os_strtok( NULL, "/\\" );
 
-		if( token != NULL && token != '\0' 
-			&& os_directory_exists( directory ) == IOT_FALSE )
+		if( token != NULL && *token != '\0' &&
+			os_directory_exists( directory ) == IOT_FALSE )
 		{
 			result = os_directory_create( directory, timeout );
 
@@ -257,37 +257,6 @@ size_t app_path_which( char *path, size_t path_max, const char *cur_dir,
 			os_strncpy( path, test_path, path_max );
 			test_path[ path_max - 1u ] = '\0';
 		}
-	}
-	return result;
-}
-
-iot_status_t app_path_runtime_directory_get(
-	char *path,
-	const size_t size )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( path )
-	{
-		result = IOT_STATUS_FAILURE;
-		os_memzero( path, size );
-		os_strncpy( path, IOT_RUNTIME_DIR_DEFAULT, size );
-		if ( os_env_expand( path, size ) > 0 )
-			result = IOT_STATUS_SUCCESS;
-	}
-	return result;
-}
-
-iot_status_t app_path_config_directory_get(
-	char *path, const size_t size )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( path )
-	{
-		result = IOT_STATUS_FAILURE;
-		os_memzero( path, size );
-		os_strncpy( path, IOT_CONFIG_DIR_DEFAULT, size );
-		if ( app_path_make_absolute( path, size, IOT_TRUE ) < size )
-			result = IOT_STATUS_SUCCESS;
 	}
 	return result;
 }

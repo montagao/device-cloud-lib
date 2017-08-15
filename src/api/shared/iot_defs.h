@@ -33,8 +33,12 @@
 #define IOT_ID_MAX_LEN                 36u
 /** @brief Maximum name length (128 = Matches AWS name) */
 #define IOT_NAME_MAX_LEN               128u
+/** @brief Maximum length of a host name on POSIX systems */
+#ifndef _POSIX_HOST_NAME_MAX
+#	define _POSIX_HOST_NAME_MAX    64
+#endif
 /** @brief Maximum host name length */
-#define IOT_HOST_MAX_LEN               256u
+#define IOT_HOST_MAX_LEN _POSIX_HOST_NAME_MAX
 /** @brief Maximum username length */
 #define IOT_USERNAME_MAX_LEN           32u
 /** @brief Maximum password length */
@@ -43,6 +47,11 @@
 #define IOT_TOPIC_MAX_LEN              255u
 /** @brief Maximum length for proxy type */
 #define IOT_PROXY_TYPE_MAX_LEN         16u
+
+/** @brief Maximum length of cloud certification validating or not */
+/*#define IOT_VALIDATE_CERT_MAX_LEN      6u*/
+/** @brief Maximum length of cloud connection token  */
+/*#define IOT_TOKEN_MAX_LEN              255u*/
 
 /** @brief Number of microseconds in millisecond */
 #define IOT_MICROSECONDS_IN_MILLISECOND 1000u
@@ -63,13 +72,6 @@
 #define IOT_SPLIT_PARENT               "/"
 /** @brief Character used to split a name into parts (i.e. name & version) */
 #define IOT_SPLIT_VERSION              ";"
-
-/** @brief Default device id file name */
-#define IOT_DEFAULT_FILENAME_DEVICE_ID           "device_id"
-/** @brief Default iot connection configuration file name */
-#define IOT_DEFAULT_FILENAME_IOT_CONNECT         "iot_connect.cfg"
-/** @brief Default iot configuration file name */
-#define IOT_DEFAULT_FILENAME_IOT_CONFIG          "iot.cfg"
 
 /** @brief Flag indicating whether 'accuracy' field is set */
 #define IOT_FLAG_LOCATION_ACCURACY               (0x01)

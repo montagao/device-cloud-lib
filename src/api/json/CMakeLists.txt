@@ -9,12 +9,14 @@
 
 set( C_HDRS ${C_HDRS}
 	"iot_json_base.h"
+	"iot_json_schema.h"
 )
 
 set( C_SRCS ${C_SRCS}
 	"iot_json_base.c"
 	"iot_json_decode.c"
 	"iot_json_encode.c"
+	"iot_json_schema.c"
 )
 
 get_full_path( C_HDRS ${C_HDRS} )

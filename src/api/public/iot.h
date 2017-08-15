@@ -230,12 +230,10 @@ typedef struct iot_telemetry                     iot_telemetry_t;
 typedef struct iot_transaction                   iot_transaction_t;
 /** @brief Type containing verison information for the library */
 typedef iot_uint32_t                             iot_version_t;
-/** @brief Type containing information required for file transfer */
-typedef struct iot_file_transfer                 iot_file_transfer_t;
 /** @brief Type containing information to pass to file transfer callback */
 typedef struct iot_file_progress                 iot_file_progress_t;
 /** @brief Storage option for file transfer */
-typedef uint32_t                                 iot_file_store_t;
+typedef uint32_t                                 iot_file_flags_t;
 
 /**
  * @}
@@ -419,15 +417,15 @@ typedef struct iot_log_source
  * @{
  */
 /** @brief Not connected to cloud */
-#define IOT_STATE_NOT_CONNECTED                  0
+#define IOT_STATE_NOT_CONNECTED        0
 /** @brief Connected to cloud */
-#define IOT_STATE_CONNECTED                      1
+#define IOT_STATE_CONNECTED            1
 
 /**
  * @brief Last state (not a true state
  * @note This must be the last state (i.e. highest number)
  */
-#define IOT_STATE_LAST                          (IOT_STATE_CONNECTED)
+#define IOT_STATE_LAST                 (IOT_STATE_CONNECTED)
 /** @brief State of client */
 typedef int iot_state_t;
 /**
@@ -436,11 +434,11 @@ typedef int iot_state_t;
 
 /**
  * @brief Type for a callback function called when an internal action is
- * requested
+ *        requested
  *
- * @param[in]      request                       information about the request
- *                                               that invoked the callback
- * @param[in]      user_data                     pointer to user specific data
+ * @param[in]      request             information about the request that
+ *                                     invoked the callback
+ * @param[in]      user_data           pointer to user specific data
  *
  * @return a return code indicating if action was handled
  */
@@ -449,13 +447,12 @@ typedef iot_status_t (iot_action_callback_t)(
 	void *user_data );
 
 /**
- * @brief Type for a callback function called during file transfer
- *        to give progress update
- * requested
+ * @brief Type of callback function called during a file transfer option to
+ *        allow for progress updates
  *
- * @param[in]      progress                      information about the
- *                                               file transfer's progress
- * @param[in]      user_data                     pointer to user specific data
+ * @param[in]      progress            information about the file transfer's
+ *                                     progress
+ * @param[in]      user_data           pointer to user specific data
  *
  * @return a return code indicating if action was handled
  */
@@ -466,10 +463,10 @@ typedef void (iot_file_progress_callback_t)(
 /**
  * @brief Type for a callback function called when log information is produced
  *
- * @param[in]      log_level                     log level of the message
- * @param[in]      log_source                    source of log message
- * @param[in]      message                       log message
- * @param[in]      user_data                     pointer to user specific data
+ * @param[in]      log_level           log level of the message
+ * @param[in]      log_source          source of log message
+ * @param[in]      message             log message
+ * @param[in]      user_data           pointer to user specific data
  */
 typedef void (iot_log_callback_t)(
 	iot_log_level_t log_level,
@@ -1314,14 +1311,13 @@ IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(
 #define IOT_FILE_FLAG_GLOBAL           0x1
 
 /**
- * @brief Get a file from cloud
+ * @brief Download a file from the cloud
  *
  * @param[in]      handle              library handle
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
- * @param[in]      store               Bitmask that control low level
- *                                     details for file transfer
+ * @param[in]      flags               flags for controlling the file transfer
  * @param[in]      file_name           cloud's file name to get (optional)
  *                                     if file name is not given, local file
  *                                     name will be used
@@ -1341,25 +1337,66 @@ IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(
  * @retval IOT_STATUS_FAILURE          internal system failure
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
-IOT_API IOT_SECTION iot_status_t iot_file_receive(
+IOT_API IOT_SECTION iot_status_t iot_file_download(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
-	iot_file_store_t store,
+	iot_file_flags_t flags,
 	const char *file_name,
 	const char *file_path,
 	iot_file_progress_callback_t *func,
 	void *user_data );
 
 /**
- * @brief Send a file/directory to cloud
+ * @brief Get the status of a file transfer
+ *
+ * @param[in]      progress            pointer containing various progress
+ *                                     update data
+ * @param[out]     status              status of the file transfer
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
+ * @retval IOT_STATUS_SUCCESS          operation successful
+ */
+IOT_API IOT_SECTION iot_status_t iot_file_progress_status_get(
+	iot_file_progress_t *progress,
+	iot_status_t *status );
+
+/**
+ * @brief Get the percentage done of a file transfer
+ *
+ * @param[in]      progress            pointer containing various progress
+ *                                     update data
+ * @param[out]     percentage          percentage done of the file transfer
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
+ * @retval IOT_STATUS_SUCCESS          operation successful
+ */
+IOT_API IOT_SECTION iot_status_t iot_file_progress_percentage_get(
+	iot_file_progress_t *progress,
+	iot_float32_t *percentage );
+
+/**
+ * @brief Check whether a file transfer has been completed or not
+ *
+ * @param[in]      progress            pointer containing various progress
+ *                                     update data
+ * @param[out]     is_completed        true if file transfer is completed
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
+ * @retval IOT_STATUS_SUCCESS          operation successful
+ */
+IOT_API IOT_SECTION iot_status_t iot_file_progress_is_completed(
+	iot_file_progress_t *progress,
+	iot_bool_t *is_completed );
+
+/**
+ * @brief Upload a file or directory to the cloud
  *
  * @param[in]      handle              library handle
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
- * @param[in]      store               Bitmask that control low level
- *                                     details for file transfer
+ * @param[in]      flags               flags for controlling the file transfer
  * @param[in]      file_name           cloud's file name to send (optional)
  *                                     if file name is not given, local file
  *                                     name will be used, if it is a directory,
@@ -1383,57 +1420,16 @@ IOT_API IOT_SECTION iot_status_t iot_file_receive(
  * @retval IOT_STATUS_FAILURE          internal system failure
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
-IOT_API IOT_SECTION iot_status_t iot_file_send(
+IOT_API IOT_SECTION iot_status_t iot_file_upload(
 	iot_t *handle,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
-	iot_file_store_t store,
+	iot_file_flags_t flags,
 	const char *file_name,
 	const char *file_path,
 	iot_file_progress_callback_t *func,
-	void *user_data  );
+	void *user_data );
 
-/**
- * @brief Get the percentage done of a file transfer
- *
- * @param[in]      progress            pointer containing various progress update data
- * @param[out]     percentage          percentage done of the file transfer
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
- * @retval IOT_STATUS_FAILURE          internal system failure
- * @retval IOT_STATUS_SUCCESS          operation successful
- */
-IOT_API IOT_SECTION iot_status_t iot_file_progress_percentage_get(
-	iot_file_progress_t * progress,
-	iot_float32_t *percentage );
-
-/**
- * @brief Get the status of a file transfer
- *
- * @param[in]      progress            pointer containing various progress update data
- * @param[out]     status              status of the file transfer
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
- * @retval IOT_STATUS_FAILURE          internal system failure
- * @retval IOT_STATUS_SUCCESS          operation successful
- */
-IOT_API IOT_SECTION iot_status_t iot_file_progress_status_get(
-	iot_file_progress_t *progress,
-	iot_status_t *status );
-
-/**
- * @brief Check whether a file transfer has been completed or not
- *
- * @param[in]      progress            pointer containing various progress update data
- * @param[out]     is_completed        true if file transfer is completed
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
- * @retval IOT_STATUS_FAILURE          internal system failure
- * @retval IOT_STATUS_SUCCESS          operation successful
- */
-IOT_API IOT_SECTION iot_status_t iot_file_progress_is_completed(
-	iot_file_progress_t *progress,
-	iot_bool_t *is_completed );
 
 /* location */
 /**

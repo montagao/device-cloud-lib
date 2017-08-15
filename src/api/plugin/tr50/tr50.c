@@ -51,6 +51,45 @@
                                              IOT_SECONDS_IN_MINUTE * \
                                              IOT_MILLISECONDS_IN_SECOND /* 1 hour */
 
+/** @brief structure containing informaiton about a file transfer */
+struct tr50_file_transfer
+{
+	/** @brief progress function callback */
+	iot_file_progress_callback_t *callback;
+	/** @brief flag to cancel transfer */
+	iot_bool_t cancel;
+	/** @brief crc32 checksum */
+	iot_uint64_t crc32;
+	/** @brief time when transfer expired */
+	iot_timestamp_t expiry_time;
+	/** @brief last time progress was sent */
+	double last_update_time;
+	/** @brief curl handle */
+	CURL *lib_curl;
+	/** @brief message id */
+	unsigned int msg_id;
+	/** @brief cloud's file name */
+	char name[ PATH_MAX + 1u ];
+	/** @brief file operation (get/put) */
+	iot_operation_t op;
+	/** @brief local file path */
+	char path[ PATH_MAX + 1u ];
+	/** @brief total byte transfered in previous session(s) */
+	long prev_byte;
+	/** @brief pointer to plugin data */
+	void *plugin_data;
+	/** @brief file size */
+	iot_uint64_t size;
+	/** @brief next time transfer is retried */
+	iot_timestamp_t retry_time;
+	/** @brief cloud download url */
+	char url[ PATH_MAX + 1u ];
+	/** @brief Use global file store */
+	iot_bool_t use_global_store;
+	/** @brief callback's user data */
+	void *user_data;
+};
+
 /** @brief internal data required for the plug-in */
 struct tr50_data
 {
@@ -65,7 +104,7 @@ struct tr50_data
 	/** @brief time_stamp of when connection loss is reported */
 	iot_timestamp_t time_stamp_connetion_loss_reported;
 	/** @brief file transfer queue */
-	iot_file_transfer_t file_transfer_queue[ TR50_FILE_TRANSFER_MAX ];
+	struct tr50_file_transfer file_transfer_queue[ TR50_FILE_TRANSFER_MAX ];
 	/** @brief number of ongoing file transfer */
 	iot_uint8_t file_transfer_count;
 	/** @brief timestamp of when file transfer queue is last checked */
@@ -205,6 +244,19 @@ iot_status_t tr50_enable(
 	void* plugin_data );
 
 /**
+ * @brief called when event log api publish is called
+ *
+ * @param[in]      data                plug-in specific data
+ * @param[in]      message             message to publish
+ *
+ * @retval IOT_STATUS_FAILURE          on failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+static IOT_SECTION iot_status_t tr50_event_log_publish(
+	struct tr50_data *data,
+	const char *message );
+
+/**
  * @brief plug-in function called to perform work in the plug-in
  *
  * @param[in]      lib                 loaded iot library
@@ -317,15 +369,15 @@ iot_status_t tr50_terminate(
  *        for file id, file size and crc
  *
  * @param[in]      data                plug-in specific data
- * @param[in]      transfer            info required to transfer file
+ * @param[in]      file_transfer       info required to transfer file
  *
  * @retval IOT_STATUS_BAD_PARAMETER    bad params
  * @retval IOT_STATUS_FAILURE          on failure
  * @retval IOT_STATUS_SUCCESS          on success
  */
 static IOT_SECTION iot_status_t tr50_file_request_send(
-	struct tr50_data *data,
-	const iot_file_transfer_t* transfer );
+	struct tr50_data *data, iot_operation_t op,
+	const iot_file_transfer_t* file_transfer );
 
 /**
  * @brief a thread to perform file transfer
@@ -844,6 +896,42 @@ iot_status_t tr50_enable(
 	return IOT_STATUS_SUCCESS;
 }
 
+iot_status_t tr50_event_log_publish(
+	struct tr50_data *data,
+	const char *message )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( data && message)
+	{
+		char buf[ 256u ];
+		iot_json_encoder_t *json;
+		json = iot_json_encode_initialize( buf, 256u, 0 );
+		result = IOT_STATUS_NO_MEMORY;
+		if ( json )
+		{
+			const char *msg;
+			iot_json_encode_object_start( json, "cmd" );
+			iot_json_encode_string( json, "command", "log.publish" );
+			iot_json_encode_object_start( json, "params" );
+			iot_json_encode_string( json, "thingKey",
+				data->thing_key );
+			iot_json_encode_string( json, "msg",
+				message );
+
+			iot_json_encode_object_end( json );
+			iot_json_encode_object_end( json );
+
+			msg = iot_json_encode_dump( json );
+			os_printf( "-->%s\n", msg );
+			iot_mqtt_publish( data->mqtt, "api",
+				msg, os_strlen( msg ), 0, IOT_FALSE, NULL );
+			iot_json_encode_terminate( json );
+			result = IOT_STATUS_SUCCESS;
+		}
+	}
+	return result;
+}
+
 iot_status_t tr50_execute(
 	iot_t *lib,
 	void* plugin_data,
@@ -872,9 +960,9 @@ iot_status_t tr50_execute(
 			case IOT_OPERATION_CLIENT_DISCONNECT:
 				result = tr50_disconnect( lib, data );
 				break;
-			case IOT_OPERATION_FILE_GET:
-			case IOT_OPERATION_FILE_PUT:
-				result = tr50_file_request_send( data,
+			case IOT_OPERATION_FILE_DOWNLOAD:
+			case IOT_OPERATION_FILE_UPLOAD:
+				result = tr50_file_request_send( data, op,
 					(const iot_file_transfer_t*)item );
 				break;
 			case IOT_OPERATION_TELEMETRY_PUBLISH:
@@ -889,6 +977,11 @@ iot_status_t tr50_execute(
 				result = tr50_action_complete( data,
 					(const iot_action_t*)item,
 					(const iot_action_request_t*)value );
+				break;
+			case IOT_OPERATION_EVENT_LOG_PUBLISH:
+				result = tr50_event_log_publish( data,
+					(const char*) value );
+				break;
 			default:
 				/* unhandled operations */
 				break;
@@ -1093,6 +1186,7 @@ void tr50_on_message(
 													iot_json_decode_bool( json, j_value, &value );
 													iot_action_request_parameter_set( req, name, IOT_TYPE_BOOL, value );
 													}
+													break;
 												case IOT_JSON_TYPE_INTEGER:
 													{
 													iot_int64_t value;
@@ -1144,7 +1238,7 @@ void tr50_on_message(
 									/* file transfer request parsing */
 									iot_uint8_t i = 0u;
 									iot_bool_t found_transfer = IOT_FALSE;
-									iot_file_transfer_t *transfer = NULL;
+									struct tr50_file_transfer *transfer = NULL;
 									char fileId[ 32u ];
 									iot_int64_t crc32 = 0u;
 									iot_int64_t fileSize = 0u;
@@ -1175,9 +1269,13 @@ void tr50_on_message(
 										if ( transfer->path &&
 											transfer->msg_id == msg_id )
 										{
-										/* FIXME: * should be configurable */
+											/* determine host name from config file */
+											const char *host = NULL;
+											iot_option_get( data->lib,
+												"cloud.host", IOT_FALSE,
+												IOT_TYPE_STRING, &host );
 											os_snprintf( transfer->url, PATH_MAX,
-												"https://api.devicewise.com/file/%s", fileId );
+												"https://%s/file/%s", host, fileId );
 											transfer->crc32 = crc32;
 											transfer->size = fileSize;
 											transfer->retry_time = 0u;
@@ -1365,11 +1463,11 @@ iot_status_t tr50_telemetry_publish(
 }
 
 iot_status_t tr50_file_request_send(
-	struct tr50_data *data,
-	const iot_file_transfer_t* transfer )
+	struct tr50_data *data, iot_operation_t op,
+	const iot_file_transfer_t* file_transfer )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( data && transfer )
+	if ( data && file_transfer )
 	{
 		result = IOT_STATUS_FULL;
 		if ( data->file_transfer_count < TR50_FILE_TRANSFER_MAX )
@@ -1377,8 +1475,19 @@ iot_status_t tr50_file_request_send(
 			char buf[ 512u ];
 			char id[ 6u ];
 			const char *msg;
+			struct tr50_file_transfer transfer;
+
 			iot_json_encoder_t *json =
 				iot_json_encode_initialize( buf, sizeof( buf ), 0u);
+
+			os_memzero( &transfer, sizeof( struct tr50_file_transfer ) );
+			os_strncpy( transfer.name, file_transfer->name, PATH_MAX );
+			os_strncpy( transfer.path, file_transfer->path, PATH_MAX );
+			transfer.callback = file_transfer->callback;
+			transfer.user_data = file_transfer->user_data;
+			transfer.op = op;
+			if ( file_transfer->flags & IOT_FILE_FLAG_GLOBAL )
+				transfer.use_global_store = IOT_TRUE;
 
 			result = IOT_STATUS_FAILURE;
 			if ( json )
@@ -1391,7 +1500,7 @@ iot_status_t tr50_file_request_send(
 
 				iot_json_encode_object_start( json, id );
 				iot_json_encode_string( json, "command",
-					(transfer->op == IOT_OPERATION_FILE_PUT)?
+					(transfer.op == IOT_OPERATION_FILE_UPLOAD)?
 						"file.put" : "file.get" );
 
 				iot_json_encode_object_start( json, "params" );
@@ -1399,24 +1508,24 @@ iot_status_t tr50_file_request_send(
 				/* Use the global file store if true */
 
 				iot_json_encode_bool( json, "global",
-					transfer->use_global_store);
+					transfer.use_global_store);
 
 				/* prepend a thing key if this is
 				 * global, but strip any path information in the file.  It is not
 				 * valid to upload a file with a path name */
-				if ( transfer->op == IOT_OPERATION_FILE_PUT &&
-					transfer->use_global_store == IOT_TRUE )
+				if ( transfer.op == IOT_OPERATION_FILE_UPLOAD &&
+					transfer.use_global_store == IOT_TRUE )
 				{
 					os_snprintf( global_name, PATH_MAX,
-							"%s_%s", data->thing_key, transfer->name);
+						"%s_%s", data->thing_key, transfer.name);
 					iot_json_encode_string( json, "fileName", global_name );
 				}
 				else
-					iot_json_encode_string( json, "fileName", transfer->name );
+					iot_json_encode_string( json, "fileName", transfer.name );
 
 				iot_json_encode_string( json, "thingKey", data->thing_key );
 
-				if ( transfer->op == IOT_OPERATION_FILE_PUT )
+				if ( transfer.op == IOT_OPERATION_FILE_UPLOAD )
 					iot_json_encode_bool( json, "public", IOT_FALSE );
 
 				iot_json_encode_object_end( json );
@@ -1433,7 +1542,7 @@ iot_status_t tr50_file_request_send(
 					/* add it to the queue */
 					os_memcpy(
 						&data->file_transfer_queue[ data->file_transfer_count ],
-						transfer, sizeof( iot_file_transfer_t ) );
+						&transfer, sizeof( struct tr50_file_transfer ) );
 					data->file_transfer_queue[ data->file_transfer_count ].msg_id =
 						data->msg_id;
 					data->file_transfer_queue[ data->file_transfer_count ].plugin_data =
@@ -1460,26 +1569,30 @@ OS_THREAD_DECL tr50_file_transfer(
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	iot_bool_t remove_from_queue = IOT_FALSE;
-	iot_file_transfer_t *transfer =
-		(iot_file_transfer_t*)arg;
+	struct tr50_file_transfer *const transfer =
+		(struct tr50_file_transfer*)arg;
 	if ( transfer )
 	{
-		char file_path[ PATH_MAX +1u ];
+		const struct tr50_data *const data =
+			(const struct tr50_data * )transfer->plugin_data;
 
+		char file_path[ PATH_MAX +1u ];
 		transfer->lib_curl = curl_easy_init();
-		if ( transfer->lib_curl )
+		if ( transfer->lib_curl && data )
 		{
+			const char *ca_bundle_file = NULL;
 			CURLcode curl_result = CURLE_FAILED_INIT;
 			os_file_t file_handle;
+			iot_bool_t validate_cert = IOT_FALSE;
 
-			if ( transfer->op == IOT_OPERATION_FILE_PUT )
+			if ( transfer->op == IOT_OPERATION_FILE_UPLOAD )
 				os_strncpy( file_path, transfer->path, PATH_MAX );
 			else
 				os_snprintf( file_path, PATH_MAX, "%s%s",
 					transfer->path, TR50_DOWNLOAD_EXTENSION );
 
 			file_handle = os_file_open( file_path,
-				(transfer->op == IOT_OPERATION_FILE_PUT)? OS_READ : OS_WRITE | OS_CREATE );
+				(transfer->op == IOT_OPERATION_FILE_UPLOAD)? OS_READ : OS_WRITE | OS_CREATE );
 
 			if ( file_handle )
 			{
@@ -1507,25 +1620,31 @@ OS_THREAD_DECL tr50_file_transfer(
 				curl_easy_setopt( transfer->lib_curl,
 					CURLOPT_XFERINFODATA, transfer );
 #endif /* LIBCURL_VERSION_NUM >= 0x072000 */
+				iot_option_get( data->lib, "ca_bundle_file", IOT_FALSE,
+					IOT_TYPE_STRING, &ca_bundle_file );
+				iot_option_get( data->lib, "validate_cloud_cert", IOT_FALSE,
+					IOT_TYPE_BOOL, &validate_cert );
 
 				/* SSL verification */
-				curl_easy_setopt( transfer->lib_curl,
-					CURLOPT_SSL_VERIFYHOST,
-					TR50_DEFAULT_SSL_VERIFY_HOST );
-				curl_easy_setopt( transfer->lib_curl,
-					CURLOPT_SSL_VERIFYPEER,
-					TR50_DEFAULT_SSL_VERIFY_PEER);
+				if ( validate_cert != IOT_FALSE )
+				{
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_SSL_VERIFYHOST,
+						TR50_DEFAULT_SSL_VERIFY_HOST );
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_SSL_VERIFYPEER,
+						TR50_DEFAULT_SSL_VERIFY_PEER );
 
-				/* In some OSs libcurl cannot access the default CAs
-				 * and it has to be added in the fs */
+					/* In some OSs libcurl cannot access the default CAs
+					 * and it has to be added in the fs */
 #ifdef __ANDROID__
-				/* FIXME: read this from iot.cfg */
-				curl_easy_setopt( transfer->lib_curl, CURLOPT_CAINFO,
-					"/system/etc/security/cacerts/ca-certificates.crt" );
-#else
-				curl_easy_setopt( transfer->lib_curl, CURLOPT_CAINFO, NULL );
-#endif
-
+					if ( !ca_bundle_file )
+						ca_bundle_file = "/system/etc/security/cacerts/ca-certificates.crt";
+#endif /* ifdef __ANDROID__ */
+					curl_easy_setopt( transfer->lib_curl,
+						CURLOPT_CAINFO,
+						ca_bundle_file );
+				}
 #if PROXY_SUPPORT
 				/* Proxy settings */
 				if ( proxy_host[0] != '\0' &&
@@ -1553,7 +1672,7 @@ OS_THREAD_DECL tr50_file_transfer(
 				}
 #endif
 
-				if ( transfer->op == IOT_OPERATION_FILE_PUT )
+				if ( transfer->op == IOT_OPERATION_FILE_UPLOAD )
 				{
 					transfer->size =
 						os_file_get_size( transfer->path );
@@ -1595,7 +1714,7 @@ OS_THREAD_DECL tr50_file_transfer(
 		/* final checks and cleanup */
 		if ( result == IOT_STATUS_SUCCESS )
 		{
-			if ( transfer->op == IOT_OPERATION_FILE_GET )
+			if ( transfer->op == IOT_OPERATION_FILE_DOWNLOAD )
 			{
 				os_file_t file_handle = os_file_open( file_path, OS_READ );
 				if ( file_handle )
@@ -1662,7 +1781,7 @@ OS_THREAD_DECL tr50_file_transfer(
 
 		if ( remove_from_queue )
 		{
-			struct tr50_data *tr50 =
+			struct tr50_data *const tr50 =
 				(struct tr50_data *)transfer->plugin_data;
 
 			if ( tr50 )
@@ -1705,8 +1824,8 @@ int tr50_file_progress( void *user_data,
 	curl_off_t up_total, curl_off_t up_now )
 {
 	int result = 0;
-	iot_file_transfer_t *transfer =
-		(iot_file_transfer_t*)user_data;
+	struct tr50_file_transfer *const transfer =
+		(struct tr50_file_transfer*)user_data;
 
 	if ( transfer )
 	{
@@ -1726,7 +1845,7 @@ int tr50_file_progress( void *user_data,
 				transfer->lib_curl, CURLINFO_TOTAL_TIME, &cur_time);
 			int_time = cur_time - transfer->last_update_time;
 
-			if ( transfer->op == IOT_OPERATION_FILE_PUT )
+			if ( transfer->op == IOT_OPERATION_FILE_UPLOAD )
 			{
 				now = (long)up_now + transfer->prev_byte;
 				total = (long)up_total + transfer->prev_byte;
@@ -1792,7 +1911,7 @@ void tr50_file_queue_check(
 				i < data->file_transfer_count;
 				i++ )
 			{
-				iot_file_transfer_t *transfer =
+				struct tr50_file_transfer *transfer =
 					&data->file_transfer_queue[i];
 				if ( transfer &&
 					transfer->retry_time != 0u &&

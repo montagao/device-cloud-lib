@@ -52,9 +52,9 @@ enum iot_operation
 	/** @brief ( up ) client-2-client message */
 	IOT_OPERATION_CLIENT_MESSAGE,
 	/** @brief (up) get url to download a file from */
-	IOT_OPERATION_FILE_GET,
+	IOT_OPERATION_FILE_DOWNLOAD,
 	/** @brief (up) get url to upload a file to */
-	IOT_OPERATION_FILE_PUT,
+	IOT_OPERATION_FILE_UPLOAD,
 	/** @brief ( up ) iteration */
 	IOT_OPERATION_ITERATION,
 	/** @brief ( up ) property publish */
@@ -65,6 +65,8 @@ enum iot_operation
 	IOT_OPERATION_TELEMETRY_PUBLISH,
 	/** @brief ( up ) telemetry registration */
 	IOT_OPERATION_TELEMETRY_REGISTER,
+	/** @brief ( up ) publication of an event log */
+	IOT_OPERATION_EVENT_LOG_PUBLISH
 };
 /** @brief current operation being performed */
 typedef enum iot_operation iot_operation_t;
