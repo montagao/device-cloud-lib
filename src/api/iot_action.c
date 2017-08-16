@@ -591,11 +591,9 @@ iot_status_t iot_action_execute_command(
 		if ( command_path )
 		{
 			char *buf[2u];
-#if 0
 			size_t buf_len[2u];
 			char buf_stderr[ IOT_ACTION_COMMAND_OUTPUT_MAX_LEN ];
 			char buf_stdout[ IOT_ACTION_COMMAND_OUTPUT_MAX_LEN ];
-#endif
 			char command_with_params[PATH_MAX + 1u];
 			size_t i;
 			const char * const output_params[2u] = {
@@ -765,7 +763,6 @@ iot_status_t iot_action_execute_command(
 				}
 			}
 
-#if 0
 			for ( i = 0u; i < 2u; ++i )
 			{
 				buf[i] = NULL;
@@ -780,7 +777,6 @@ iot_status_t iot_action_execute_command(
 				buf[1] = buf_stderr;
 				buf_len[1] = IOT_ACTION_COMMAND_OUTPUT_MAX_LEN;
 			}
-#endif
 
 #if 0
 			/* base64 encoded string, may contain "\r\n" characters.
@@ -803,12 +799,8 @@ iot_status_t iot_action_execute_command(
 				max_time_out = action->time_limit;
 			}
 
-#if 0
-			result = os_system_run( command_with_params,
+			result = os_system_run_wait( command_with_params,
 				&system_ret, buf, buf_len, max_time_out );
-#else
-			system_ret = 0;
-#endif
 			if ( result == IOT_STATUS_SUCCESS )
 			{
 				if ( !( action->flags & IOT_ACTION_NO_RETURN ) )

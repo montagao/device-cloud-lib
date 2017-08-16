@@ -153,6 +153,7 @@ static iot_t* initialize( void )
 	iot_status_t status = IOT_STATUS_FAILURE;
 
 	iot_lib = iot_initialize( "action-app", NULL, 0 );
+	iot_log_level_set(iot_lib, IOT_LOG_INFO);
 	iot_log_callback_set( iot_lib, &log_handler, NULL );
 	status = iot_connect( iot_lib, 0u );
 	if ( status == IOT_STATUS_SUCCESS )
