@@ -43,6 +43,8 @@ enum iot_operation
 	IOT_OPERATION_ACTION_DEREGISTER,
 	/** @brief ( up ) action registration */
 	IOT_OPERATION_ACTION_REGISTER,
+	/** @brief ( up ) publication of an alarm event */
+	IOT_OPERATION_ALARM_PUBLISH,
 	/** @brief ( up ) client connect to cloud */
 	IOT_OPERATION_CLIENT_CONNECT,
 	/** @brief ( up ) client disconnecting from cloud */

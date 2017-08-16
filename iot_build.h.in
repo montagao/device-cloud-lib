@@ -37,6 +37,10 @@
 #define IOT_ACTION_QUEUE_MAX           @IOT_ACTION_QUEUE_MAX@
 /** @brief Maximum number of actions in stack */
 #define IOT_ACTION_STACK_MAX           @IOT_ACTION_STACK_MAX@
+/** @brief maximum number of alarm items reserved on the stack */
+#define IOT_ALARM_STACK_MAX            @IOT_ALARM_STACK_MAX@
+/** @brief maximum number of alarm items allowed in an application */
+#define IOT_ALARM_MAX                  @IOT_ALARM_MAX@
 /** @brief Maximum number of options */
 #define IOT_OPTION_MAX                 @IOT_OPTION_MAX@
 /** @brief Maximum number of parameters per action */

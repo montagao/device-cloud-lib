@@ -247,6 +247,33 @@ struct iot_action_request
 };
 
 /**
+ * @brief Alarm information
+ */
+struct iot_alarm
+{
+	/** @brief library handle */
+	struct iot *lib;
+	/** @brief alarm name */
+	char *name;
+
+	/** @brief alarm state */
+	iot_uint8_t severity;
+	/** @brief alarm time stamp */
+	iot_timestamp_t time_stamp;
+
+#ifdef IOT_STACK_ONLY
+	/** @brief storage of name value on heap
+	 *
+	 * @note This is not to be used directly, use @c name instead
+	 */
+	const char _name[ IOT_NAME_MAX_LEN + 1u ];
+#else
+	/** @brief location of the action, heap or stack */
+	iot_bool_t is_in_heap;
+#endif
+};
+
+/**
  * @brief Location information
  */
 struct iot_location
@@ -474,6 +501,18 @@ struct iot
 	 */
 	struct iot_action           *action_ptr[ IOT_ACTION_MAX ];
 
+	/** @brief registered alarms stored on the stack */
+	struct iot_alarm            alarm[ IOT_ALARM_STACK_MAX ];
+	/** @brief number of registered alarms */
+	iot_uint8_t                 alarm_count;
+	/**
+	 * @brief Pointer to which alarm objects are used or available
+	 *
+	 * @note if the index is < alarm_count are used.
+	 *       if the index is >= alarm_count are available for use.
+	 */
+	struct iot_alarm            *alarm_ptr[ IOT_ALARM_MAX ];
+
 	/** @brief value of option */
 	struct iot_option        *option;
 	/** @brief number of options */
@@ -544,6 +583,8 @@ struct iot
 	os_thread_t                 main_thread;
 	/** @brief Mutex to protect telemetry samples */
 	os_thread_mutex_t           telemetry_mutex;
+	/** @brief Mutex to protect alarm publications */
+	os_thread_mutex_t           alarm_mutex;
 
 	/* worker threads */
 	/** @brief Array of all worker threads for handling commands */
@@ -854,8 +895,6 @@ IOT_API IOT_SECTION iot_status_t iot_common_data_copy( struct iot_data *to,
 #if 0
 /* TODO ITEMS */
 
-/** @brief Type representing an unexpected periodic event */
-typedef struct iot_alarm                         iot_alarm_t;
 /** @brief Type representing an expected periodic event */
 typedef struct iot_event                         iot_event_t;
 /** @brief Type repseenting client to client communication */

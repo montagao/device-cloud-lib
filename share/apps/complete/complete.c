@@ -86,6 +86,8 @@ static iot_telemetry_t *telemetry_uint32 = NULL;
 static iot_telemetry_t *telemetry_uint64 = NULL;
 static iot_telemetry_t *telemetry_raw = NULL;
 
+static iot_alarm_t *alarm_test = NULL;
+
 static iot_action_t *enable_location_cmd = NULL;
 static iot_action_t *enable_telemetry_cmd = NULL;
 static iot_action_t *script_cmd = NULL;
@@ -313,6 +315,8 @@ static iot_t* initialize( void )
 			"raw", IOT_TYPE_RAW );
 		telemetry_location = iot_telemetry_allocate( iot_lib,
 			"location", IOT_TYPE_LOCATION );
+
+		alarm_test = iot_alarm_register( iot_lib, "alarm_test" );
 
 		/* Register telemetry items */
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "Registering telemetry: %s",
@@ -737,6 +741,7 @@ void send_telemetry_sample( iot_t *iot_lib )
 	char string_test[MAX_TEXT_SIZE];
 	size_t sample_size;
 	double random_value;
+	iot_severity_t alarm_severity;
 	(void)iot_lib;
 
 	random_value = random_num( (double)MIN_JSON_INT, (double)MAX_JSON_INT );
@@ -748,6 +753,7 @@ void send_telemetry_sample( iot_t *iot_lib )
 	random_value = random_num( 0, MAX_TEXT_SIZE - 1);
 	sample_size = (size_t)random_value;
 	generate_random_string( string_test, sample_size );
+	alarm_severity = (iot_int8_t)random_num(0, 6);
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO,"%s",
 		"+--------------------------------------------------------+");
@@ -802,6 +808,10 @@ void send_telemetry_sample( iot_t *iot_lib )
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending raw   : %s", string_test );
 	result = iot_telemetry_publish_raw( telemetry_raw, NULL, 0, sample_size, string_test );
+	IOT_LOG( iot_lib, IOT_LOG_INFO, " ...... Result: %s", iot_error( result ) );
+
+	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending alarm   : %d", alarm_severity );
+	result = iot_alarm_publish( alarm_test, alarm_severity, string_test );
 	IOT_LOG( iot_lib, IOT_LOG_INFO, " ...... Result: %s", iot_error( result ) );
 
 	/* toggle the boolean value for next sample */
@@ -900,6 +910,9 @@ int main( int argc, char *argv[] )
 
 	/* Test Free API for telemetry resources allocated */
 	iot_telemetry_free( telemetry_light, 0 );
+
+	/* Test Free API for alarm resources */
+	iot_alarm_deregister( alarm_test );
 
 	/* Terminate */
 	IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "Exiting..." );

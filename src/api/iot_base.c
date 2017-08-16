@@ -867,6 +867,8 @@ iot_t *iot_initialize(
 			/* initialize data structures */
 			for ( i = 0u; i < IOT_ACTION_STACK_MAX; ++i )
 				result->action_ptr[i] = &result->action[i];
+			for ( i = 0u; i < IOT_ALARM_STACK_MAX; ++i )
+				result->alarm_ptr[i] = &result->alarm[i];
 			for ( i = 0u; i < IOT_TELEMETRY_STACK_MAX; ++i )
 				result->telemetry_ptr[i] = &result->telemetry[i];
 
@@ -883,6 +885,7 @@ iot_t *iot_initialize(
 #else /* ifndef IOT_NO_THREAD_SUPPORT */
 				os_thread_mutex_create( &result->log_mutex );
 				os_thread_mutex_create( &result->telemetry_mutex );
+				os_thread_mutex_create( &result->alarm_mutex );
 				os_thread_mutex_create( &result->worker_mutex );
 				os_thread_condition_create( &result->worker_signal );
 				os_thread_rwlock_create( &result->worker_thread_exclusive_lock );
@@ -1223,6 +1226,16 @@ iot_status_t iot_terminate(
 				--lib->action_count;
 		}
 
+		while ( lib->alarm_count )
+		{
+			struct iot_alarm *const alarm =
+				lib->alarm_ptr[lib->alarm_count - 1u];
+
+			if ( iot_alarm_deregister( alarm )
+				!= IOT_STATUS_SUCCESS )
+				--lib->alarm_count;
+		}
+
 		/* free memory allocated for each option */
 		for ( i = 0u; i < lib->option_count; ++i )
 		{
@@ -1243,6 +1256,8 @@ iot_status_t iot_terminate(
 		/* set lib pointers to NULL */
 		for ( idx = 0u; idx < lib->action_count; ++idx )
 			lib->action_ptr[idx]->lib = NULL;
+		for ( idx = 0u; idx < lib->alarm_count; ++idx )
+			lib->alarm_ptr[idx]->lib = NULL;
 		for ( idx = 0u; idx < lib->telemetry_count; ++idx )
 			lib->telemetry_ptr[idx]->lib = NULL;
 
@@ -1257,6 +1272,7 @@ iot_status_t iot_terminate(
 #ifndef IOT_NO_THREAD_SUPPORT
 		os_thread_mutex_destroy( &lib->log_mutex );
 		os_thread_mutex_destroy( &lib->telemetry_mutex );
+		os_thread_mutex_destroy( &lib->alarm_mutex );
 		os_thread_mutex_destroy( &lib->worker_mutex );
 		os_thread_condition_destroy( &lib->worker_signal );
 		os_thread_rwlock_destroy(

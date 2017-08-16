@@ -23,6 +23,7 @@ set( API_HDRS_C ${API_HDRS_C}
 
 set( API_SRCS_C ${API_SRCS_C}
 	"iot_action.c"
+	"iot_alarm.c"
 	"iot_base.c"
 	"iot_base64.c"
 	"iot_common.c"

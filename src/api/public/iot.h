@@ -212,6 +212,8 @@ typedef struct iot                               iot_t;
 typedef struct iot_action                        iot_action_t;
 /** @brief Type representing an action request from the cloud */
 typedef struct iot_action_request                iot_action_request_t;
+/** @brief Type representing an unexpected periodic event */
+typedef struct iot_alarm                         iot_alarm_t;
 /** @brief Type representing a location sample */
 typedef struct iot_location                      iot_location_t;
 /** @brief Type representing a location source type within the system */
@@ -411,6 +413,18 @@ typedef struct iot_log_source
 	/** @brief Line number that generated log message */
 	unsigned int line_number;
 } iot_log_source_t;
+
+/**
+ * @brief Possible alarm severities
+ */
+typedef enum iot_severity {
+    SEVERITY_0,
+    SEVERITY_1,
+    SEVERITY_2,
+    SEVERITY_3,
+    SEVERITY_4,
+    SEVERITY_5
+} iot_severity_t;
 
 /**
  * @defgroup state Possible states of the system
@@ -1306,6 +1320,51 @@ IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(
 #endif /* ifndef __clang__ */
 #endif /* ifndef iot_EXPORTS */
 
+/* alarms */
+/**
+ * @brief Allocates a new alarm object
+ *
+ * @param[in,out]  lib                 library handle
+ * @param[in]      name                alarm name
+ *
+ * @return a new alarm object on success, NULL on failure
+ *
+ * @see iot_alarm_deregister
+ */
+IOT_API IOT_SECTION iot_alarm_t *iot_alarm_register(
+	iot_t *lib,
+	const char *name );
+
+/**
+ * @brief Frees memory associated with an alarm object
+ *
+ * @param[in,out]  alarm               alarm object to free
+ *
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ *
+ * @see iot_alarm_register
+ */
+IOT_API IOT_SECTION iot_status_t iot_alarm_deregister(
+	iot_alarm_t *alarm );
+
+/**
+ * @brief Publish an alarm state
+ *
+ * @param[in,out]  alarm               telemetry object sample is for
+ * @param[in]      severity            severity of the alarm
+ * @param[in]      message             message to show with the alarm state
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_NO_MEMORY        no memory to store alarm state
+ * @retval IOT_STATUS_NOT_INITIALIZED  alarm object is not initialized
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_API IOT_SECTION iot_status_t iot_alarm_publish(
+	iot_alarm_t *alarm,
+	iot_severity_t severity,
+	const char *message);
 
 /** @brief File transfer flag to use global store */
 #define IOT_FILE_FLAG_GLOBAL           0x1
