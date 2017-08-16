@@ -270,18 +270,6 @@ static iot_status_t on_action_agent_shutdown(
 /*static iot_status_t on_action_remote_login(*/
 /*iot_action_request_t* request,*/
 /*void *user_data );*/
-/**
- * @brief Callback function to return the remote login protocol
- *
- * @param[in,out]  request             request invoked by the cloud
- * @param[in]      user_data           not used
- *
- * @retval IOT_STATUS_SUCCESS          on success
- */
-/*FIXME*/
-/*static iot_status_t on_action_remote_login_protocols(*/
-/*iot_action_request_t* request,*/
-/*void *user_data );*/
 
 #if defined( __ANDROID__ )
 iot_status_t on_action_agent_decommission(
@@ -552,21 +540,6 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 }
 #endif
 
-/*FIXME*/
-/*iot_status_t on_action_remote_login_protocols( iot_action_request_t* request,*/
-/*void *user_data )*/
-/*{*/
-/*iot_status_t result = IOT_STATUS_FAILURE;*/
-/*struct device_manager_info * const device_manager =*/
-/*(struct device_manager_info *) user_data;*/
-/*if ( device_manager && *device_manager->remote_login_protocols != '\0' )*/
-/*{*/
-/*result = iot_action_parameter_set( request,*/
-/*REMOTE_LOGIN_PARAM_PROTOCOL, IOT_TYPE_STRING,*/
-/*device_manager->remote_login_protocols );*/
-/*}*/
-/*return result;*/
-/*}*/
 #endif
 
 iot_status_t device_manager_actions_deregister(
@@ -582,7 +555,6 @@ iot_status_t device_manager_actions_deregister(
 		iot_action_t *const decommission_device = device_manager->decommission_device;
 		iot_action_t *const device_shutdown = device_manager->device_shutdown;
 		iot_action_t *const remote_login = device_manager->remote_login;
-		iot_action_t *const remote_login_protocols = device_manager->remote_login_protocol;
 #endif /* ifndef _WRS_KERNEL */
 		iot_action_t *const device_reboot = device_manager->device_reboot;
 
@@ -648,13 +620,6 @@ iot_status_t device_manager_actions_deregister(
 			iot_action_free( remote_login, 0u );
 			device_manager->remote_login = NULL;
 		}
-		/* remote_login_protocol */
-		if ( remote_login_protocols )
-		{
-			iot_action_deregister( remote_login_protocols, NULL, 0u );
-			iot_action_free( remote_login_protocols, 0u );
-			device_manager->remote_login_protocol = NULL;
-		}
 
 		/* manifest(ota) */
 		device_manager_ota_deregister( device_manager );
@@ -687,7 +652,6 @@ iot_status_t device_manager_actions_register(
 		iot_action_t *device_shutdown = NULL;
 		/*FIXME*/
 		/*iot_action_t *remote_login = NULL;*/
-		/*iot_action_t *remote_login_protocols = NULL;*/
 #ifndef _WIN32
 		/*iot_action_t *restore_factory_images = NULL;*/
 		/*FIXME*/
@@ -849,29 +813,8 @@ iot_status_t device_manager_actions_register(
 		/*FIXME*/
 #if 0
 		if ( ( device_manager->enabled_actions &
-			DEVICE_MANAGER_ENABLE_REMOTE_LOGIN )
-			&& *device_manager->remote_login_protocols != '\0' )
+			DEVICE_MANAGER_ENABLE_REMOTE_LOGIN ))
 		{
-			remote_login_protocols = iot_action_allocate( iot_lib,
-				DEVICE_MANAGER_REMOTE_LOGIN_PROTOCOL );
-
-			/* param to call set on  */
-			iot_action_parameter_add( remote_login_protocols,
-				REMOTE_LOGIN_PARAM_PROTOCOL,
-				IOT_PARAMETER_OUT_REQUIRED,
-				IOT_TYPE_STRING, 0u );
-
-			result = iot_action_register_callback(
-				remote_login_protocols,
-				&on_action_remote_login_protocols,
-					(void*)device_manager, NULL, 0u );
-			if ( result != IOT_STATUS_SUCCESS )
-			{
-				IOT_LOG( iot_lib, IOT_LOG_ERROR,
-					"Failed to register %s action. Reason: %s",
-					DEVICE_MANAGER_REMOTE_LOGIN_PROTOCOL,
-					iot_error(result) );
-			}
 
 			remote_login = iot_action_allocate( iot_lib,
 				DEVICE_MANAGER_REMOTE_LOGIN );
@@ -1209,7 +1152,6 @@ iot_status_t device_manager_config_read(
 		if ( app_path_which( NULL, 0u, NULL, "xrdp" ) > 0u )
 			has_rdp = IOT_TRUE;
 #endif
-		p_path = device_manager_info->remote_login_protocols;
 		if ( has_rdp != IOT_FALSE )
 		{
 			os_strncpy( p_path, "rdp,",
@@ -1245,23 +1187,6 @@ iot_status_t device_manager_config_read(
 		}
 
 #endif /* !defined( _WIN32) */
-
-		/* remote trailing comma */
-		if ( p_path != device_manager_info->remote_login_protocols )
-		{
-			--p_path;
-			*p_path = '\0';
-		}
-
-#if defined( __ANDROID__ )
-		if ( *device_manager_info->remote_login_protocols != '\0' )
-			IOT_LOG( NULL, IOT_LOG_INFO,
-				"rlogin-protocol %s \n",
-				device_manager_info->remote_login_protocols );
-		else
-			IOT_LOG( NULL, IOT_LOG_INFO, "%s",
-				"rlogin-protocol is empty \n" );
-#endif /* defined( __ANDROID__ ) */
 
 		/* standard actions */
 		device_manager_info->enabled_actions = 0u;
@@ -1410,39 +1335,6 @@ iot_status_t device_manager_config_read(
 			}
 		}
 		os_file_close( fd );
-#if 0
-		if ( ( config = app_config_open( NULL, config_file ) ) )
-		{
-			iot_bool_t temp_bool = IOT_FALSE;
-
-			/* Read the remote login protocol from the
-			 * iot.cfg.  Null is a valid value to disable it.*/
-			result = app_config_read_string_array( config, NULL,
-				"remote_login_protocols", ',', temp_string,
-				REMOTE_LOGIN_PROTOCOL_MAX );
-			if ( result == IOT_STATUS_SUCCESS )
-			{
-				os_strncpy(
-					device_manager_info->remote_login_protocols,
-					temp_string, REMOTE_LOGIN_PROTOCOL_MAX );
-			}
-
-
-			result = app_config_read_string_array( config, NULL,
-				"upload_additional_dirs", OS_ENV_SPLIT, temp_string, PATH_MAX );
-			/*FIXME*/
-			/*if ( result == IOT_STATUS_SUCCESS )*/
-			/*device_manager_file_add_upload_directories(*/
-			/*device_manager_info, temp_string, OS_ENV_SPLIT );*/
-
-			result = app_config_read_boolean( config, NULL,
-				"upload_remove_on_success", &temp_bool );
-			if ( result == IOT_STATUS_SUCCESS )
-				file_io->upload_file_remove = temp_bool;
-
-			app_config_close( config );
-		}
-#endif
 	}
 	return result;
 }
