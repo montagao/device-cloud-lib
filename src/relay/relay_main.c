@@ -262,16 +262,6 @@ static int relay_service_callback_old( struct lws_context *context,
 static void relay_signal_handler( int signum );
 
 /**
- * @brief Write a file with the status of the connection
- *
- * @param[in]      status              status of the connection
- * @param[in]      file_path           path to the notification file
- * @param[in]      verbose             output in verbose mode on stdout
- */
-static void relay_notify_device_manager( os_status_t status,
-	const char *file_path, iot_bool_t verbose);
-
-/**
  * @brief Redirect output to a file for logging purposes
  *
  * @param    path                      path to the log file to write to
@@ -327,55 +317,6 @@ static const struct lws_extension EXTS[] = {
 };
 #endif /* libwebsockets >= 1.7.0 */
 
-void relay_notify_device_manager( os_status_t status, const char *file_path,
-	iot_bool_t verbose)
-{
-	os_file_t file_handle;
-#	define SUCCESS "SUCCESS"
-#	define FAILURE "FAILURE"
-
-	if ( file_path && *file_path != '\0' )
-	{
-		char pass_fail_flag[ PATH_MAX +1 ];
-		if ( status == EXIT_SUCCESS )
-			os_snprintf( pass_fail_flag, PATH_MAX, "%s-%s.txt",
-				file_path, SUCCESS );
-		else
-			os_snprintf( pass_fail_flag, PATH_MAX, "%s-%s.txt",
-				file_path, FAILURE );
-
-		if ( verbose )
-			relay_log( IOT_LOG_DEBUG, "%s status %d to file %s\n", LOG_PREFIX,
-				(int) status, pass_fail_flag );
-		if( os_file_exists( pass_fail_flag ) == IOT_FALSE )
-			file_handle = os_file_open( pass_fail_flag, OS_READ_WRITE | OS_CREATE );
-		else
-			file_handle = os_file_open( pass_fail_flag, OS_READ_WRITE );
-		if ( file_handle )
-		{
-			char buff[sizeof(int)];
-			int w_bytes = 0;
-			os_memset( buff, sizeof(buff), 0 );
-
-			os_snprintf( buff, sizeof(int), "%d", status );
-			buff[ sizeof(int) -1 ] = '\0';
-			w_bytes = os_file_write( buff, sizeof(char),
-				sizeof(buff), file_handle );
-			if ( verbose )
-				relay_log( IOT_LOG_DEBUG, "%s wrote %d bytes to file %s\n",
-					LOG_PREFIX, w_bytes, file_path );
-			os_file_close( file_handle );
-#		ifdef __ANDROID__
-			os_file_fsync( pass_fail_flag );
-#		endif
-		}
-		else
-			relay_log( IOT_LOG_DEBUG, "%s failed to write status %d to file %s\n",
-				LOG_PREFIX, (int) status, pass_fail_flag );
-	}
-
-}
-
 /* function implementations */
 /* Write a status file once the connectivity has been confirmed so
  * that the device manager and return a status to the cloud.  This
@@ -389,9 +330,7 @@ iot_bool_t insecure, iot_bool_t verbose,
 	os_socket_t socket;
 	os_socket_t socket_accept;
 	int packet_type = SOCK_STREAM;
-	os_status_t connection_status = OS_STATUS_FAILURE;
 	int result = EXIT_FAILURE;
-	int notify_set = 0;
 
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 4 )
 	struct relay_data WSD;
@@ -737,10 +676,6 @@ iot_bool_t insecure, iot_bool_t verbose,
 
 				relay_log( IOT_LOG_INFO, "%s relay connected status %d\n",
 					LOG_PREFIX, result );
-				relay_notify_device_manager( result,
-					notification_file,
-					verbose);
-				notify_set = 1;
 
 				while ( result >= EXIT_SUCCESS && TO_QUIT == IOT_FALSE )
 				{
@@ -803,11 +738,6 @@ iot_bool_t insecure, iot_bool_t verbose,
 		wsd->tx_buffer_len = wsd->tx_buffer_size = 0;
 		os_free_null( (void **)&wsd->tx_buffer );
 	}
-
-	/* catch any error case not caught above and only notify once */
-	if ( notify_set == 0 )
-		relay_notify_device_manager( connection_status, notification_file,
-			verbose );
 
 	os_socket_close( &socket_accept );
 	os_socket_close( &socket );
