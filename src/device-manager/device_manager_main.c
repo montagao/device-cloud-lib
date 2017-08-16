@@ -266,10 +266,9 @@ static iot_status_t on_action_agent_shutdown(
  * @retval IOT_STATUS_SUCCESS          on success
  */
 #ifndef _WRS_KERNEL
-/*FIXME*/
-/*static iot_status_t on_action_remote_login(*/
-/*iot_action_request_t* request,*/
-/*void *user_data );*/
+static iot_status_t on_action_remote_login(
+		iot_action_request_t* request,
+		void *user_data );
 
 #if defined( __ANDROID__ )
 iot_status_t on_action_agent_decommission(
@@ -343,7 +342,6 @@ iot_status_t on_action_agent_shutdown(
 }
 #endif /* __ANDROID__ */
 
-#if 0
 iot_status_t on_action_remote_login( iot_action_request_t* request,
 	void *user_data )
 {
@@ -352,26 +350,27 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 		(struct device_manager_info *) user_data;
 	iot_t *const iot_lib = device_manager->iot_lib;
 
+#	define RELAY_CMD_TEMPLATE "%s --host=%s --insecure -p %d %s "
+
 	if ( device_manager && request )
 	{
-		static struct remote_login_protocol protocols[] = {
-			{ "ssh", 22u },
-			{ "rdp", 3389u },
-			{ "vnc", 5900u },
-			{ "telnet", 23u },
-			{ NULL, 0u }
-		};
-		struct remote_login_protocol *protocol;
 		char relay_cmd[ PATH_MAX + 1u ];
 		size_t relay_cmd_len;
 		const char *host_in = NULL;
 		const char *url_in = NULL;
 		const char *protocol_in = NULL;
-		iot_uint16_t port = 0u;
-		char *out_buf[2u] = { NULL, NULL };
-		size_t out_len[2u] = { 0u, 0u };
-		char log_path[ PATH_MAX + 1u ];
+		os_file_t out_files[2];
+		char log_file[256];
 
+		/* for debugging, create two file handles */
+		os_snprintf(log_file, PATH_MAX, "%s%c%s",
+			IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP, "iot-relay-stdout.log");
+		out_files[0] = os_file_open(log_file,OS_CREATE | OS_WRITE);
+
+		os_snprintf(log_file, PATH_MAX, "%s%c%s", IOT_RUNTIME_DIR_DEFAULT,
+			OS_DIR_SEP, "iot-relay-stderr.log");
+		out_files[1] = os_file_open(log_file,OS_CREATE | OS_WRITE);
+		
 		/* read parameters */
 		iot_action_parameter_get( request,
 			REMOTE_LOGIN_PARAM_HOST, IOT_TRUE, IOT_TYPE_STRING,
@@ -379,166 +378,41 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 		iot_action_parameter_get( request,
 			REMOTE_LOGIN_PARAM_PROTOCOL, IOT_TRUE, IOT_TYPE_STRING,
 			&protocol_in );
-		result = iot_action_parameter_get( request,
+		iot_action_parameter_get( request,
 			REMOTE_LOGIN_PARAM_URL, IOT_TRUE, IOT_TYPE_STRING,
 			&url_in );
 
 		IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login params host=%s, protocol=%s, url=%s\n",
 			host_in, protocol_in, url_in );
 
-		/* convert port to port number */
-		port = (iot_uint16_t)os_atoi( protocol_in );
-		protocol = &protocols[0u];
-		while ( protocol_in && port == 0u && protocol->name != NULL )
+		if ( host_in && *host_in != '\0'
+		     && protocol_in && *protocol_in != '\0'
+		     && url_in && *url_in != '\0' )
 		{
-			if ( os_strncmp( protocol_in, protocol->name,
-				os_strlen( protocol->name ) ) == 0 )
-				port = protocol->port;
-			++protocol;
-		}
-
-		/* build full relay command */
-		relay_cmd[ PATH_MAX ] = '\0';
-		os_strncpy( relay_cmd, IOT_RELAY_TARGET, PATH_MAX );
-		relay_cmd_len = os_strlen( relay_cmd );
-
-		if ( host_in && *host_in != '\0' )
-		{
-			os_snprintf( &relay_cmd[ relay_cmd_len ],
-				PATH_MAX - relay_cmd_len,
-				" --host \"%s\"", host_in );
-			relay_cmd_len = os_strlen( relay_cmd );
-		}
-
-		if ( port > 0u && url_in && *url_in != '\0' )
-		{
-			char relay_status_file[ PATH_MAX + 1u ];
-			char relay_status_pass[ PATH_MAX + 1u ];
-			char relay_status_fail[ PATH_MAX + 1u ];
-
-			int max_wait_ms = 60 * IOT_MILLISECONDS_IN_SECOND;
-			int ms_counter = 0;
-			int loop_wait_ms = 100u;
-			char runtime_path[ PATH_MAX +1u ];
-			iot_status_t res;
-			os_dir_t dptr;
-			char file_path[ PATH_MAX +1u ];
-#			define RELAY_FILE_PREFIX "relay-"
-#			define SUCCESS "SUCCESS"
-#			define FAILURE "FAILURE"
-			app_path_runtime_directory_get( runtime_path, PATH_MAX );
-
-			/* Reap any existing relay status files.
-			 * On windows, this will clean up every time the device
-			 * manager starts */
-			res = os_directory_open( runtime_path, &dptr );
-			if ( res == IOT_STATUS_SUCCESS )
-			{
-				while ( ( os_directory_next( &dptr,
-					IOT_TRUE, file_path, PATH_MAX )
-						== OS_STATUS_SUCCESS ) )
-				{
-					/* look for relay temp files and delete them */
-					char * str = NULL;
-					IOT_LOG( iot_lib, IOT_LOG_TRACE, "test clean up rule for %s\n", file_path );
-					str = os_strstr( file_path, RELAY_FILE_PREFIX );
-					if ( str != NULL )
-						if ( OS_STATUS_SUCCESS != os_file_delete( file_path ) )
-							IOT_LOG( iot_lib, IOT_LOG_ERROR,
-								"test clean up rule for %s failed\n",
-								file_path );
-				}
-				os_directory_close( &dptr );
-			}
-
-			/* create a status file so that the relay
-			 * app can communicate back to the cloud any error during
-			 * initialization. Pass this file name to the
-			 * relay app. */
-			os_snprintf( relay_status_file, PATH_MAX,
-				"%s%c%sXXXXXX", runtime_path, OS_DIR_SEP,
-				RELAY_FILE_PREFIX );
-
-			os_file_temp( relay_status_file, 0 );
-
-			IOT_LOG( iot_lib, IOT_LOG_TRACE,
-				"Remote login connection status file=%s\n",
-				relay_status_file );
-
-			/* Now create the pass fail flag file names
-			 * based on relay_status_file.  Websocket
-			 * app will append -SUCCESS.txt
-			 * or -FAILURE.txt to it. Later poll for one of
-			 * those files  */
-			os_snprintf( relay_status_pass, PATH_MAX,
-				"%s-%s.txt", relay_status_file, SUCCESS );
-			os_snprintf( relay_status_fail, PATH_MAX,
-				"%s-%s.txt", relay_status_file, FAILURE);
-
-			os_make_path( log_path, PATH_MAX, IOT_RUNTIME_DIR,
-				"log", "iot-relay.log", NULL );
 
 			os_snprintf( &relay_cmd[ relay_cmd_len ],
-				PATH_MAX - relay_cmd_len,
-				" --port %u  --verbose --notification \"%s\" --log-file \"%s\" \"%s\"",
-				(unsigned int)port, relay_status_file,
-				log_path, url_in);
-
-#if !defined( _WIN32 ) && !defined( _WRS_KERNEL )
-			relay_cmd_len = os_strlen( relay_cmd );
-			/* start the cmd detached so that it won't be defunct
-			after disconnects */
-			os_snprintf( &relay_cmd[ relay_cmd_len ],
-				PATH_MAX - relay_cmd_len, " &" );
-#endif /* if !defined( _WIN32 ) && !defined( _WRS_KERNEL ) */
+				PATH_MAX,
+				RELAY_CMD_TEMPLATE,
+				IOT_RELAY_TARGET,
+				host_in, os_atoi(protocol_in), url_in );
 
 			IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login cmd:\n%s\n",
 				relay_cmd );
 
-			/* run relay command, as a background
-			 * process.  Websocket app will write its
-			 * status to a file and poll here until the
-			 * status file shows up. */
-			result =  os_system_run( relay_cmd, NULL,
-					out_buf, out_len, 0u );
+			result =  os_system_run( relay_cmd, NULL, out_files);
+			printf("os_system_run returned %d\n", result);
+			os_time_sleep(10, IOT_FALSE);
+			
+			/* remote login protocol requires us to return
+			 * success, or it will not open the cloud side relay connection.  So,
+			 * check for invoked here and return success */	
 			if ( result == IOT_STATUS_INVOKED )
-			{
-				int poll_done = -1;
-				IOT_LOG( iot_lib, IOT_LOG_TRACE, "Waiting for notification file:%s\n",
-					relay_status_pass );
-				do {
-					if (os_file_exists(
-					relay_status_pass ) == IOT_TRUE )
-					{
+				result = IOT_STATUS_SUCCESS;
 
-						IOT_LOG( iot_lib, IOT_LOG_DEBUG, "Found success flag %s\n",
-							relay_status_pass );
-						result = IOT_STATUS_SUCCESS;
-						poll_done = 0;
-					}
-					else if (os_file_exists(
-					relay_status_fail ) == IOT_TRUE )
-					{
-
-						IOT_LOG( iot_lib, IOT_LOG_DEBUG, "Found failure flag %s\n",
-							relay_status_fail );
-						result = IOT_STATUS_FAILURE;
-						poll_done = 0;
-					}
-
-					os_time_sleep( loop_wait_ms, IOT_TRUE );
-					ms_counter += loop_wait_ms;
-				}
-				while ( poll_done != 0 && ms_counter < max_wait_ms );
-			}
-
-			if ( result != IOT_STATUS_SUCCESS )
-				result = IOT_STATUS_FAILURE;
 		}
 	}
 	return result;
 }
-#endif
 
 #endif
 
@@ -651,7 +525,7 @@ iot_status_t device_manager_actions_register(
 		/*iot_action_t *decommission_device = NULL;*/
 		iot_action_t *device_shutdown = NULL;
 		/*FIXME*/
-		/*iot_action_t *remote_login = NULL;*/
+		iot_action_t *remote_login = NULL;
 #ifndef _WIN32
 		/*iot_action_t *restore_factory_images = NULL;*/
 		/*FIXME*/
@@ -810,8 +684,6 @@ iot_status_t device_manager_actions_register(
 					"Failed to register manifest(ota) actions" );
 
 		/* remote_login */
-		/*FIXME*/
-#if 0
 		if ( ( device_manager->enabled_actions &
 			DEVICE_MANAGER_ENABLE_REMOTE_LOGIN ))
 		{
@@ -845,7 +717,6 @@ iot_status_t device_manager_actions_register(
 					iot_error(result) );
 			}
 		}
-#endif
 
 		/* device reboot */
 		if ( device_manager->enabled_actions &
