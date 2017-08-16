@@ -32,14 +32,12 @@ set( IOT_HDRS_C ${IOT_HDRS_C}
 	"device_manager_md5.h"
 	"device_manager_sha256.h"
 	"device_manager_ota.h"
-	"app_json.h"
 )
 
 set( IOT_SRCS_C ${IOT_SRCS_C}
 	"device_manager.c"
 	"device_manager_main.c"
 	"device_manager_ota.c"
-	"app_json.c"
 )
 
 add_executable( ${TARGET}
