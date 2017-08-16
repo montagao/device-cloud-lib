@@ -1,6 +1,6 @@
 {
 	"runtime_dir": "",
-	"log_level": "",
+	"log_level": "INFO",
 	"actions_enabled": {
 		"shutdown_device": True,
 		"reboot_device": True,

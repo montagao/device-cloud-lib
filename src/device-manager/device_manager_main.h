@@ -100,6 +100,8 @@ struct device_manager_info
 	char remote_login_protocols[REMOTE_LOGIN_PROTOCOL_MAX];
 	/** @brief number of loops main loop has gone through */
 	size_t loop_count;
+	/** @brief log level */
+	char log_level[16];
 };
 
 /**
