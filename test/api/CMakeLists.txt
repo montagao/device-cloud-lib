@@ -10,6 +10,7 @@
 set( TARGET "api" )
 set( TESTS
 #	"iot_action"
+	"iot_alarm"
 	"iot_base"
 	"iot_base64"
 	"iot_common"
@@ -45,6 +46,16 @@ set( TEST_IOT_ACTION_MOCK ${MOCK_API_PART} ${MOCK_OSAL_FUNC} )
 set( TEST_IOT_ACTION_SRCS ${MOCK_API_SRCS} ${MOCK_OSAL_SRCS} "iot_action_test.c" )
 set( TEST_IOT_ACTION_LIBS ${MOCK_API_LIBS} ${MOCK_OSAL_LIBS} )
 set( TEST_IOT_ACTION_UNIT "iot_action.c" "iot_common.c" )
+
+set( MOCK_API_PART ${MOCK_API_FUNC} )
+list( REMOVE_ITEM MOCK_API_PART
+	"iot_alarm_deregister"
+)
+
+set( TEST_IOT_ALARM_MOCK ${MOCK_API_PART} ${MOCK_OSAL_FUNC} )
+set( TEST_IOT_ALARM_SRCS ${MOCK_API_SRCS} ${MOCK_OSAL_SRCS} "iot_alarm_test.c" )
+set( TEST_IOT_ALARM_LIBS ${MOCK_API_LIBS} ${MOCK_OSAL_LIBS} )
+set( TEST_IOT_ALARM_UNIT "iot_alarm.c" )
 
 set( MOCK_API_PART ${MOCK_API_FUNC} )
 list( REMOVE_ITEM MOCK_API_PART
