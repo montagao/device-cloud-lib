@@ -22,6 +22,8 @@ iotutils_c_includes := \
 
 iotutils_src_files := \
     app_arg.c \
+    app_log.c \
+    app_path.c \
 
 include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := $(iotutils_c_includes)

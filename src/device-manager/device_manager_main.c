@@ -74,13 +74,6 @@
 #	define COMMAND_PREFIX                      ""
 #endif
 
-#if defined( __ANDROID__ )
-/** @brief Command and parameters to enable adb over network on the device */
-/** @brief Command and parameters to enable telnetd on the device */
-#define ENABLE_TELNETD_LOCALHOST \
-	"if [ 0 -eq $( netstat | grep 23 | grep -c LISTEN ) ]; then busybox telnetd -l /system/bin/sh -b 127.0.0.1:23; fi"
-#endif /* __ANDROID__ */
-
 /** @brief IoT device manager service ID */
 #define IOT_DEVICE_MANAGER_ID         IOT_DEVICE_MANAGER_TARGET
 #ifdef _WIN32
@@ -1085,8 +1078,12 @@ iot_status_t device_manager_initialize( const char *app_path,
 #	ifdef	__ANDROID__
 			/* check pending file transfer status
 			 * after run time dir is available */
+
+			/*FIXME*/
+			/* to-be-do
 			device_manager_file_initialize(
 				device_manager, IOT_FALSE );
+			*/
 #	endif	/* __ANDROID__ */
 #endif /* ifndef NO_FILEIO_SUPPORT */
 		}
@@ -1566,14 +1563,14 @@ iot_status_t device_manager_run_os_command( const char *cmd,
 				out_len[i] = 0u;
 			}
 		}
-		if ( os_system_run( cmd, &retval, out_buf,
+		if ( os_system_run_wait( cmd, &retval, out_buf,
 			out_len, 0u ) == IOT_STATUS_SUCCESS &&
 			     retval >= 0 )
 			result = IOT_STATUS_SUCCESS;
 		else
 		{
 			result = IOT_STATUS_FAILURE;
-			IOT_LOG( APP_DATA.iot_lib, IOT_LOG_LEVEL,
+			IOT_LOG( APP_DATA.iot_lib, IOT_LOG_INFO,
 				"OS cmd (%s): return value %d",
 				cmd, retval );
 		}
@@ -1601,20 +1598,6 @@ int device_manager_main( int argc, char *argv[] )
 		IOT_DEVICE_MANAGER_TARGET, NULL, NULL);
 	else if (result == EXIT_SUCCESS)
 	{
-#if defined( __ANDROID__ )
-		const char *os_config_command[] = {
-			ENABLE_TELNETD_LOCALHOST,
-			NULL
-		};
-		const char **os_command = os_config_command;
-		while ( os_command && *os_command )
-		{
-			device_manager_run_os_command(
-				*os_command, IOT_TRUE );
-			++os_command;
-		}
-#endif /* __ANDROID__ */
-
 		os_memzero( &APP_DATA, sizeof(struct device_manager_info) );
 
 /** @todo vxWorks checking iot.cfg will be implemented later */
@@ -1645,7 +1628,10 @@ int device_manager_main( int argc, char *argv[] )
 					APP_DATA.iot_lib->to_quit == IOT_FALSE )
 				{
 #ifdef	__ANDROID__
+					/*FIXME*/
+					/* tbd
 					device_manager_file_create_default_directories( &APP_DATA, 1u );
+					*/
 #endif
 					os_time_sleep( POLL_INTERVAL_MSEC,
 						IOT_FALSE );
