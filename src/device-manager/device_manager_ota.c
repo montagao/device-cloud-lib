@@ -30,7 +30,7 @@
 /** @brief Name of the parameter to manifest action */
 #define DEVICE_MANAGER_OTA_MANIFEST_PARAM_DATA "0"
 /** @brief Name of the manifest action */
-#define DEVICE_MANAGER_OTA_MANIFEST    SOFTWARE_MANAGER_SERVICE_AND_VERSION "manifest"
+#define DEVICE_MANAGER_OTA_MANIFEST         "manifest"
 /** @brief Name of ota software update package */
 #define DEVICE_MANAGER_OTA_PACKAGE_NAME     "software_update_package"
 /** @brief Time for an ota package downloading to expired in ms */

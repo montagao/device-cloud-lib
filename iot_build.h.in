@@ -105,43 +105,43 @@
 
 /* FIXME: these will all be config driven.  For now, hard code */
 /** @brief Default state of agent reset action */
-#define IOT_DEFAULT_ENABLE_AGENT_RESET                    1 //@IOT_DEFAULT_ENABLE_AGENT_RESET_C@
+#define IOT_DEFAULT_ENABLE_AGENT_RESET                    @IOT_DEFAULT_ENABLE_AGENT_RESET_C@
 
 /** @brief Default state of decommission device action */
-#define IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE            1 //@IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE_C@
+#define IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE            @IOT_DEFAULT_ENABLE_DECOMMISSION_DEVICE_C@
 
 /** @brief Default state of device reboot action */
-#define IOT_DEFAULT_ENABLE_DEVICE_REBOOT                  1 //@IOT_DEFAULT_ENABLE_DEVICE_REBOOT_C@
+#define IOT_DEFAULT_ENABLE_DEVICE_REBOOT                  @IOT_DEFAULT_ENABLE_DEVICE_REBOOT_C@
 
 /** @brief Default state of device shutdown action */
-#define IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN                1 //@IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN_C@
+#define IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN                @IOT_DEFAULT_ENABLE_DEVICE_SHUTDOWN_C@
 
 /** @brief Default state of dump log files action */
-#define IOT_DEFAULT_ENABLE_DUMP_LOG_FILES                 1 //@IOT_DEFAULT_ENABLE_DUMP_LOG_FILES_C@
+#define IOT_DEFAULT_ENABLE_DUMP_LOG_FILES                 @IOT_DEFAULT_ENABLE_DUMP_LOG_FILES_C@
 
 /** @brief Default state of file transfer related actions */
-#define IOT_DEFAULT_ENABLE_FILE_TRANSFERS                 1 //@IOT_DEFAULT_ENABLE_FILE_TRANSFERS_C@
+#define IOT_DEFAULT_ENABLE_FILE_TRANSFERS                 @IOT_DEFAULT_ENABLE_FILE_TRANSFERS_C@
 
 /** @brief Default state of remote login related action */
-#define IOT_DEFAULT_ENABLE_REMOTE_LOGIN                   1 //@IOT_DEFAULT_ENABLE_REMOTE_LOGIN_C@
+#define IOT_DEFAULT_ENABLE_REMOTE_LOGIN                   @IOT_DEFAULT_ENABLE_REMOTE_LOGIN_C@
 
 /** @brief Default state of restore factory images action */
-#define IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES         1 //@IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES_C@
+#define IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES         @IOT_DEFAULT_ENABLE_RESTORE_FACTORY_IMAGES_C@
 
 /** @brief Default state of software update action */
-#define IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE                1 //@IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE_C@
+#define IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE                @IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE_C@
 
 /** @brief Default state of enable offline action - do not unregister actions */
-#define IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS             0 //@IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS_C@
+#define IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS             @IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS_C@
 
 /** @brief Default state of enable automation test on Android*/
-#define IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID     1 //@IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID_C@
+#define IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID     @IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID_C@
 
 /** @brief Default state of uploaded file removal upon success */
-#define IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS              0 //@IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS_C@
+#define IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS              @IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS_C@
 
 /** @brief Default value for SSL validation */
-#define SSL_DEFAULT_VALIDATE                              1 //@IOT_DEFAULT_SSL_VALIDATION_C@
+#define SSL_DEFAULT_VALIDATE                              @IOT_DEFAULT_SSL_VALIDATION_C@
 
 /** @brief Exectutable suffix */
 #define IOT_EXE_SUFFIX 		                          "@CMAKE_EXECUTABLE_SUFFIX@"
@@ -149,4 +149,5 @@
 /** @brief Default user running services */
 #define IOT_USER                                          "@IOT_USER@"
 
+#define IOT_DEFAULT_CERT_PATH                             "@IOT_DEFAULT_CERT_PATH@"
 #endif /* ifndef IOT_BUILD_H */

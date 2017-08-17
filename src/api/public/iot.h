@@ -951,8 +951,8 @@ IOT_API IOT_SECTION iot_action_request_t *iot_action_request_allocate(
  * @retval IOT_STATUS_NOT_FOUND        option not found
  * @retval IOT_STATUS_SUCCESS          on success
  *
- * @see iot_action_option_request_set_raw
- * @see iot_action_option_request_set
+ * @see iot_action_request_option_set_raw
+ * @see iot_action_request_option_set
  */
 IOT_API IOT_SECTION iot_status_t iot_action_request_option_get(
 	const iot_action_request_t *request,

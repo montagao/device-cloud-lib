@@ -23,22 +23,6 @@
  */
 #define POLL_INTERVAL_MSEC 2000u
 
-/**
- * @brief Base device manager and version for registering actions
- *
- * @see SOFTWARE_MANAGER_SERVICE_AND_VERSION
- */
-#define DEVICE_MANAGER_SERVICE_AND_VERSION \
-	"device_manager" IOT_SPLIT_VERSION "1.0" IOT_SPLIT_PARENT
-
-/**
- * @brief Base software manager and version for registering actions
- *
- * @see DEVICE_MANAGER_SERVICE_AND_VERSION
- */
-#define SOFTWARE_MANAGER_SERVICE_AND_VERSION \
-	"software_manager" IOT_SPLIT_VERSION "1.0" IOT_SPLIT_PARENT
-
 /** @brief Flag to enable software update (manifest) action */
 #define DEVICE_MANAGER_ENABLE_SOFTWARE_UPDATE         0x0001
 /** @brief Flag to enable file transfers related actions */

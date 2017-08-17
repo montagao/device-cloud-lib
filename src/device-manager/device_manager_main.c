@@ -33,22 +33,22 @@
 /* Note: for backwards compatibility, register under two services instead of one
  */
 /** @brief Name of the Restore Factory Images action */
-#define DEVICE_MANAGER_RESTORE_FACTORY_IMAGES  SOFTWARE_MANAGER_SERVICE_AND_VERSION "Restore Factory Images"
+#define DEVICE_MANAGER_RESTORE_FACTORY_IMAGES  "Restore Factory Images"
 /** @brief Name of the Dump Log Files action*/
-#define DEVICE_MANAGER_DUMP_LOG_FILES          SOFTWARE_MANAGER_SERVICE_AND_VERSION "Dump Log Files"
+#define DEVICE_MANAGER_DUMP_LOG_FILES          "Dump Log Files"
 
 /** @brief Name of the decommission device action */
-#define DEVICE_MANAGER_DECOMMISSION_DEVICE     DEVICE_MANAGER_SERVICE_AND_VERSION "decommission_device"
+#define DEVICE_MANAGER_DECOMMISSION_DEVICE     "decommission_device"
 /** @brief Name of the device shutdown action*/
-#define DEVICE_MANAGER_DEVICE_SHUTDOWN         DEVICE_MANAGER_SERVICE_AND_VERSION "device_shutdown"
+#define DEVICE_MANAGER_DEVICE_SHUTDOWN         "device_shutdown"
 /** @brief Name of the device reboot action*/
-#define DEVICE_MANAGER_DEVICE_REBOOT           DEVICE_MANAGER_SERVICE_AND_VERSION "device_reboot"
+#define DEVICE_MANAGER_DEVICE_REBOOT           "device_reboot"
 /** @brief Name of the agent reset action*/
-#define DEVICE_MANAGER_AGENT_RESET             DEVICE_MANAGER_SERVICE_AND_VERSION "agent_reset"
+#define DEVICE_MANAGER_AGENT_RESET             "agent_reset"
 /** @brief Name of the remote login action */
-#define DEVICE_MANAGER_REMOTE_LOGIN            DEVICE_MANAGER_SERVICE_AND_VERSION "Remote Login"
+#define DEVICE_MANAGER_REMOTE_LOGIN            "remote-access"
 /** @brief Name of the remote login protocol action */
-#define DEVICE_MANAGER_REMOTE_LOGIN_PROTOCOL   DEVICE_MANAGER_SERVICE_AND_VERSION "Remote Login Protocols"
+#define DEVICE_MANAGER_REMOTE_LOGIN_PROTOCOL   "Remote Login Protocols"
 /** @brief Name of "host" parameter for remote login action */
 #define REMOTE_LOGIN_PARAM_HOST                "host"
 /** @brief Name of "protocol" parameter for remote login action */

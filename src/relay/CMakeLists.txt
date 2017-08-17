@@ -33,6 +33,7 @@ add_executable( ${TARGET}
 
 target_link_libraries( ${TARGET}
         "iotutils"
+	"iot"
 	${LIBWEBSOCKETS_LIBRARIES}
 	${OPENSSL_LIBRARIES}
 	${OSAL_LIBRARIES}

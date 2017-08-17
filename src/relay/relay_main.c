@@ -53,7 +53,6 @@
 #define IOT_DEFAULT_CERT_PATH "/etc/security/cacerts/ca-certificates.crt"
 #endif
 #define IOT_NAME_FULL                  "Internet of Things"
-#define iot_error(n) "NOTSUPPORTED"
 
 
 /* libwebsockets backwards support defines */
