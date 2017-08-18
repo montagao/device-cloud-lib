@@ -25,7 +25,6 @@
 
 #include <archive.h>                   /* for archiving functions */
 #include <archive_entry.h>             /* for adding files to an archive */
-#include <jansson.h>               /* for formatting JSON data */
 
 /** @brief Name of the parameter to manifest action */
 #define DEVICE_MANAGER_OTA_MANIFEST_PARAM_DATA "0"
