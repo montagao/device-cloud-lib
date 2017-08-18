@@ -69,8 +69,6 @@
 #define IOT_DEFAULT_FILE_DEVICE_ID     "@IOT_DEFAULT_FILE_DEVICE_ID@"
 
 /* PATHS */
-/** @brief Default path of certificates file */
-#define IOT_DEFAULT_CERT_PATH          "@IOT_DEFAULT_CERT_PATH@"
 /** @brief Sub-directory that binary applications are installed within */
 #define IOT_BIN_DIR                    "@IOT_BIN_DIR@"
 
@@ -156,4 +154,6 @@
 /** @brief Default user running services */
 #define IOT_USER                       "@IOT_USER@"
 
+#define IOT_DEFAULT_CERT_PATH                             "@IOT_DEFAULT_CERT_PATH@"
+#define IOT_UPDATE_LOGFILE                                "@IOT_UPDATE_LOGFILE@"
 #endif /* ifndef IOT_BUILD_H */

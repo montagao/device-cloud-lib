@@ -23,6 +23,7 @@
 #include <stdarg.h>     /* for va_list, va_start, va_end */
 #include <sys/wait.h>   /* for waitpid */
 
+/*#define UPDATE_DEBUG*/
 
 /**
  * @brief Maximum length for ota script/command output
@@ -36,10 +37,6 @@
  * @brief Maximum length for iot each message log
  */
 #define IOT_UPDATE_LOG_MAX_LEN 128u
-/**
- * @brief Log file for ota
- */
-#define IOT_UPDATE_LOGFILE "iot_install_updates.log"
 /**
  * @brief Maximum length for iot update timestamp
  */
@@ -150,14 +147,13 @@ static enum iot_update_mec_status iot_update_mec_status( void );
  /**
  * @brief Function to log iot update information
  *
- * @param[in, out] lib                 pointer to iot lib
- * @param[in, out] log_file            log file to write to
- * @param[in]      output              log to file/cloud
- * @param[in]      format              string format
+ * @param[in, out] log_file     log file to write to
+ * @param[in]      output       log to file/cloud
+ * @param[in]      format       string format
  */
-static void iot_update_log( iot_t *lib,os_file_t log_file,
+static void iot_update_log(os_file_t log_file,
 	enum iot_update_log_output output, const char *fmt,... )
-	__attribute__((format(printf,4,5)));
+	__attribute__((format(printf,3,4)));
 /**
  * @brief Function to parse iot update json file
  *
@@ -438,7 +434,7 @@ iot_status_t iot_update(
 			out_buf[1] = buf_stderr;
 			out_len[1] = IOT_UPDATE_COMMAND_OUTPUT_MAX_LEN;
 
-			iot_update_log( iot_lib, sw_update_logfile,
+			iot_update_log( log_fd,
 				IOT_UPDATE_LOG_FILE_ONLY,
 				"Downloading and extracting the Update Package ... Successful! " );
 
@@ -451,17 +447,17 @@ iot_status_t iot_update(
 				if ( mec_original_status == IOT_UPDATE_MEC_STATUS_ENABLED)
 				{
 					result = iot_update_mec_enable( IOT_UPDATE_MEC_DISABLE );
-					if ( result == IOT_STATUS_SUCCESS )
-						iot_update_log( iot_lib, sw_update_logfile,
+					if ( result == OS_STATUS_SUCCESS )
+						iot_update_log( log_fd,
 							IOT_UPDATE_LOG_FILE_ONLY,
 							"MEC security is disabled" );
 					else
-						iot_update_log( iot_lib, sw_update_logfile,
+						iot_update_log( log_fd,
 							IOT_UPDATE_LOG_FILE_ONLY,
 							"Disable MEC failed" );
 				}
 				else
-					iot_update_log( iot_lib, sw_update_logfile,
+					iot_update_log( log_fd,
 						IOT_UPDATE_LOG_FILE_ONLY,
 						"MEC original status is not enabled,"
 						"don't need to be disabled" );
@@ -470,7 +466,7 @@ iot_status_t iot_update(
 			/*
 			 * parse update.json file
 			 */
-			/*if ( os_file_exists ( IOT_UPDATE_JSON ) )*/
+			if ( os_file_exists ( IOT_UPDATE_JSON ) )
 			{
 				result = iot_update_parse_json(
 					IOT_UPDATE_JSON,
@@ -523,13 +519,13 @@ iot_status_t iot_update(
 							}
 						}
 						exit_status = -1;
-						iot_update_log( iot_lib, sw_update_logfile,
+						iot_update_log( log_fd,
 							IOT_UPDATE_LOG_FILE_CLOUD,
 							"Executing %s (%s) ... Start!",
 							iot_update_install[i].name,
 							iot_update_install[i].script );
 
-						result = iot_os_system_run(
+						result = os_system_run_wait(
 							iot_update_install[i].script, 
 							&exit_status,
 							out_buf, out_len, 0 );
@@ -539,7 +535,7 @@ iot_status_t iot_update(
 							if ( out_buf[j] && out_buf[j][0] != '\0' )
 							{
 								os_fprintf(
-								sw_update_logfile,
+								log_fd,
 								"%s log: \n%s \n",
 								iot_update_install[i].name,
 								out_buf[j] );
@@ -548,7 +544,7 @@ iot_status_t iot_update(
 
 						if ( result != IOT_STATUS_SUCCESS || exit_status != 0 )
 						{
-							iot_update_log( iot_lib, sw_update_logfile,
+							iot_update_log( log_fd,
 								IOT_UPDATE_LOG_FILE_CLOUD,
 								"Error: Executing %s (%s) ... Failed! ",
 								iot_update_install[i].name, iot_update_install[i].script );
@@ -556,20 +552,20 @@ iot_status_t iot_update(
 							if ( iot_update_install[OTA_PHASE_ERROR].script[0] != '\0' &&
 								os_strcmp( iot_update_install[OTA_PHASE_ERROR].script, " " ) != 0)
 							{
-								iot_update_log( iot_lib, sw_update_logfile,
+								iot_update_log( log_fd,
 									IOT_UPDATE_LOG_FILE_CLOUD,
 									"Executing %s (%s) ... Start!",
 									iot_update_install[OTA_PHASE_ERROR].name,
 									iot_update_install[OTA_PHASE_ERROR].script);
 
-								result = iot_os_system_run(
+								result = os_system_run_wait(
 									iot_update_install[OTA_PHASE_ERROR].script,
 									&exit_status,
 									out_buf, out_len, 0 );
 
 								if ( result == IOT_STATUS_SUCCESS )
 								{
-									iot_update_log( iot_lib, sw_update_logfile,
+									iot_update_log( log_fd,
 										IOT_UPDATE_LOG_FILE_CLOUD,
 										"Executing %s (%s) ... "
 										"Successful!",
@@ -578,7 +574,7 @@ iot_status_t iot_update(
 								}
 								else
 								{
-									iot_update_log( iot_lib, sw_update_logfile,
+									iot_update_log( log_fd,
 										IOT_UPDATE_LOG_FILE_CLOUD,
 										"Executing %s (%s) ... "
 										"Failed!",
@@ -587,7 +583,7 @@ iot_status_t iot_update(
 								}
 							}
 							else
-								iot_update_log( iot_lib, sw_update_logfile,
+								iot_update_log( log_fd,
 									IOT_UPDATE_LOG_FILE_ONLY,
 									"Info: No %s script provided ",
 									iot_update_install[OTA_PHASE_ERROR].name
@@ -596,7 +592,7 @@ iot_status_t iot_update(
 						}
 						else
 						{
-							iot_update_log( iot_lib, sw_update_logfile,
+							iot_update_log( log_fd,
 								IOT_UPDATE_LOG_FILE_CLOUD,
 								"Executing %s (%s) ... Successful!",
 								iot_update_install[i].name,
@@ -604,7 +600,7 @@ iot_status_t iot_update(
 						}
 					}
 					else
-						iot_update_log( iot_lib, sw_update_logfile,
+						iot_update_log( log_fd,
 							IOT_UPDATE_LOG_FILE_ONLY,
 							"Info: No %s script provided ",
 							iot_update_install[i].name
@@ -623,13 +619,13 @@ iot_status_t iot_update(
 									IOT_UPDATE_LOG_FILE_ONLY,
 									"Enable MEC failed" );
 							else
-								iot_update_log( iot_lib, sw_update_logfile,
+								iot_update_log( log_fd,
 									IOT_UPDATE_LOG_FILE_ONLY,
 									"MEC is enabled" );
 						}
 					}
 					else
-						iot_update_log( iot_lib, sw_update_logfile,
+						iot_update_log( log_fd,
 							IOT_UPDATE_LOG_FILE_ONLY,
 							"MEC original status is not enabled,"
 							"don't need to be enabled" );
@@ -644,7 +640,7 @@ iot_status_t iot_update(
 				"yes", 3u ) == 0)
 			{
 				/*reboot = 1;*/
-				iot_update_log( iot_lib, sw_update_logfile,
+				iot_update_log( log_fd,
 					IOT_UPDATE_LOG_FILE_CLOUD,
 					"Device will reboot after 1 minute... "
 					);
@@ -654,75 +650,29 @@ iot_status_t iot_update(
 			 */
 			if ( result == IOT_STATUS_SUCCESS )
 			{
-				iot_update_log( iot_lib, sw_update_logfile,
+				iot_update_log( log_fd,
 					IOT_UPDATE_LOG_FILE_CLOUD,
 					"Software Update Finish... Successful! "
 					);
 			}
 			else
 			{
-				iot_update_log( iot_lib, sw_update_logfile,
+				iot_update_log( log_fd,
 					IOT_UPDATE_LOG_FILE_CLOUD,
 					"Software Update Finish... Failed! " );
 			}
 
-			if ( sw_update_logfile )
+			if ( log_fd )
 			{
-				os_file_close( sw_update_logfile );
-				sw_update_logfile = NULL;
+				os_file_close( log_fd );
+				log_fd = NULL;
 			}
-#if 0
-			/*
-			 * copy ota log file to device upload directory
-			 */
-			if (IOT_UPDATE_LOGFILE[0] != '\0' /*&&
-				iot_os_file_exists( IOT_UPDATE_LOGFILE )*/ )
-			{
-				char device_upload_dir[ PATH_MAX + 1u ];
 
-				os_fsync ( IOT_UPDATE_LOGFILE );
-				if ( OS_STATUS_SUCCESS == iot_os_make_path( device_upload_dir,
-					PATH_MAX, IOT_RUNTIME_DIR, "upload", NULL ) )
-				{
-					if ( iot_os_directory_exists( device_upload_dir ) )
-					{
-						char device_upload_ota_logfile[ PATH_MAX + 1u ];
-						char device_upload_ota_logfile_backup[ PATH_MAX + 1u ];
-						char timestamp[IOT_UPDATE_TIMESTAMP_LENGTH  + 1u];
-						unsigned int i = 0;
+			/* FIXME upload the log file */
 
-						iot_os_time_format( timestamp, IOT_UPDATE_TIMESTAMP_LENGTH );
-						while ( timestamp[i] != '\0' && i <= IOT_UPDATE_TIMESTAMP_LENGTH )
-						{
-							if (timestamp[i] == ' ' || timestamp[i] == ':')
-								timestamp[i] = '_';
-							i ++;
-						}
-						iot_os_snprintf( device_upload_ota_logfile_backup,
-							PATH_MAX,
-							"%s.%s",
-							IOT_UPDATE_LOGFILE,
-							timestamp);
-						if ( OS_STATUS_SUCCESS ==
-							iot_os_make_path(
-								device_upload_ota_logfile,
-								PATH_MAX,
-								device_upload_dir,
-								device_upload_ota_logfile_backup,
-								NULL )
-							)
-						{
-							iot_os_file_copy(
-								IOT_UPDATE_LOGFILE,
-								device_upload_ota_logfile );
-						}
-					}
-				}
-			}
-#endif
 		}
 		else
-			iot_update_log( iot_lib, sw_update_logfile,
+			iot_update_log( log_fd,
 				IOT_UPDATE_LOG_FILE_CLOUD,
 				"Error: Open iot update json file ... Failed!\n " );
 		if ( cwd[0] != '\0' )
@@ -742,7 +692,7 @@ iot_status_t iot_update(
 			iot_os_strncpy( command_with_params,
 				COMMAND_PREFIX"iot-control --reboot 1",
 				31u );
-			iot_os_system_run( command_with_params,
+			os_system_run_wait( command_with_params,
 				NULL, buf, buf_len, 0u );
 #endif
 		}
@@ -771,7 +721,7 @@ iot_status_t iot_update_mec_enable(
 			COMMAND_PREFIX" sadmin bu"
 			);
 
-	result = iot_os_system_run(
+	result = os_system_run_wait(
 		command,
 		&exit_status,
 		buf, buf_len, 0 );
@@ -821,7 +771,7 @@ enum iot_update_mec_status iot_update_mec_status( void )
 	out_buf[1] = buf_stderr;
 	out_len[1] = IOT_UPDATE_COMMAND_OUTPUT_MAX_LEN;
 
-	result = iot_os_system_run(
+	result = os_system_run_wait(
 		COMMAND_PREFIX"sadmin status",
 		&exit_status,
 		out_buf, out_len, 0 );
@@ -846,8 +796,11 @@ iot_status_t iot_update_parse_json(
 		os_file_t fd;
 		char *json_string;
 		size_t size = 0;
+		char cwd[PATH_MAX];
 
 		status = IOT_STATUS_FAILURE;
+		os_directory_current( cwd, PATH_MAX );
+		printf("%s:%d cwd=%s\n", __func__,__LINE__, cwd);
 		fd = os_file_open( json_file, OS_READ );
 		if( fd )
 		{

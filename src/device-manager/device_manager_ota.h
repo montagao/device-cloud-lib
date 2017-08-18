@@ -22,7 +22,7 @@
 #include "device_manager_md5.h"
 #include "device_manager_sha256.h"
 /** @brief Maximum length of field in manifest */
-#define DEVICE_MANAGER_OTA_MANIFEST_STRING_MAX_LENGTH 255
+#define DEVICE_MANAGER_OTA_PKG_STRING_MAX_LENGTH 255
 struct device_manager_info;
 
 /** @brief Contains information about ota manifest */
@@ -31,17 +31,17 @@ struct device_manager_ota_manifest
 	/** @brief Library handle */
 	iot_t *iot_lib;
 	/** @brief Manifest identifier */
-	char identifier[ DEVICE_MANAGER_OTA_MANIFEST_STRING_MAX_LENGTH + 1u ];
+	char identifier[ DEVICE_MANAGER_OTA_PKG_STRING_MAX_LENGTH + 1u ];
 	/** @brief Manifest opertion type */
-	char operation[ DEVICE_MANAGER_OTA_MANIFEST_STRING_MAX_LENGTH + 1u ];
+	char operation[ DEVICE_MANAGER_OTA_PKG_STRING_MAX_LENGTH + 1u ];
 	/** @brief Manifest version */
-	char version [ DEVICE_MANAGER_OTA_MANIFEST_STRING_MAX_LENGTH + 1u ];
+	char version [ DEVICE_MANAGER_OTA_PKG_STRING_MAX_LENGTH + 1u ];
 	/** @brief Expected sh256 checksum for a downloaded file */
 	char checksum_sh256[ DEVICE_MANAGER_SHA256_DIGEST_HEX_LENGTH + 1u ];
 	/** @brief Expected md5 checksum for a downloaded file */
 	char checksum_md5[ DEVICE_MANAGER_MD5_DIGEST_HEX_LENGTH + 1u ];
 	/** @brief Token for response URL */
-	char jwt[ DEVICE_MANAGER_OTA_MANIFEST_STRING_MAX_LENGTH + 1u ];
+	char jwt[ DEVICE_MANAGER_OTA_PKG_STRING_MAX_LENGTH + 1u ];
 	/** @brief Path to excute the script */
 	char command_path[ PATH_MAX + 1u ];
 	/** @brief Path to excute the script */

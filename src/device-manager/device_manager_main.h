@@ -57,7 +57,7 @@ struct device_manager_info
 	/** @brief Mask of enabled actions */
 	iot_uint16_t enabled_actions;
 	/** @brief manifest action */
-	iot_action_t *ota_manifest;
+	iot_action_t *software_update;
 	/** @brief decommission action */
 	iot_action_t *decommission_device;
 	/** @brief restore_factory_images action */

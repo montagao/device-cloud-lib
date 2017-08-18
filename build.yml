@@ -37,7 +37,6 @@ IOT_DEFAULT_FILE_CONNECT: "iot-connect.cfg"
 IOT_DEFAULT_FILE_DEVICE_ID: "device_id"
 
 # Default paths
-IOT_DEFAULT_CERT_PATH: "/etc/ssl/certs/ca-certificates.crt"
 IOT_BIN_DIR: "bin"
 
 # Plugin options
@@ -64,3 +63,7 @@ IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS: true
 IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID: false
 IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS: true
 
+# default ssl CA bundle
+IOT_DEFAULT_CERT_PATH: "/etc/ssl/certs/ca-certificates.crt"
+
+IOT_UPDATE_LOGFILE: "iot_install_updates.log"
