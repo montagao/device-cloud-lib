@@ -16,6 +16,8 @@
 
 LOCAL_PATH:= $(call my-dir)
 
+$( info ($(shell ${LOCAL_PATH}/../../build-sys/android/generate_android_iot-connect.schema.json.sh )))
+
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
@@ -25,11 +27,13 @@ LOCAL_C_INCLUDES := \
 LOCAL_SHARED_LIBRARIES := libiot libdl libext2_uuid libcurl
 LOCAL_STATIC_LIBRARIES := libiotutils libosal libandroidifaddrs
 
-LOCAL_MODULE := iot-update
+LOCAL_MODULE := iot-control
 
 LOCAL_SRC_FILES := \
-	./iot_update.c \
-	./iot_update_main.c \
+	./control.c \
+	./control_config.c \
+	./control_main.c \
+	./iot-connect.schema.json.c \
 
 include $(BUILD_EXECUTABLE)
 

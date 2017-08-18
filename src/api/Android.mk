@@ -62,6 +62,7 @@ LOCAL_SRC_FILES := \
 	./checksum/iot_checksum_crc32.c \
 	./json/iot_json_decode.c \
 	./json/iot_json_encode.c \
+	./json/iot_json_schema.c \
 	./json/iot_json_base.c \
 	./plugin/iot_plugin_builtin.c
 include $(BUILD_SHARED_LIBRARY)
