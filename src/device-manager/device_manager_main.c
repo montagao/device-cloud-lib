@@ -55,6 +55,8 @@
 #define REMOTE_LOGIN_PARAM_PROTOCOL            "protocol"
 /** @brief Name of "url" parameter for remote login action */
 #define REMOTE_LOGIN_PARAM_URL                 "url"
+/** @brief Name of "debug" parameter for remote login action */
+#define REMOTE_LOGIN_PARAM_DEBUG               "debug-mode"
 
 #if defined( __unix__ ) && !defined( __ANDROID__ )
 #	define COMMAND_PREFIX                      "sudo "
@@ -359,18 +361,12 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 		const char *host_in = NULL;
 		const char *url_in = NULL;
 		const char *protocol_in = NULL;
+		const iot_bool_t debug_mode = IOT_FALSE;
 		os_file_t out_files[2];
+
+		/* Support a debug option that supports logging */
 		char log_file[256];
 
-		/* for debugging, create two file handles */
-		os_snprintf(log_file, PATH_MAX, "%s%c%s",
-			IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP, "iot-relay-stdout.log");
-		out_files[0] = os_file_open(log_file,OS_CREATE | OS_WRITE);
-
-		os_snprintf(log_file, PATH_MAX, "%s%c%s", IOT_RUNTIME_DIR_DEFAULT,
-			OS_DIR_SEP, "iot-relay-stderr.log");
-		out_files[1] = os_file_open(log_file,OS_CREATE | OS_WRITE);
-		
 		/* read parameters */
 		iot_action_parameter_get( request,
 			REMOTE_LOGIN_PARAM_HOST, IOT_TRUE, IOT_TYPE_STRING,
@@ -381,9 +377,24 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 		iot_action_parameter_get( request,
 			REMOTE_LOGIN_PARAM_URL, IOT_TRUE, IOT_TYPE_STRING,
 			&url_in );
+		iot_action_parameter_get( request,
+			REMOTE_LOGIN_PARAM_DEBUG, IOT_TRUE, IOT_TYPE_BOOL,
+			&debug_mode);
 
-		IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login params host=%s, protocol=%s, url=%s\n",
-			host_in, protocol_in, url_in );
+		/* for debugging, create two file handles */
+		if ( debug_mode != IOT_FALSE )
+		{
+			os_snprintf(log_file, PATH_MAX, "%s%c%s",
+				IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP, "iot-relay-stdout.log");
+			out_files[0] = os_file_open(log_file,OS_CREATE | OS_WRITE);
+
+			os_snprintf(log_file, PATH_MAX, "%s%c%s", IOT_RUNTIME_DIR_DEFAULT,
+				OS_DIR_SEP, "iot-relay-stderr.log");
+			out_files[1] = os_file_open(log_file,OS_CREATE | OS_WRITE);
+		}
+
+		IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login params host=%s, protocol=%s, url=%s, debug-mode=%d\n",
+			host_in, protocol_in, url_in, debug_mode );
 
 		if ( host_in && *host_in != '\0'
 		     && protocol_in && *protocol_in != '\0'
@@ -704,6 +715,10 @@ iot_status_t device_manager_actions_register(
 				REMOTE_LOGIN_PARAM_URL,
 				IOT_PARAMETER_IN_REQUIRED,
 				IOT_TYPE_STRING, 0u );
+			iot_action_parameter_add( remote_login,
+				REMOTE_LOGIN_PARAM_DEBUG,
+				IOT_PARAMETER_IN,
+				IOT_TYPE_BOOL, 0u );
 
 			result = iot_action_register_callback(
 				remote_login,
@@ -807,12 +822,13 @@ iot_status_t device_manager_initialize( const char *app_path,
 		iot_log_level_set_string( iot_lib, device_manager->log_level );
 		iot_log_callback_set( iot_lib, &app_log, NULL );
 
-		printf( "  * testing log level (%s)\n",  device_manager->log_level );
-		IOT_LOG( iot_lib, IOT_LOG_FATAL, "%s", "  * testing IOT_LOG_FATAL\n");
-		IOT_LOG( iot_lib, IOT_LOG_WARNING, "%s", "  * testing IOT_LOG_WARNING\n");
-		IOT_LOG( iot_lib, IOT_LOG_TRACE, "%s", "  * testing IOT_LOG_TRACE\n");
-		IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "  * testing IOT_LOG_INFO\n");
-		IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s", "  *testing IOT_LOG_ERROR\n");
+		printf("Example Log Levels:\n");
+		IOT_LOG( iot_lib, IOT_LOG_FATAL, "%s", "  * Example of IOT_LOG_FATAL");
+		IOT_LOG( iot_lib, IOT_LOG_WARNING, "%s", "  * Example of IOT_LOG_WARNING");
+		IOT_LOG( iot_lib, IOT_LOG_TRACE, "%s", "  * Example of IOT_LOG_TRACE");
+		IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "  * Example of IOT_LOG_INFO");
+		IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s", "  * Example of IOT_LOG_ERROR");
+		printf("\n");
 
 
 			/* Find the absolute path to where the application resides */
