@@ -225,6 +225,7 @@ iot_status_t iot_json_encode_key(
 						++encoder->depth;
 					}
 
+					/* add the object */
 					if ( j_parent || !key )
 					{
 						encoder->j_cur[encoder->depth] = obj;
@@ -369,7 +370,7 @@ const char *iot_json_encode_dump(
 	if ( encoder && encoder->j_cur )
 		result = encoder->output = json_dumps( encoder->j_cur[0u], flags );
 #else /* ifdef IOT_JSON_JANSSON */
-	if ( encoder )
+	if ( encoder && encoder->buf && *encoder->buf != '\0' )
 	{
 		/* complete any open objects in the output string */
 		char *p_cur = encoder->cur;
@@ -393,12 +394,16 @@ const char *iot_json_encode_dump(
 						if ( indent )
 						{
 							unsigned int j = indent * (depth - 1);
-							*p_cur++ = '\n';
-
-							while ( j )
+							if ( *(p_cur - 1) != JSON_CHARS_START[0] &&
+							     *(p_cur - 1) != JSON_CHARS_START[1] )
 							{
-								*p_cur++ = ' ';
-								--j;
+								*p_cur++ = '\n';
+
+								while ( j )
+								{
+									*p_cur++ = ' ';
+									--j;
+								}
 							}
 							--depth;
 						}
@@ -425,7 +430,7 @@ iot_json_encoder_t *iot_json_encode_initialize(
 #ifdef IOT_JSON_JANSSON
 	size_t extra_space = 0u;
 #else /* ifdef IOT_JSON_JANSSON */
-	size_t extra_space = 3u; /* for '{', '}' and '\0' */
+	size_t extra_space = 1u; /* for '\0' */
 #endif /* else IOT_JSON_JANSSON */
 
 #ifndef IOT_STACK_ONLY
@@ -445,7 +450,15 @@ iot_json_encoder_t *iot_json_encode_initialize(
 			encoder = (struct iot_json_encoder *)iot_json_realloc(
 				NULL, sizeof(struct iot_json_encoder) + extra_space );
 			if ( encoder )
+			{
+#ifdef IOT_JSON_JANSSON
 				os_memzero( encoder, sizeof( struct iot_json_encoder ) );
+#else
+				encoder->buf = NULL;
+				encoder->cur = NULL;
+				encoder->len = 0u;
+#endif
+			}
 		}
 		else
 		{
@@ -682,6 +695,143 @@ iot_status_t iot_json_encode_key(
 	return result;
 }
 #endif /* ifndef IOT_JSON_JANSSON */
+
+iot_status_t iot_json_encode_object_cancel(
+	iot_json_encoder_t *encoder )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( encoder )
+	{
+		result = IOT_STATUS_BAD_REQUEST;
+#ifdef IOT_JSON_JANSSON
+		if ( encoder->depth >= 1u )
+		{
+			json_type parent_type;
+			json_t *const j_parent =
+				encoder->j_cur[encoder->depth - 1u];
+			parent_type = json_typeof( j_parent );
+			if ( j_parent && parent_type == JSON_OBJECT )
+			{
+				/* not the root item */
+				if ( encoder->depth > 1u )
+				{
+					void *j_iter;
+					json_t *const p =
+						encoder->j_cur[encoder->depth - 2u];
+
+					/* remove the reference to the item */
+					j_iter = json_object_iter( p );
+					result = IOT_STATUS_NOT_FOUND;
+					while ( result != IOT_STATUS_SUCCESS && j_iter )
+					{
+						if ( json_object_iter_value( j_iter ) == j_parent )
+						{
+							const char *const key =
+								json_object_iter_key( j_iter );
+							json_object_del( p, key );
+							result = IOT_STATUS_SUCCESS;
+						}
+						else
+							j_iter = json_object_iter_next( p, j_iter );
+					}
+				}
+				else
+				{
+					/* remove the reference */
+					json_decref( j_parent );
+					result = IOT_STATUS_SUCCESS;
+				}
+
+				encoder->j_cur[encoder->depth - 1u ] = NULL;
+				--encoder->depth;
+			}
+		}
+#else /* ifdef IOT_JSON_JANSSON */
+		if ( encoder->structs >> 1 ) /* inside an object */
+		{
+			char *new_pos = encoder->cur - 1;
+			unsigned int depth_count = 0u;
+
+			/* remove the object */
+			while ( new_pos && new_pos > encoder->buf &&
+				( depth_count > 0u ||
+				( *new_pos != JSON_CHARS_START[2] ) ) )
+			{
+				if ( *new_pos == JSON_CHARS_START[2] )
+					--depth_count;
+				if ( *new_pos == JSON_CHARS_END[2] )
+					++depth_count;
+				--new_pos;
+			}
+
+			/* remove the key to the object (may not exist) */
+			if ( new_pos > encoder->buf && *(new_pos - 1) == ':' )
+			{
+				--new_pos;
+				while( new_pos > encoder->buf &&
+					*new_pos != ',' &&
+					*new_pos != '{' &&
+					*new_pos != '[' )
+					--new_pos;
+			}
+			else
+				++new_pos;
+			encoder->cur = new_pos;
+			encoder->structs >>= 3;
+
+			/* removed the root element */
+			if ( encoder->structs == 0 )
+				*encoder->buf = '\0';
+			result = IOT_STATUS_SUCCESS;
+		}
+#endif /* ifdef IOT_JSON_JANSSON */
+	}
+	return result;
+}
+
+iot_status_t iot_json_encode_object_clear(
+	iot_json_encoder_t *encoder )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( encoder )
+	{
+		result = IOT_STATUS_BAD_REQUEST;
+#ifdef IOT_JSON_JANSSON
+		if ( encoder->depth > 0u )
+		{
+			json_type parent_type;
+			json_t *j_parent;
+			j_parent = encoder->j_cur[encoder->depth - 1u];
+			parent_type = json_typeof( j_parent );
+			if ( j_parent && parent_type == JSON_OBJECT )
+			{
+				json_object_clear( j_parent );
+				result = IOT_STATUS_SUCCESS;
+			}
+		}
+#else /* ifdef IOT_JSON_JANSSON */
+		if ( encoder->structs >> 1 ) /* inside an object */
+		{
+			char *new_pos = encoder->cur - 1;
+			unsigned int depth_count = 0u;
+			while ( new_pos && new_pos > encoder->buf &&
+				( depth_count > 0u ||
+				  *new_pos != JSON_CHARS_START[2] ) )
+			{
+				if ( *new_pos == JSON_CHARS_START[2] )
+					--depth_count;
+				if ( *new_pos == JSON_CHARS_END[2] )
+					++depth_count;
+				--new_pos;
+			}
+			++new_pos;
+			encoder->cur = new_pos;
+			result = IOT_STATUS_SUCCESS;
+		}
+#endif /* ifdef IOT_JSON_JANSSON */
+	}
+	return result;
+}
 
 iot_status_t iot_json_encode_object_end(
 	iot_json_encoder_t *encoder )
@@ -962,14 +1112,18 @@ iot_status_t iot_json_encode_struct_end(
 						if ( indent )
 						{
 							unsigned int j = indent * depth;
-							*encoder->cur++ = '\n';
-
-							while ( j )
+							if ( *(encoder->cur - 1) != JSON_CHARS_START[0] &&
+							     *(encoder->cur - 1) != JSON_CHARS_START[1] )
 							{
-								*encoder->cur++ = ' ';
-								--j;
+								*encoder->cur++ = '\n';
+
+								while ( j )
+								{
+									*encoder->cur++ = ' ';
+									--j;
+								}
+								space -= (indent + 1u);
 							}
-							space -= (indent + 1u);
 							--depth;
 						}
 						*encoder->cur++ = end_ch;

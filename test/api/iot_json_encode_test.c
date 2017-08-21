@@ -388,7 +388,7 @@ static void test_iot_json_encode_dump_no_items( void **state )
 	iot_json_encoder_t *e;
 	const char *result;
 
-	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	e = iot_json_encode_initialize( NULL, 0u, 0u );
 	assert_non_null( e );
 
 	result = iot_json_encode_dump( e );
@@ -787,6 +787,320 @@ static void test_iot_json_encode_integer_outside_object( void **state )
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
 	assert_string_equal( json_str, "{\"test\":23423}" );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_cancel_at_root( void **state )
+{
+	iot_json_encoder_t *e;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_cancel( e );
+	assert_int_equal( result, IOT_STATUS_BAD_REQUEST );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_cancel_in_array( void **state )
+{
+	iot_json_encoder_t *e;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_array_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_cancel( e );
+	assert_int_equal( result, IOT_STATUS_BAD_REQUEST );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_cancel_in_object( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_integer( e, "one", 1 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_integer( e, "two", 2 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_integer( e, "three", 3 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_start( e, "obj" );
+	for ( i = 0u; i < 10u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	result = iot_json_encode_object_cancel( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_end( e );
+
+	json_str = iot_json_encode_dump( e );
+	assert_non_null( json_str );
+	assert_string_equal( json_str,
+		"{\"one\":1,\"two\":2,\"three\":3}" );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_cancel_in_root_object( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	for ( i = 0u; i < 10u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	result = iot_json_encode_object_cancel( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	json_str = iot_json_encode_dump( e );
+	assert_null( json_str );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_cancel_null_item( void **state )
+{
+	iot_status_t result;
+
+	result = iot_json_encode_object_cancel( NULL );
+	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
+}
+
+static void test_iot_json_encode_object_clear_at_root( void **state )
+{
+	iot_json_encoder_t *e;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_clear( e );
+	assert_int_equal( result, IOT_STATUS_BAD_REQUEST );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_clear_in_array( void **state )
+{
+	iot_json_encoder_t *e;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_array_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_clear( e );
+	assert_int_equal( result, IOT_STATUS_BAD_REQUEST );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_clear_in_object( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u,
+		IOT_JSON_FLAG_INDENT(2) | IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_integer( e, "one", 1 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_integer( e, "two", 2 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_integer( e, "three", 3 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_start( e, "obj" );
+	for ( i = 0u; i < 10u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	result = iot_json_encode_object_clear( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_end( e );
+
+	json_str = iot_json_encode_dump( e );
+	assert_non_null( json_str );
+	assert_string_equal( json_str,
+	"{\n"
+	"  \"one\": 1,\n"
+	"  \"two\": 2,\n"
+	"  \"three\": 3,\n"
+	"  \"obj\": {}\n"
+	"}" );
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_clear_in_object_deep( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_start( e, "obj" );
+	result = iot_json_encode_object_start( e, "obj2" );
+	for ( i = 0u; i < 10u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	result = iot_json_encode_object_end( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_clear( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_end( e );
+
+	json_str = iot_json_encode_dump( e );
+	assert_non_null( json_str );
+	assert_string_equal( json_str, "{\"obj\":{}}" );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_clear_in_root_object( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	for ( i = 0u; i < 10u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	result = iot_json_encode_object_clear( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	json_str = iot_json_encode_dump( e );
+	assert_non_null( json_str );
+	assert_string_equal( json_str,
+		"{}" );
+
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_object_clear_null_item( void **state )
+{
+	iot_status_t result;
+
+	result = iot_json_encode_object_clear( NULL );
+	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
+}
+
+static void test_iot_json_encode_object_clear_then_add( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u,
+		IOT_JSON_FLAG_INDENT(2) | IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_DYNAMIC );
+	assert_non_null( e );
+
+	result = iot_json_encode_object_start( e, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	for ( i = 0u; i < 5u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	result = iot_json_encode_object_clear( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	for ( ; i < 10u; ++i )
+	{
+		char key[5u];
+		snprintf( key, 5u, "%u", i + 1u );
+		result = iot_json_encode_integer( e, key, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+
+	json_str = iot_json_encode_dump( e );
+	assert_non_null( json_str );
+	assert_string_equal( json_str,
+		"{\n"
+		"  \"6\": 6,\n"
+		"  \"7\": 7,\n"
+		"  \"8\": 8,\n"
+		"  \"9\": 9,\n"
+		"  \"10\": 10\n"
+		"}" );
 
 	iot_json_encode_terminate( e );
 }
@@ -1330,6 +1644,18 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_json_encode_integer_inside_object_blank_key ),
 		cmocka_unit_test( test_iot_json_encode_integer_null_item ),
 		cmocka_unit_test( test_iot_json_encode_integer_outside_object ),
+		cmocka_unit_test( test_iot_json_encode_object_cancel_at_root ),
+		cmocka_unit_test( test_iot_json_encode_object_cancel_in_array ),
+		cmocka_unit_test( test_iot_json_encode_object_cancel_in_object ),
+		cmocka_unit_test( test_iot_json_encode_object_cancel_in_root_object ),
+		cmocka_unit_test( test_iot_json_encode_object_cancel_null_item ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_at_root ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_in_array ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_in_object ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_in_object_deep ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_in_root_object ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_null_item ),
+		cmocka_unit_test( test_iot_json_encode_object_clear_then_add ),
 		cmocka_unit_test( test_iot_json_encode_object_end_at_root ),
 		cmocka_unit_test( test_iot_json_encode_object_end_in_array ),
 		cmocka_unit_test( test_iot_json_encode_object_end_in_object ),

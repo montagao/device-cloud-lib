@@ -66,7 +66,7 @@ typedef enum iot_json_type
  * @param[out]     mptr                pointer to the realloction function
  * @param[out]     fptr                pointer to the free function
  */
-void iot_json_allocation_get(
+IOT_API IOT_SECTION void iot_json_allocation_get(
 	iot_json_realloc_t **mptr,
 	iot_json_free_t **fptr );
 
@@ -76,7 +76,7 @@ void iot_json_allocation_get(
  * @param[in]      mptr                pointer to the realloction function
  * @param[in]      fptr                pointer to the free function
  */
-void iot_json_allocation_set(
+IOT_API IOT_SECTION void iot_json_allocation_set(
 	iot_json_realloc_t *mptr,
 	iot_json_free_t *fptr );
 #endif /* ifndef IOT_STACK_ONLY */
@@ -539,7 +539,7 @@ typedef struct iot_json_encoder iot_json_encoder_t;
  * @see iot_json_decode_array_iterator
  * @see iot_json_encode_array_start
  */
-iot_status_t iot_json_encode_array_end(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_array_end(
 	iot_json_encoder_t *encoder );
 
 /**
@@ -564,7 +564,7 @@ iot_status_t iot_json_encode_array_end(
  * @see iot_json_decode_array_iterator
  * @see iot_json_encode_array_end
  */
-iot_status_t iot_json_encode_array_start(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_array_start(
 	iot_json_encoder_t *encoder,
 	const char *key );
 
@@ -590,7 +590,7 @@ iot_status_t iot_json_encode_array_start(
  *
  * @see iot_json_decode_bool
  */
-iot_status_t iot_json_encode_bool(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_bool(
 	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_bool_t value );
@@ -602,7 +602,7 @@ iot_status_t iot_json_encode_bool(
  *
  * @return string in JSON format
  */
-const char *iot_json_encode_dump(
+IOT_API IOT_SECTION const char *iot_json_encode_dump(
 	iot_json_encoder_t *encoder );
 
 /**
@@ -621,7 +621,7 @@ const char *iot_json_encode_dump(
  * @see iot_json_encode_parse
  * @see iot_json_encode_terminate
  */
-iot_json_encoder_t *iot_json_encode_initialize(
+IOT_API IOT_SECTION iot_json_encoder_t *iot_json_encode_initialize(
 	char *buf,
 	size_t len,
 	unsigned int flags );
@@ -648,10 +648,40 @@ iot_json_encoder_t *iot_json_encode_initialize(
  *
  * @see iot_json_decode_integer
  */
-iot_status_t iot_json_encode_integer(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_integer(
 	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_int64_t value );
+
+/**
+ * @brief Cancels the encoding of a JSON object
+ *
+ * @param[in]      encoder             JSON encoder object
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_object_end
+ * @see iot_json_encode_object_start
+ */
+IOT_API IOT_SECTION iot_status_t iot_json_encode_object_cancel(
+	iot_json_encoder_t *encoder );
+
+/**
+ * @brief Removes any items previously added into an object
+ *
+ * @param[in]      encoder             JSON encoder object
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to the function
+ * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
+ * @retval IOS_STATUS_SUCCESS          on success
+ *
+ * @see iot_json_decode_object_end
+ * @see iot_json_encode_object_start
+ */
+IOT_API IOT_SECTION iot_status_t iot_json_encode_object_clear(
+	iot_json_encoder_t *encoder );
 
 /**
  * @brief Ends the encoding of a JSON object
@@ -662,10 +692,11 @@ iot_status_t iot_json_encode_integer(
  * @retval IOT_STATUS_BAD_REQUEST      not inside an JSON array object
  * @retval IOS_STATUS_SUCCESS          on success
  *
+ * @see iot_json_decode_object_cancel
  * @see iot_json_decode_object_iterator
  * @see iot_json_encode_object_start
  */
-iot_status_t iot_json_encode_object_end(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_object_end(
 	iot_json_encoder_t *encoder );
 
 /**
@@ -687,10 +718,11 @@ iot_status_t iot_json_encode_object_end(
  * @retval IOT_STATUS_NO_MEMORY        no more memory available
  * @retval IOS_STATUS_SUCCESS          on success
  *
- * @see iot_json_decode_object_iterator
+ * @see iot_json_decode_object_cancel
  * @see iot_json_encode_object_end
+ * @see iot_json_decode_object_iterator
  */
-iot_status_t iot_json_encode_object_start(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_object_start(
 	iot_json_encoder_t *encoder,
 	const char *key );
 
@@ -716,7 +748,7 @@ iot_status_t iot_json_encode_object_start(
  *
  * @see iot_json_decode_real
  */
-iot_status_t iot_json_encode_real(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_real(
 	iot_json_encoder_t *encoder,
 	const char *key,
 	iot_float64_t value );
@@ -743,7 +775,7 @@ iot_status_t iot_json_encode_real(
  *
  * @see iot_json_decode_string
  */
-iot_status_t iot_json_encode_string(
+IOT_API IOT_SECTION iot_status_t iot_json_encode_string(
 	iot_json_encoder_t *encoder,
 	const char *key,
 	const char *value );
@@ -755,7 +787,7 @@ iot_status_t iot_json_encode_string(
  *
  * @see iot_json_encode_initialize
  */
-void iot_json_encode_terminate(
+IOT_API IOT_SECTION void iot_json_encode_terminate(
 	iot_json_encoder_t *encoder );
 
 #ifdef __cplusplus
