@@ -53,6 +53,7 @@ int __wrap_os_snprintf( char *str, size_t size, const char *format, ... )
 	__attribute__((format(printf,3,4)));
 os_status_t __wrap_os_socket_initialize( void );
 os_status_t __wrap_os_socket_terminate( void );
+int __wrap_os_strcasecmp( const char *s1, const char *s2 );
 char *__wrap_os_strchr( const char *s, char c );
 int __wrap_os_strcmp( const char *s1, const char *s2 );
 size_t __wrap_os_strlen( const char *s );
@@ -338,6 +339,19 @@ os_status_t __wrap_os_socket_initialize( void )
 os_status_t __wrap_os_socket_terminate( void )
 {
 	return OS_STATUS_SUCCESS;
+}
+
+int __wrap_os_strcasecmp( const char *s1, const char *s2 )
+{
+	const char offset = 'a' - 'A';
+	/* ensure this function is called meeting pre-requirements */
+	assert_non_null( s1 );
+	assert_non_null( s2 );
+
+	/* perform strcasecmp */
+	while( ( *s1 ) && ( *s1 == *s2 || *s1 + offset == *s2 || *s1 == *s2 + offset ) )
+		s1++, s2++;
+	return *( const unsigned char* )s1 - *( const unsigned char* )s2;
 }
 
 char *__wrap_os_strchr( const char *s, char c )

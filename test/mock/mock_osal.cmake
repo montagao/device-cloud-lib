@@ -38,6 +38,7 @@ set( MOCK_OSAL_FUNC
 	"os_snprintf"
 	"os_socket_initialize"
 	"os_socket_terminate"
+	"os_strcasecmp"
 	"os_strchr"
 	"os_strcmp"
 	"os_strlen"

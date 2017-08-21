@@ -1211,7 +1211,7 @@ static void test_iot_log_level_set_string_invalid( void **state )
 
 	memset( &lib, 0, sizeof( struct iot ) );
 	result = iot_log_level_set_string( &lib, "error" );
-	assert_int_equal( result, IOT_STATUS_NOT_FOUND );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
 }
 
 static void test_iot_log_level_set_string_null_lib( void **state )
