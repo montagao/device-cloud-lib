@@ -45,10 +45,9 @@
 #define DEVICE_MANAGER_DEVICE_REBOOT           "device_reboot"
 /** @brief Name of the agent reset action*/
 #define DEVICE_MANAGER_AGENT_RESET             "agent_reset"
+
 /** @brief Name of the remote login action */
 #define DEVICE_MANAGER_REMOTE_LOGIN            "remote-access"
-/** @brief Name of the remote login protocol action */
-#define DEVICE_MANAGER_REMOTE_LOGIN_PROTOCOL   "Remote Login Protocols"
 /** @brief Name of "host" parameter for remote login action */
 #define REMOTE_LOGIN_PARAM_HOST                "host"
 /** @brief Name of "protocol" parameter for remote login action */
@@ -57,6 +56,17 @@
 #define REMOTE_LOGIN_PARAM_URL                 "url"
 /** @brief Name of "debug" parameter for remote login action */
 #define REMOTE_LOGIN_PARAM_DEBUG               "debug-mode"
+
+/** @brief Name of action to get a file from the cloud */
+#define DEVICE_MANAGER_FILE_CLOUD_DOWNLOAD      "file_download"
+/** @brief Name of action to send a file to the cloud */
+#define DEVICE_MANAGER_FILE_CLOUD_UPLOAD        "file_upload"
+/** @brief Name of the parameter to save file as */
+#define DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME "file_name"
+/** @brief Name of the parameter for using global file store */
+#define DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE "use_global_store"
+/** @brief Name of the parameter for file path on device */
+#define DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH "file_path"
 
 #if defined( __unix__ ) && !defined( __ANDROID__ )
 #	define COMMAND_PREFIX                      "sudo "
@@ -110,6 +120,33 @@ struct remote_login_protocol
 iot_status_t device_manager_action_enable(
 	struct device_manager_info *device_manager_info,
 	iot_uint16_t flag, iot_bool_t value );
+
+/**
+ * @brief Callback function to download a file from the cloud
+ *
+ * @param[in,out]  request             request from the cloud
+ * @param[in,out]  user_data           pointer to user defined data
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    request or user data provided is invalid
+ * @retval IOT_STATUS_SUCCESS          file download started
+ * @retval IOT_STATUS_FAILURE          failed start file download
+ */
+static iot_status_t device_manager_file_download(
+	iot_action_request_t *request,
+	void *user_data );
+/**
+ * @brief Callback function to upload a file to the cloud
+ *
+ * @param[in,out]  request             request from the cloud
+ * @param[in,out]  user_data           pointer to user defined data
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    request or user data provided is invalid
+ * @retval IOT_STATUS_SUCCESS          file upload started
+ * @retval IOT_STATUS_FAILURE          failed start file upload
+ */
+static iot_status_t device_manager_file_upload(
+		iot_action_request_t *request,
+		void *user_data );
 /**
  * @brief Initializes the application
  *
@@ -344,6 +381,124 @@ iot_status_t on_action_agent_shutdown(
 }
 #endif /* __ANDROID__ */
 
+iot_status_t device_manager_file_download(
+	iot_action_request_t *request,
+	void *user_data )
+{
+	const char *file_name = NULL;
+	const iot_bool_t use_global_store = IOT_FALSE;
+	const char *file_path = NULL;
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+
+	/* get the params: note optional string params that are null
+	 * return an error, so ignore */
+	if ( request && user_data )
+	{
+		struct device_manager_info *dm =
+			(struct device_manager_info *)user_data;
+
+		/* file_name */
+		result = iot_action_parameter_get( request,
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME,
+			IOT_FALSE, IOT_TYPE_STRING, &file_name );
+		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
+			"param %s = %s result=%d\n",
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME, file_name,
+			(int)result);
+
+		/* file_path */
+		result = iot_action_parameter_get( request,
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH,
+			IOT_FALSE, IOT_TYPE_STRING, &file_path );
+		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
+			"param %s = %s result=%d\n",
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH, file_path,
+			(int)result);
+
+		/* use global store */
+		result = iot_action_parameter_get( request,
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
+			IOT_FALSE, IOT_TYPE_BOOL, &use_global_store);
+		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
+			"param %s = %d result=%d\n",
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
+			(int)use_global_store, (int)result);
+
+		/* support a file_name, but no path.  That means,
+		 * store it in the default runtime dir with the file_name */
+		if ( ! file_path  )
+			file_path = file_name;
+
+		if ( dm )
+			result = iot_file_receive(
+				dm->iot_lib,
+				NULL,
+				0u,
+				use_global_store,
+				file_name,
+				file_path,
+				NULL,
+				NULL );
+	}
+	return result;
+}
+
+iot_status_t device_manager_file_upload(
+	iot_action_request_t *request,
+	void *user_data )
+{
+	const char *file_name = NULL;
+	const iot_bool_t use_global_store = IOT_FALSE;
+	const char *file_path = NULL;
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+
+	/* get the params */
+	if ( request && user_data )
+	{
+		struct device_manager_info *dm =
+			(struct device_manager_info *)user_data;
+
+		/* file_name */
+		result = iot_action_parameter_get( request,
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME,
+			IOT_FALSE, IOT_TYPE_STRING, &file_name );
+		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
+			"param %s = %s result=%d\n",
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME, file_name,
+			(int)result);
+
+		/* file_path */
+		result = iot_action_parameter_get( request,
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH,
+			IOT_FALSE, IOT_TYPE_STRING, &file_path );
+		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
+			"param %s = %s result=%d\n",
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH, file_path,
+			(int)result);
+
+		/* use global store */
+		result = iot_action_parameter_get( request,
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
+			IOT_FALSE, IOT_TYPE_BOOL, &use_global_store);
+		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
+			"param %s = %d result=%d\n",
+			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
+			(int)use_global_store, (int)result);
+
+		if ( dm )
+			result = iot_file_send(
+				dm->iot_lib,
+				NULL,
+				0u,
+				use_global_store,
+				file_name,
+				file_path,
+				NULL,
+				NULL );
+	}
+	return result;
+}
+
 iot_status_t on_action_remote_login( iot_action_request_t* request,
 	void *user_data )
 {
@@ -362,7 +517,7 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 		const char *url_in = NULL;
 		const char *protocol_in = NULL;
 		const iot_bool_t debug_mode = IOT_FALSE;
-		os_file_t out_files[2];
+		os_file_t out_files[2] = { NULL, NULL };
 
 		/* Support a debug option that supports logging */
 		char log_file[256];
@@ -385,7 +540,7 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 		if ( debug_mode != IOT_FALSE )
 		{
 			os_snprintf(log_file, PATH_MAX, "%s%c%s",
-				IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP, "iot-relay-stdout.log");
+				device_manager->runtime_dir, OS_DIR_SEP, "iot-relay-stdout.log");
 			out_files[0] = os_file_open(log_file,OS_CREATE | OS_WRITE);
 
 			os_snprintf(log_file, PATH_MAX, "%s%c%s", IOT_RUNTIME_DIR_DEFAULT,
@@ -413,10 +568,10 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 			result =  os_system_run( relay_cmd, NULL, out_files);
 			printf("os_system_run returned %d\n", result);
 			os_time_sleep(10, IOT_FALSE);
-			
+
 			/* remote login protocol requires us to return
 			 * success, or it will not open the cloud side relay connection.  So,
-			 * check for invoked here and return success */	
+			 * check for invoked here and return success */
 			if ( result == IOT_STATUS_INVOKED )
 				result = IOT_STATUS_SUCCESS;
 
@@ -440,6 +595,8 @@ iot_status_t device_manager_actions_deregister(
 		iot_action_t *const decommission_device = device_manager->decommission_device;
 		iot_action_t *const device_shutdown = device_manager->device_shutdown;
 		iot_action_t *const remote_login = device_manager->remote_login;
+		iot_action_t *file_upload = NULL;
+		iot_action_t *file_download = device_manager->file_download;
 #endif /* ifndef _WRS_KERNEL */
 		iot_action_t *const device_reboot = device_manager->device_reboot;
 
@@ -511,10 +668,23 @@ iot_status_t device_manager_actions_deregister(
 
 #ifndef NO_FILEIO_SUPPORT
 		/* file-io */
-		/*FIXEM*/
-		/*device_manager_file_deregister( device_manager );*/
+		if ( file_download )
+		{
+			iot_action_deregister( file_download, NULL, 0u );
+			iot_action_free( file_download, 0u );
+			device_manager->file_download = NULL;
+		}
+		if ( file_upload )
+		{
+			iot_action_deregister( file_upload, NULL, 0u );
+			iot_action_free( file_upload, 0u );
+			device_manager->file_upload = NULL;
+		}
+
+
 #endif /* ifndef NO_FILEIO_SUPPORT */
 #endif /* ifndef _WRS_KERNEL */
+
 		result = IOT_STATUS_SUCCESS;
 	}
 
@@ -535,8 +705,9 @@ iot_status_t device_manager_actions_register(
 		iot_action_t *agent_reset = NULL;
 		/*iot_action_t *decommission_device = NULL;*/
 		iot_action_t *device_shutdown = NULL;
-		/*FIXME*/
 		iot_action_t *remote_login = NULL;
+		iot_action_t *file_upload = NULL;
+		iot_action_t *file_download = NULL;
 #ifndef _WIN32
 		/*iot_action_t *restore_factory_images = NULL;*/
 		/*FIXME*/
@@ -563,6 +734,64 @@ iot_status_t device_manager_actions_register(
 		/*iot_error(result) );*/
 		/*}*/
 #endif /* ifndef _WIN32 */
+
+
+		/* file transfer */
+		if ( device_manager->enabled_actions &
+			DEVICE_MANAGER_ENABLE_FILE_TRANSFERS )
+		{
+			/* File Download */
+			file_download = iot_action_allocate( iot_lib,
+				DEVICE_MANAGER_FILE_CLOUD_DOWNLOAD );
+
+			/* global store is optional */
+			iot_action_parameter_add( file_download,
+				DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
+				IOT_PARAMETER_IN, IOT_TYPE_BOOL, 0u );
+
+			/* file name */
+			iot_action_parameter_add( file_download,
+				DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME,
+				IOT_PARAMETER_IN_REQUIRED, IOT_TYPE_STRING, 0u );
+
+			/* file path */
+			iot_action_parameter_add( file_download,
+				DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH,
+				IOT_PARAMETER_IN, IOT_TYPE_STRING, 0u );
+
+			result = iot_action_register_callback( file_download,
+				&device_manager_file_download, device_manager, NULL, 0u );
+			if ( result != IOT_STATUS_SUCCESS )
+				IOT_LOG( iot_lib, IOT_LOG_ERROR,
+					"Failed to register %s action",
+					DEVICE_MANAGER_FILE_CLOUD_DOWNLOAD );
+			/* File Upload */
+			file_upload = iot_action_allocate( iot_lib,
+				DEVICE_MANAGER_FILE_CLOUD_UPLOAD);
+
+			/* global store is optional */
+			iot_action_parameter_add( file_upload,
+				DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
+				IOT_PARAMETER_IN, IOT_TYPE_BOOL, 0u );
+
+			/* file name  */
+			iot_action_parameter_add( file_upload,
+				DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME,
+				IOT_PARAMETER_IN, IOT_TYPE_STRING, 0u );
+
+			/* file path */
+			iot_action_parameter_add( file_upload,
+				DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH,
+				IOT_PARAMETER_IN_REQUIRED, IOT_TYPE_STRING, 0u );
+
+			result = iot_action_register_callback( file_upload,
+				&device_manager_file_upload, device_manager, NULL, 0u );
+			if ( result != IOT_STATUS_SUCCESS )
+				IOT_LOG( iot_lib, IOT_LOG_ERROR,
+					"Failed to register %s action",
+					DEVICE_MANAGER_FILE_CLOUD_UPLOAD);
+		}
+
 		/* device shutdown */
 		if ( device_manager->enabled_actions &
 			DEVICE_MANAGER_ENABLE_DEVICE_SHUTDOWN )

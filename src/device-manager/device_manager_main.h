@@ -72,6 +72,10 @@ struct device_manager_info
 	iot_action_t *agent_reset;
 	/** @brief remote_login action */
 	iot_action_t *remote_login;
+	/** @brief file_download action */
+	iot_action_t *file_download;
+	/** @brief file_upload action */
+	iot_action_t *file_upload;
 	/** @brief remote_login_protocol action */
 	iot_action_t *remote_login_protocol;
 	/** @brief agent_state */
