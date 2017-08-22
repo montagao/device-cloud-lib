@@ -418,12 +418,12 @@ typedef struct iot_log_source
  * @brief Possible alarm severities
  */
 typedef enum iot_severity {
-    SEVERITY_0,
-    SEVERITY_1,
-    SEVERITY_2,
-    SEVERITY_3,
-    SEVERITY_4,
-    SEVERITY_5
+    IOT_SEVERITY_0,
+    IOT_SEVERITY_1,
+    IOT_SEVERITY_2,
+    IOT_SEVERITY_3,
+    IOT_SEVERITY_4,
+    IOT_SEVERITY_5
 } iot_severity_t;
 
 /**
@@ -1351,7 +1351,23 @@ IOT_API IOT_SECTION iot_status_t iot_alarm_deregister(
 /**
  * @brief Publish an alarm state
  *
- * @param[in,out]  alarm               telemetry object sample is for
+ * @param[in,out]  alarm               alarm to raise
+ * @param[in]      severity            severity of the alarm
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_NO_MEMORY        no memory to store alarm state
+ * @retval IOT_STATUS_NOT_INITIALIZED  alarm object is not initialized
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_API IOT_SECTION iot_status_t iot_alarm_publish(
+	const iot_alarm_t *alarm,
+	iot_severity_t severity);
+
+/**
+ * @brief Publish an alarm state with a message
+ *
+ * @param[in,out]  alarm               alarm to raise
  * @param[in]      severity            severity of the alarm
  * @param[in]      message             message to show with the alarm state
  *
@@ -1361,8 +1377,8 @@ IOT_API IOT_SECTION iot_status_t iot_alarm_deregister(
  * @retval IOT_STATUS_NOT_INITIALIZED  alarm object is not initialized
  * @retval IOT_STATUS_SUCCESS          on success
  */
-IOT_API IOT_SECTION iot_status_t iot_alarm_publish(
-	iot_alarm_t *alarm,
+IOT_API IOT_SECTION iot_status_t iot_alarm_publish_string(
+	const iot_alarm_t *alarm,
 	iot_severity_t severity,
 	const char *message);
 

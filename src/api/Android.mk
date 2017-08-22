@@ -50,7 +50,7 @@ LOCAL_STATIC_LIBRARIES := libosal libandroidifaddrs libtr50 libpaho-mqtt3cs libi
 LOCAL_MODULE := libiot
 LOCAL_SRC_FILES := \
 	./iot_action.c \
-	./iot_alarm.c\
+	./iot_alarm.c \
 	./iot_base.c \
 	./iot_base64.c \
 	./iot_common.c \

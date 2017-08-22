@@ -811,7 +811,7 @@ void send_telemetry_sample( iot_t *iot_lib )
 	IOT_LOG( iot_lib, IOT_LOG_INFO, " ...... Result: %s", iot_error( result ) );
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending alarm   : %d", alarm_severity );
-	result = iot_alarm_publish( alarm_test, alarm_severity, string_test );
+	result = iot_alarm_publish_string( alarm_test, alarm_severity, string_test );
 	IOT_LOG( iot_lib, IOT_LOG_INFO, " ...... Result: %s", iot_error( result ) );
 
 	/* toggle the boolean value for next sample */

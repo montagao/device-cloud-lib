@@ -256,11 +256,6 @@ struct iot_alarm
 	/** @brief alarm name */
 	char *name;
 
-	/** @brief alarm state */
-	iot_uint8_t severity;
-	/** @brief alarm time stamp */
-	iot_timestamp_t time_stamp;
-
 #ifdef IOT_STACK_ONLY
 	/** @brief storage of name value on heap
 	 *
@@ -272,6 +267,15 @@ struct iot_alarm
 	iot_bool_t is_in_heap;
 #endif
 };
+
+/**
+ * @brief Alarm publication data
+ */
+typedef struct iot_alarm_data
+{
+	iot_severity_t severity;
+	char *message;
+} iot_alarm_data_t;
 
 /**
  * @brief Location information
@@ -583,7 +587,7 @@ struct iot
 	os_thread_t                 main_thread;
 	/** @brief Mutex to protect telemetry samples */
 	os_thread_mutex_t           telemetry_mutex;
-	/** @brief Mutex to protect alarm publications */
+	/** @brief Mutex to protect alarm registration/deregistration */
 	os_thread_mutex_t           alarm_mutex;
 
 	/* worker threads */

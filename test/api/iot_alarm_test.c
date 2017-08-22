@@ -199,7 +199,7 @@ static void test_iot_alarm_deregister_valid( void **state )
 	assert_int_equal( lib.alarm_count, 1u );
 }
 
-static void test_iot_alarm_publish_null_lib( void **state )
+static void test_iot_alarm_publish_string_null_lib( void **state )
 {
 	size_t i;
 	iot_status_t result;
@@ -212,19 +212,19 @@ static void test_iot_alarm_publish_null_lib( void **state )
 	lib.alarm_count = 1u;
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = NULL;
-	result = iot_alarm_publish( alarm, 1, "" );
+	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, "msg" );
 	assert_int_equal( result, IOT_STATUS_NOT_INITIALIZED );
 }
 
-static void test_iot_alarm_publish_null_alarm( void **state )
+static void test_iot_alarm_publish_string_null_alarm( void **state )
 {
 	iot_status_t result;
 
-	result = iot_alarm_publish( NULL, 1, "" );
+	result = iot_alarm_publish_string( NULL, IOT_SEVERITY_1, "msg" );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
-static void test_iot_alarm_publish_no_memory( void **state )
+static void test_iot_alarm_publish_string_no_memory( void **state )
 {
 	size_t i;
 	iot_status_t result;
@@ -238,29 +238,11 @@ static void test_iot_alarm_publish_no_memory( void **state )
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = &lib;
 	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
-	result = iot_alarm_publish( alarm, 1, "alarm message" );
+	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1,"msg" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 }
 
-static void test_iot_alarm_publish_null_message( void **state )
-{
-	size_t i;
-	iot_status_t result;
-	iot_t lib;
-	iot_alarm_t *alarm;
-
-	bzero( &lib, sizeof( iot_t ) );
-	for ( i = 0u; i < IOT_ALARM_MAX; i++ )
-		lib.alarm_ptr[i] = &lib.alarm[i];
-	lib.alarm_count = 1u;
-	alarm = lib.alarm_ptr[0];
-	alarm->lib = &lib;
-	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
-	result = iot_alarm_publish( alarm, 1, NULL );
-	assert_int_equal( result, IOT_STATUS_SUCCESS );
-}
-
-static void test_iot_alarm_publish_valid( void **state )
+static void test_iot_alarm_publish_string_valid( void **state )
 {
 	size_t i;
 	iot_status_t result;
@@ -274,8 +256,44 @@ static void test_iot_alarm_publish_valid( void **state )
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = &lib;
 	will_return( __wrap_iot_plugin_perform, IOT_STATUS_NO_MEMORY );
-	result = iot_alarm_publish( alarm, 1, "alarm message" );
+	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, "msg" );
 	assert_int_equal( result, IOT_STATUS_NO_MEMORY );
+}
+
+static void test_iot_alarm_publish_string_null_message( void **state )
+{
+	size_t i;
+	iot_status_t result;
+	iot_t lib;
+	iot_alarm_t *alarm;
+
+	bzero( &lib, sizeof( iot_t ) );
+	for ( i = 0u; i < IOT_ALARM_MAX; i++ )
+		lib.alarm_ptr[i] = &lib.alarm[i];
+	lib.alarm_count = 1u;
+	alarm = lib.alarm_ptr[0];
+	alarm->lib = &lib;
+	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
+	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, NULL );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+}
+
+static void test_iot_alarm_publish_string_empty_message( void **state )
+{
+	size_t i;
+	iot_status_t result;
+	iot_t lib;
+	iot_alarm_t *alarm;
+
+	bzero( &lib, sizeof( iot_t ) );
+	for ( i = 0u; i < IOT_ALARM_MAX; i++ )
+		lib.alarm_ptr[i] = &lib.alarm[i];
+	lib.alarm_count = 1u;
+	alarm = lib.alarm_ptr[0];
+	alarm->lib = &lib;
+	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
+	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, "" );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
 }
 
 int main( int argc, char *argv[] )
@@ -291,11 +309,12 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_alarm_deregister_null_alarm ),
 		cmocka_unit_test( test_iot_alarm_deregister_null_lib ),
 		cmocka_unit_test( test_iot_alarm_deregister_valid ),
-		cmocka_unit_test( test_iot_alarm_publish_null_lib ),
-		cmocka_unit_test( test_iot_alarm_publish_null_alarm ),
-		cmocka_unit_test( test_iot_alarm_publish_no_memory ),
-		cmocka_unit_test( test_iot_alarm_publish_null_message ),
-		cmocka_unit_test( test_iot_alarm_publish_valid )
+		cmocka_unit_test( test_iot_alarm_publish_string_null_lib ),
+		cmocka_unit_test( test_iot_alarm_publish_string_null_alarm ),
+		cmocka_unit_test( test_iot_alarm_publish_string_no_memory ),
+		cmocka_unit_test( test_iot_alarm_publish_string_valid ),
+		cmocka_unit_test( test_iot_alarm_publish_string_null_message ),
+		cmocka_unit_test( test_iot_alarm_publish_string_empty_message )
 	};
 	MOCK_SYSTEM_ENABLED = 1;
 	result = cmocka_run_group_tests( tests, NULL, NULL );

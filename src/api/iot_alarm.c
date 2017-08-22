@@ -22,7 +22,7 @@ iot_alarm_t *iot_alarm_register(
 	if( lib && name && *name != '\0' )
 	{
 #ifndef IOT_NO_THREAD_SUPPORT
-			os_thread_mutex_lock( &lib->alarm_mutex );
+		os_thread_mutex_lock( &lib->alarm_mutex );
 #endif
 		if ( lib->alarm_count < IOT_ALARM_MAX )
 		{
@@ -50,6 +50,10 @@ iot_alarm_t *iot_alarm_register(
 				unsigned int min_idx = 0u;
 				unsigned int max_idx = count;
 				size_t name_len = os_strlen(name);
+
+				if( name_len > IOT_NAME_MAX_LEN )
+					name_len = IOT_NAME_MAX_LEN;
+
 				os_memzero( alarm, sizeof( struct iot_alarm ) );
 
 #ifdef IOT_STACK_ONLY
@@ -62,7 +66,6 @@ iot_alarm_t *iot_alarm_register(
 					os_strncpy( alarm->name, name, name_len );
 					alarm->name[name_len] = '\0';
 					alarm->lib = lib;
-					alarm->severity = 0;
 
 #ifndef IOT_STACK_ONLY
 					alarm->is_in_heap = is_in_heap;
@@ -75,7 +78,7 @@ iot_alarm_t *iot_alarm_register(
 						cur_idx = (max_idx - min_idx) / 2u + min_idx;
 						cmp_result = os_strncmp( name,
 							lib->alarm_ptr[cur_idx]->name,
-							IOT_NAME_MAX_LEN );
+							name_len );
 						if ( cmp_result > 0 )
 						{
 							++cur_idx;
@@ -105,7 +108,7 @@ iot_alarm_t *iot_alarm_register(
 				"no remaining space (max: %u) for alarm: %s",
 				IOT_ALARM_MAX, name );
 #ifndef IOT_NO_THREAD_SUPPORT
-			os_thread_mutex_unlock( &lib->alarm_mutex );
+		os_thread_mutex_unlock( &lib->alarm_mutex );
 #endif
 	}
 	return alarm;
@@ -139,7 +142,6 @@ iot_status_t iot_alarm_deregister(
 					alarm->is_in_heap;
 #endif /* ifndef IOT_STACK_ONLY */
 				os_free_null((void **)&alarm->name);
-				os_free_null((void **)&alarm->severity);
 
 				/* remove from library */
 				os_memmove(
@@ -180,7 +182,14 @@ iot_status_t iot_alarm_deregister(
 }
 
 iot_status_t iot_alarm_publish(
-	iot_alarm_t *alarm,
+	const iot_alarm_t *alarm,
+	iot_severity_t severity)
+{
+	return iot_alarm_publish_string( alarm, severity, NULL );
+}
+
+iot_status_t iot_alarm_publish_string(
+	const iot_alarm_t *alarm,
 	iot_severity_t severity,
 	const char *message)
 {
@@ -189,30 +198,32 @@ iot_status_t iot_alarm_publish(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( alarm )
 	{
-		alarm->severity = severity;
 		result = IOT_STATUS_NOT_INITIALIZED;
 		if ( alarm->lib )
 		{
 			char *msg = NULL;
-#ifndef IOT_NO_THREAD_SUPPORT
-			os_thread_mutex_lock( &alarm->lib->alarm_mutex );
-#endif
+			iot_alarm_data_t *payload = os_malloc( sizeof( iot_alarm_data_t ) );
+			payload->severity = severity;
 			if ( message )
 			{
 				size_t msg_len = os_strlen( message );
-				msg = os_malloc( msg_len * sizeof(char) + 1 );
+				msg = os_malloc( msg_len * sizeof( char ) + 1u );
 				os_strncpy( msg, message, msg_len );
-				msg[msg_len] = '\0';
+				msg[ msg_len ] = '\0';
+				payload->message = msg;
 			}
+			else
+			{
+				payload->message = os_malloc( 1u );
+				os_memzero( payload->message, 1u );
+			}
+
 			result = iot_plugin_perform(
 				alarm->lib, NULL, &max_time_out,
-					IOT_OPERATION_ALARM_PUBLISH,
-					alarm, msg );
-			if ( result == IOT_STATUS_SUCCESS )
-				alarm->time_stamp = 0u;
-#ifndef IOT_NO_THREAD_SUPPORT
-			os_thread_mutex_unlock( &alarm->lib->alarm_mutex );
-#endif
+				IOT_OPERATION_ALARM_PUBLISH,
+				alarm, payload );
+			os_free_null( &payload->message );
+			os_free_null( &payload );
 		}
 	}
 	return result;

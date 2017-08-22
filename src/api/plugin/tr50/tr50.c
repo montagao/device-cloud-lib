@@ -130,16 +130,16 @@ static IOT_SECTION iot_status_t tr50_action_complete(
  * @brief publishes an alarm to the cloud
  *
  * @param[in]      data                plug-in specific data
- * @param[in]      a                   alarm object to publish
- * @param[in]      m                   message related to the alarm state change
+ * @param[in]      alarm               alarm object to publish
+ * @param[in]      payload             alarm payload to publish
  *
  * @retval IOT_STATUS_FAILURE          on failure
  * @retval IOT_STATUS_SUCCESS          on success
  */
 static IOT_SECTION iot_status_t tr50_alarm_publish(
 	struct tr50_data *data,
-	const iot_alarm_t *a,
-	const char *m );
+	const iot_alarm_t *alarm,
+	const iot_alarm_data_t *payload );
 
 /**
  * @brief appends location information to json structure
@@ -603,43 +603,37 @@ iot_status_t tr50_action_complete(
 
 iot_status_t tr50_alarm_publish(
 	struct tr50_data *data,
-	const iot_alarm_t *a,
-	const char *m )
+	const iot_alarm_t *alarm,
+	const iot_alarm_data_t *payload )
 {
 	iot_status_t result = IOT_STATUS_FAILURE;
-	char buf[512u];
-	const char *cmd = "alarm.publish";
 	char id[6u];
-	const char *msg;
+	const char *out_msg;
+
 	iot_json_encoder_t *const json =
-		iot_json_encode_initialize( buf, 512u, 0u);
+		iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC);
 
 	/* convert id to string */
 	os_snprintf( id, 5u, "%d", data->msg_id );
 	id[5u] = '\0';
 	iot_json_encode_object_start( json, id );
-	iot_json_encode_string( json, "command", cmd );
+	iot_json_encode_string( json, "command", "alarm.publish" );
 	iot_json_encode_object_start( json, "params" );
 	iot_json_encode_string( json, "thingKey",
 		data->thing_key );
-	iot_json_encode_string( json, "key", a->name);
+	iot_json_encode_string( json, "key", alarm->name);
 
-	iot_json_encode_real( json, "state", a->severity );
-	iot_json_encode_string( json, "msg", m );
+	iot_json_encode_real( json, "state", payload->severity );
+	if( payload->message && *payload->message != '\0')
+		iot_json_encode_string( json, "msg", payload->message );
 
-	if ( a->time_stamp > 0u )
-	{
-		char ts_str[32u];
-		tr50_strtime( a->time_stamp, ts_str, 25u );
-		iot_json_encode_string( json, "ts", ts_str );
-	}
 	iot_json_encode_object_end( json );
 	iot_json_encode_object_end( json );
 
-	msg = iot_json_encode_dump( json );
-	os_printf( "-->%s\n", msg );
+	out_msg = iot_json_encode_dump( json );
+	os_printf( "-->%s\n", out_msg );
 	result = iot_mqtt_publish( data->mqtt, "api",
-		msg, os_strlen( msg ), TR50_MQTT_QOS, IOT_FALSE, NULL );
+		out_msg, os_strlen( out_msg ), TR50_MQTT_QOS, IOT_FALSE, NULL );
 	iot_json_encode_terminate( json );
 	++data->msg_id;
 	return result;
@@ -1040,7 +1034,7 @@ iot_status_t tr50_execute(
 			case IOT_OPERATION_ALARM_PUBLISH:
 				result = tr50_alarm_publish( data,
 					(const iot_alarm_t*)item,
-					(const char *)value );
+					(const iot_alarm_data_t*)value );
 				break;
 			case IOT_OPERATION_EVENT_LOG_PUBLISH:
 				result = tr50_event_log_publish( data,
