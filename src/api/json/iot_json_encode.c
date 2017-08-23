@@ -750,6 +750,7 @@ iot_status_t iot_json_encode_object_cancel(
 		if ( encoder->structs >> 1 ) /* inside an object */
 		{
 			char *new_pos = encoder->cur - 1;
+			char *save_pos = NULL;
 			unsigned int depth_count = 0u;
 
 			/* remove the object */
