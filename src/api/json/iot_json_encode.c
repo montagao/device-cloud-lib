@@ -764,18 +764,24 @@ iot_status_t iot_json_encode_object_cancel(
 				--new_pos;
 			}
 
+			save_pos = new_pos;
+			/* remove any spaces before '{' character */
+			while ( new_pos > encoder->buf && *(--new_pos) == ' ' );
+
 			/* remove the key to the object (may not exist) */
-			if ( new_pos > encoder->buf && *(new_pos - 1) == ':' )
+			if ( new_pos > encoder->buf && *new_pos == ':' )
 			{
 				--new_pos;
 				while( new_pos > encoder->buf &&
 					*new_pos != ',' &&
 					*new_pos != '{' &&
 					*new_pos != '[' )
+				{
 					--new_pos;
+				}
 			}
 			else
-				++new_pos;
+				new_pos = save_pos + 1;
 			encoder->cur = new_pos;
 			encoder->structs >>= 3;
 
