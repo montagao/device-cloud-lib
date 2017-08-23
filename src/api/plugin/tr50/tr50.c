@@ -1117,7 +1117,7 @@ void tr50_on_message(
 	char buf[1024u];
 	struct tr50_data *const data = (struct tr50_data *)(user_data);
 	iot_json_decoder_t *json;
-	iot_json_item_t *root;
+	const iot_json_item_t *root;
 
 	if ( data )
 		IOT_LOG( data->lib, IOT_LOG_TRACE,
@@ -1136,7 +1136,7 @@ void tr50_on_message(
 		if ( os_strcmp( topic, "notify/mailbox_activity" ) == 0 )
 		{
 			iot_json_type_t type;
-			iot_json_item_t *const j_thing_key =
+			const iot_json_item_t *const j_thing_key =
 				iot_json_decode_object_find( json, root,
 					"thingKey" );
 			type = iot_json_decode_type( json, j_thing_key );
@@ -1155,14 +1155,14 @@ void tr50_on_message(
 		}
 		else if ( os_strcmp( topic, "reply" ) == 0 )
 		{
-			iot_json_object_iterator_t *root_iter =
+			const iot_json_object_iterator_t *root_iter =
 				iot_json_decode_object_iterator( json, root );
 			if ( root_iter )
 			{
 				char name[ IOT_NAME_MAX_LEN + 1u ];
 				const char *v = NULL;
 				size_t v_len = 0u;
-				iot_json_item_t *j_obj = NULL;
+				const iot_json_item_t *j_obj = NULL;
 				unsigned int msg_id = 0u;
 
 				iot_json_decode_object_iterator_key(
@@ -1176,7 +1176,7 @@ void tr50_on_message(
 
 				if ( j_obj )
 				{
-					iot_json_item_t *j_success;
+					const iot_json_item_t *j_success;
 					iot_bool_t is_success;
 
 					j_success = iot_json_decode_object_find( json,
@@ -1187,8 +1187,8 @@ void tr50_on_message(
 
 						if ( is_success )
 						{
-							iot_json_item_t *j_params;
-							iot_json_item_t *j_messages;
+							const iot_json_item_t *j_params;
+							const iot_json_item_t *j_messages;
 							j_params = iot_json_decode_object_find(
 								json, j_obj, "params" );
 
@@ -1204,11 +1204,11 @@ void tr50_on_message(
 									iot_json_decode_array_size( json, j_messages );
 								for ( i = 0u; i < msg_count; ++i )
 								{
-									iot_json_item_t *j_cmd_item;
+									const iot_json_item_t *j_cmd_item;
 									if ( iot_json_decode_array_at( json,
 										j_messages, i, &j_cmd_item ) == IOT_STATUS_SUCCESS )
 									{
-										iot_json_item_t *j_id;
+										const iot_json_item_t *j_id;
 										j_id = iot_json_decode_object_find(
 											json, j_cmd_item, "id" );
 										if ( !j_id )
@@ -1221,8 +1221,8 @@ void tr50_on_message(
 
 										if ( j_id && j_params )
 										{
-											iot_json_item_t *j_method;
-											iot_json_object_iterator_t *iter;
+											const iot_json_item_t *j_method;
+											const iot_json_object_iterator_t *iter;
 											iot_action_request_t *req = NULL;
 
 											j_method = iot_json_decode_object_find(
@@ -1250,7 +1250,7 @@ void tr50_on_message(
 												json, j_params );
 											while ( iter )
 											{
-												iot_json_item_t *j_value = NULL;
+												const iot_json_item_t *j_value = NULL;
 												iot_json_decode_object_iterator_key(
 													json, j_params, iter,
 													&v, &v_len );

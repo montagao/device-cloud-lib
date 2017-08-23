@@ -565,11 +565,11 @@ iot_status_t iot_base_configuration_read(
 static iot_status_t iot_base_configuration_parse_object(
 	iot_t *lib,
 	iot_json_decoder_t *json,
-	iot_json_item_t *obj,
+	const iot_json_item_t *obj,
 	char *key,
 	size_t key_len )
 {
-	iot_json_object_iterator_t *iter =
+	const iot_json_object_iterator_t *iter =
 		iot_json_decode_object_iterator( json, obj );
 
 	if ( key_len )
@@ -582,7 +582,7 @@ static iot_status_t iot_base_configuration_parse_object(
 	{
 		const char *cur_key = NULL;
 		size_t cur_key_len = 0u;
-		iot_json_item_t *item = NULL;
+		const iot_json_item_t *item = NULL;
 		iot_json_type_t type;
 
 		iot_json_decode_object_iterator_key( json,
@@ -670,7 +670,7 @@ iot_status_t iot_base_configuration_parse(
 	if ( lib && buf && len > 0 )
 	{
 		iot_json_decoder_t *json;
-		iot_json_item_t *root;
+		const iot_json_item_t *root;
 		char err_msg[32u];
 
 		json = iot_json_decode_initialize( NULL, 0u,

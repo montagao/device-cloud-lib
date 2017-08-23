@@ -60,7 +60,7 @@ include( GitSha )
 include( OptionSelect )
 option_select( IOT_JSON_LIBRARY
 	DESCRIPTION "JSON Library to use"
-	DEFAULT "jsmn" "jansson" "jsmn"
+	DEFAULT "jsmn" "jansson" "jsmn" "json-c"
 )
 option_select( IOT_MQTT_LIBRARY
 	DESCRIPTION "MQTT Library to use"
@@ -97,6 +97,11 @@ if ( IOT_JSON_LIBRARY STREQUAL "jansson" )
 	add_definitions( "-DIOT_JSON_JANSSON" )
 	set( JSON_INCLUDE_DIR "${JANSSON_INCLUDE_DIR}" )
 	set( JSON_LIBRARIES   "${JANSSON_LIBRARIES}" )
+elseif ( IOT_JSON_LIBRARY STREQUAL "json-c" )
+	find_package( JsonC REQUIRED )
+	add_definitions( "-DIOT_JSON_JSONC" )
+	set( JSON_INCLUDE_DIR "${JSONC_INCLUDE_DIR}" )
+	set( JSON_LIBRARIES   "${JSONC_LIBRARIES}" )
 else()
 	find_package( Jsmn REQUIRED )
 	set( JSON_INCLUDE_DIR "${JSMN_INCLUDE_DIR}" )

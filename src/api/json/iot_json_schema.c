@@ -114,7 +114,7 @@ struct iot_json_schema_item
 	/** @brief flags for the item */
 	iot_uint8_t       flags;
 	/** @brief key item */
-	iot_json_item_t   *item;
+	const iot_json_item_t   *item;
 	/** @brief name */
 	const char        *name;
 	/** @brief length of name */
@@ -124,7 +124,7 @@ struct iot_json_schema_item
 	/** @brief parent object */
 	unsigned int      parent;
 	/** @brief pointer to json dependencies (can be either array or object) */
-	iot_json_item_t   *dependencies;
+	const iot_json_item_t   *dependencies;
 };
 
 /**
@@ -161,41 +161,41 @@ static IOT_SECTION iot_status_t iot_json_schema_item_string_value(
 
 static IOT_SECTION iot_status_t iot_json_schema_allocate_item(
 	iot_json_schema_t *schema,
-	iot_json_item_t *item,
+	const iot_json_item_t *item,
 	iot_json_type_t item_type,
 	unsigned int parent_idx,
 	const char *name,
 	size_t name_len,
 	struct iot_json_schema_item **out,
 	size_t *count,
-	iot_json_item_t *j_required_arr,
-	iot_json_item_t *j_dependencies,
+	const iot_json_item_t *j_required_arr,
+	const iot_json_item_t *j_dependencies,
 	const char **error_msg );
 
 static IOT_SECTION iot_status_t iot_json_schema_parse_schema_json(
 	iot_json_schema_t *schema,
-	iot_json_item_t *root,
+	const iot_json_item_t *root,
 	unsigned int parent_idx,
 	const char *name,
 	size_t name_len,
 	struct iot_json_schema_item **out,
 	size_t *count,
-	iot_json_item_t *j_required_arr,
-	iot_json_item_t *j_dependencies,
+	const iot_json_item_t *j_required_arr,
+	const iot_json_item_t *j_dependencies,
 	const char **error_msg );
 
 
 iot_status_t iot_json_schema_allocate_item(
 	iot_json_schema_t *schema,
-	iot_json_item_t *item,
+	const iot_json_item_t *item,
 	iot_json_type_t item_type,
 	unsigned int parent_idx,
 	const char *name,
 	size_t name_len,
 	struct iot_json_schema_item **out,
 	size_t *count,
-	iot_json_item_t *j_required_arr,
-	iot_json_item_t *j_dependencies,
+	const iot_json_item_t *j_required_arr,
+	const iot_json_item_t *j_dependencies,
 	const char **error_msg )
 {
 	struct iot_json_schema_item *base = NULL;
@@ -218,7 +218,7 @@ iot_status_t iot_json_schema_allocate_item(
 #endif /* ifndef IOT_STACK_ONLY */
 	if ( base && item_type != IOT_JSON_TYPE_NULL )
 	{
-		iot_json_item_t *j_item;
+		const iot_json_item_t *j_item;
 		enum iot_json_schema_keyword_id max_field_id =
 			IOT_JSON_SCHEMA_KEYWORD_MAXIMUM;
 		enum iot_json_schema_keyword_id min_field_id =
@@ -263,7 +263,7 @@ iot_status_t iot_json_schema_allocate_item(
 		base->flags = 0u;
 		if ( item_type == IOT_JSON_TYPE_ARRAY )
 		{
-			iot_json_item_t *u_item;
+			const iot_json_item_t *u_item;
 			/* uniqueItems flag */
 			u_item = iot_json_decode_object_find( schema->decoder, item,
 				IOT_JSON_SCHEMA_KEYWORDS[IOT_JSON_SCHEMA_KEYWORD_UNIQUE_ITEMS] );
@@ -303,7 +303,7 @@ iot_status_t iot_json_schema_allocate_item(
 		else if ( item_type == IOT_JSON_TYPE_INTEGER ||
 			item_type == IOT_JSON_TYPE_REAL )
 		{
-			iot_json_item_t *u_item;
+			const iot_json_item_t *u_item;
 			/* exclusiveMaximum */
 			u_item = iot_json_decode_object_find( schema->decoder, item,
 				IOT_JSON_SCHEMA_KEYWORDS[IOT_JSON_SCHEMA_KEYWORD_EXCLUSIVE_MAXIMUM] );
@@ -482,12 +482,12 @@ iot_status_t iot_json_schema_allocate_item(
 		}
 		else if ( j_item && item_type != IOT_JSON_TYPE_OBJECT )
 		{
-			iot_json_array_iterator_t *iter =
+			const iot_json_array_iterator_t *iter =
 				iot_json_decode_array_iterator( schema->decoder,
 					j_item );
 			while ( result == IOT_STATUS_SUCCESS && iter )
 			{
-				iot_json_item_t *enum_item = NULL;
+				const iot_json_item_t *enum_item = NULL;
 				iot_json_decode_array_iterator_value(
 					schema->decoder, j_item, iter, &enum_item );
 				if ( iot_json_decode_type( schema->decoder, enum_item )
@@ -522,14 +522,14 @@ iot_status_t iot_json_schema_allocate_item(
 		if ( name && name_len > 0u && j_required_arr )
 		{
 			iot_bool_t found_item = IOT_FALSE;
-			iot_json_array_iterator_t *arr_iter;
+			const iot_json_array_iterator_t *arr_iter;
 
 			arr_iter = iot_json_decode_array_iterator(
 				schema->decoder, j_required_arr );
 			while ( result == IOT_STATUS_SUCCESS &&
 				found_item == IOT_FALSE && arr_iter )
 			{
-				iot_json_item_t *obj = NULL;
+				const iot_json_item_t *obj = NULL;
 
 				result = iot_json_decode_array_iterator_value(
 					schema->decoder,
@@ -562,10 +562,10 @@ iot_status_t iot_json_schema_allocate_item(
 		if ( item_type == IOT_JSON_TYPE_OBJECT )
 		{
 			unsigned int idx = *count - 1u;
-			iot_json_item_t *j_properties;
-			iot_json_item_t *j_required;
-			iot_json_item_t *j_deps;
-			iot_json_object_iterator_t *iter;
+			const iot_json_item_t *j_properties;
+			const iot_json_item_t *j_required;
+			const iot_json_item_t *j_deps;
+			const iot_json_object_iterator_t *iter;
 			struct iot_json_schema_item *parent_obj;
 
 			j_properties = iot_json_decode_object_find( schema->decoder, item,
@@ -581,7 +581,7 @@ iot_status_t iot_json_schema_allocate_item(
 			{
 				size_t key_len = 0u;
 				const char *key = NULL;
-				iot_json_item_t *value;
+				const iot_json_item_t *value;
 				result = iot_json_decode_object_iterator_key(
 					schema->decoder, j_properties, iter, &key, &key_len );
 				result = iot_json_decode_object_iterator_value(
@@ -620,7 +620,7 @@ iot_status_t iot_json_schema_parse(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( schema && root )
 	{
-		iot_json_item_t *root_item = NULL;
+		const iot_json_item_t *root_item = NULL;
 		result = iot_json_decode_parse( schema->decoder, js,
 			len, &root_item, error, error_len );
 
@@ -665,17 +665,17 @@ iot_status_t iot_json_schema_parse(
 
 iot_status_t iot_json_schema_parse_schema_json(
 	iot_json_schema_t *schema,
-	iot_json_item_t *root,
+	const iot_json_item_t *root,
 	unsigned int parent_idx,
 	const char *name,
 	size_t name_len,
 	struct iot_json_schema_item **out,
 	size_t *count,
-	iot_json_item_t *j_required_arr,
-	iot_json_item_t *j_dependencies,
+	const iot_json_item_t *j_required_arr,
+	const iot_json_item_t *j_dependencies,
 	const char **error_msg )
 {
-	iot_json_item_t *j_type;
+	const iot_json_item_t *j_type;
 	iot_status_t result;
 	const char *value = NULL;
 	size_t value_len = 0u;
@@ -838,7 +838,7 @@ iot_bool_t iot_json_schema_dependencies_achieved(
 		(const struct iot_json_schema_item *)item;
 	if ( schema && i && i->name && i->name_len > 0u )
 	{
-		iot_json_item_t *const j_deps = i->dependencies;
+		const iot_json_item_t *const j_deps = i->dependencies;
 		result = IOT_TRUE;
 		if ( j_deps )
 		{
@@ -849,8 +849,8 @@ iot_bool_t iot_json_schema_dependencies_achieved(
 			result = IOT_FALSE;
 			for ( j = 0u; j < keys_set_len && result == IOT_FALSE; ++j )
 			{
-				iot_json_item_t *j_str = NULL;
-				iot_json_array_iterator_t *arr_it = NULL;
+				const iot_json_item_t *j_str = NULL;
+				const iot_json_array_iterator_t *arr_it = NULL;
 
 				if ( type == IOT_JSON_TYPE_ARRAY )
 				{
@@ -943,10 +943,10 @@ iot_json_schema_t *iot_json_schema_initialize(
 		buf += sizeof( struct iot_json_schema );
 		len -= sizeof( struct iot_json_schema );
 
-#ifndef IOT_JSON_JANSSON
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 		len = len * sizeof( jsmntok_t ) /
 			sizeof( struct iot_json_schema_item );
-#endif /* ifndef IOT_JSON_JANSSON */
+#endif /* if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 	}
 
 	if ( result )
@@ -1020,7 +1020,7 @@ iot_bool_t iot_json_schema_integer(
 			{
 				iot_bool_t exclusive_maximum = IOT_FALSE;
 				iot_bool_t exclusive_minimum = IOT_FALSE;
-				iot_json_item_t *j_item;
+				const iot_json_item_t *j_item;
 				/* exclusiveMaximum */
 				j_item = iot_json_decode_object_find(
 					schema->decoder, i->item,
@@ -1147,7 +1147,7 @@ iot_status_t iot_json_schema_item_string_value(
 	size_t o_len = 0u;
 	if ( schema && item )
 	{
-		iot_json_item_t *j_item;
+		const iot_json_item_t *j_item;
 		result = IOT_STATUS_NOT_FOUND;
 
 		j_item = iot_json_decode_object_find( schema->decoder, i->item,
@@ -1176,7 +1176,7 @@ iot_json_schema_object_iterator_t *
 	if ( schema && i &&
 		iot_json_decode_type( schema->decoder, i->item ) == IOT_JSON_TYPE_OBJECT )
 	{
-		iot_json_item_t *j_obj;
+		const iot_json_item_t *j_obj;
 		const char *value = NULL;
 		size_t value_len = 0u;
 
@@ -1248,7 +1248,7 @@ iot_json_schema_object_iterator_t *
 	if ( schema && i && it &&
 		iot_json_decode_type( schema->decoder, i->item ) == IOT_JSON_TYPE_OBJECT )
 	{
-		iot_json_item_t *j_obj;
+		const iot_json_item_t *j_obj;
 		const char *value = NULL;
 		size_t value_len = 0u;
 
@@ -1344,7 +1344,7 @@ iot_bool_t iot_json_schema_real(
 		{
 			iot_bool_t exclusive_maximum = IOT_FALSE;
 			iot_bool_t exclusive_minimum = IOT_FALSE;
-			iot_json_item_t *j_item;
+			const iot_json_item_t *j_item;
 			iot_float64_t real_value = 0.0;
 
 			/* parse value from string */
@@ -1556,7 +1556,7 @@ iot_bool_t iot_json_schema_string(
 	if ( schema && i && value &&
 		iot_json_schema_type( schema, item ) == IOT_JSON_TYPE_STRING )
 	{
-		iot_json_item_t *j_item;
+		const iot_json_item_t *j_item;
 		iot_int64_t length;
 
 		result = IOT_TRUE;
@@ -1580,12 +1580,12 @@ iot_bool_t iot_json_schema_string(
 			if ( j_item && iot_json_decode_type( schema->decoder, j_item ) ==
 				IOT_JSON_TYPE_ARRAY )
 			{
-				iot_json_array_iterator_t *it =
+				const iot_json_array_iterator_t *it =
 					iot_json_decode_array_iterator( schema->decoder, j_item );
 				result = IOT_FALSE;
 				while ( result == IOT_FALSE && it )
 				{
-					iot_json_item_t *ar_item = NULL;
+					const iot_json_item_t *ar_item = NULL;
 					if ( iot_json_decode_array_iterator_value(
 						schema->decoder, j_item, it, &ar_item )
 						== IOT_STATUS_SUCCESS && ar_item )
@@ -1628,7 +1628,7 @@ iot_bool_t iot_json_schema_string(
 							schema->decoder, j_item );
 						while ( error_msg_buf && it )
 						{
-							iot_json_item_t *ar_item = NULL;
+							const iot_json_item_t *ar_item = NULL;
 							const char *str = NULL;
 							size_t str_len = 0u;
 							if ( iot_json_decode_array_iterator_value(
@@ -1780,7 +1780,7 @@ iot_json_type_t iot_json_schema_type(
 	{
 		const char *value = NULL;
 		size_t value_len = 0u;
-		iot_json_item_t *j_type =
+		const iot_json_item_t *j_type =
 			iot_json_decode_object_find( schema->decoder,
 				i->item, "type" );
 

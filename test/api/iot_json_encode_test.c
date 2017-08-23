@@ -434,7 +434,12 @@ static void test_iot_json_encode_dump_expand( void **state )
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
 
+#if defined( IOT_JSON_JSONC )
+	/* contains extra space after '{' & '}' characters */
+	assert_string_equal( json_str, "{ \"array\": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ], \"bool\": false, \"int\": 1, \"obj\": { \"real\": 1, \"string\": \"value\" } }" );
+#else
 	assert_string_equal( json_str, "{\"array\": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], \"bool\": false, \"int\": 1, \"obj\": {\"real\": 1.0, \"string\": \"value\"}}" );
+#endif
 	iot_json_encode_terminate( e );
 }
 
@@ -465,7 +470,7 @@ static void test_iot_json_encode_dump_indent_0( void **state )
 
 	result = iot_json_encode_object_start( e, "obj" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	result = iot_json_encode_real( e, "real", 1.0 );
+	result = iot_json_encode_integer( e, "negative", -1 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	result = iot_json_encode_string( e, "string", "value" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -475,7 +480,7 @@ static void test_iot_json_encode_dump_indent_0( void **state )
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
 
-	assert_string_equal( json_str, "{\"array\":[1,2,3,4,5,6,7,8,9,10],\"bool\":false,\"int\":1,\"obj\":{\"real\":1.0,\"string\":\"value\"}}" );
+	assert_string_equal( json_str, "{\"array\":[1,2,3,4,5,6,7,8,9,10],\"bool\":false,\"int\":1,\"obj\":{\"negative\":-1,\"string\":\"value\"}}" );
 	iot_json_encode_terminate( e );
 }
 
@@ -506,7 +511,7 @@ static void test_iot_json_encode_dump_indent_1( void **state )
 
 	result = iot_json_encode_object_start( e, "obj" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	result = iot_json_encode_real( e, "real", 1.0 );
+	result = iot_json_encode_integer( e, "negative", -1 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	result = iot_json_encode_string( e, "string", "value" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -533,9 +538,70 @@ static void test_iot_json_encode_dump_indent_1( void **state )
 		" \"bool\":false,\n"
 		" \"int\":1,\n"
 		" \"obj\":{\n"
-		"  \"real\":1.0,\n"
+		"  \"negative\":-1,\n"
 		"  \"string\":\"value\"\n"
 		" }\n"
+		"}" );
+	iot_json_encode_terminate( e );
+}
+
+static void test_iot_json_encode_dump_indent_2( void **state )
+{
+	iot_json_encoder_t *e;
+	unsigned int i;
+	const char *json_str;
+	iot_status_t result;
+
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_INDENT(2) );
+	assert_non_null( e );
+
+	result = iot_json_encode_array_start( e, "array" );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	for ( i = 0u; i < 10u; ++i )
+	{
+		result = iot_json_encode_integer( e, NULL, i + 1u );
+		assert_int_equal( result, IOT_STATUS_SUCCESS );
+	}
+	result = iot_json_encode_array_end( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_bool( e, "bool", IOT_FALSE );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_integer( e, "int", 1 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_object_start( e, "obj" );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_integer( e, "negative", -1 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_string( e, "string", "value" );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	result = iot_json_encode_object_end( e );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	json_str = iot_json_encode_dump( e );
+	assert_non_null( json_str );
+
+	assert_string_equal( json_str,
+		"{\n"
+		"  \"array\":[\n"
+		"    1,\n"
+		"    2,\n"
+		"    3,\n"
+		"    4,\n"
+		"    5,\n"
+		"    6,\n"
+		"    7,\n"
+		"    8,\n"
+		"    9,\n"
+		"    10\n"
+		"  ],\n"
+		"  \"bool\":false,\n"
+		"  \"int\":1,\n"
+		"  \"obj\":{\n"
+		"    \"negative\":-1,\n"
+		"    \"string\":\"value\"\n"
+		"  }\n"
 		"}" );
 	iot_json_encode_terminate( e );
 }
@@ -567,7 +633,7 @@ static void test_iot_json_encode_dump_indent_5( void **state )
 
 	result = iot_json_encode_object_start( e, "obj" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	result = iot_json_encode_real( e, "real", 1.0 );
+	result = iot_json_encode_integer( e, "negative", -1 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	result = iot_json_encode_string( e, "string", "value" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -594,7 +660,7 @@ static void test_iot_json_encode_dump_indent_5( void **state )
 		"     \"bool\":false,\n"
 		"     \"int\":1,\n"
 		"     \"obj\":{\n"
-		"          \"real\":1.0,\n"
+		"          \"negative\":-1,\n"
 		"          \"string\":\"value\"\n"
 		"     }\n"
 		"}" );
@@ -608,7 +674,7 @@ static void test_iot_json_encode_dump_indent_expand( void **state )
 	const char *json_str;
 	iot_status_t result;
 
-	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_INDENT(5) );
+	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_INDENT(2) );
 	assert_non_null( e );
 
 	result = iot_json_encode_array_start( e, "array" );
@@ -628,7 +694,7 @@ static void test_iot_json_encode_dump_indent_expand( void **state )
 
 	result = iot_json_encode_object_start( e, "obj" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
-	result = iot_json_encode_real( e, "real", 1.0 );
+	result = iot_json_encode_integer( e, "negative", -1 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	result = iot_json_encode_string( e, "string", "value" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -638,27 +704,51 @@ static void test_iot_json_encode_dump_indent_expand( void **state )
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
 
+#ifdef IOT_JSON_JSONC
 	assert_string_equal( json_str,
 		"{\n"
-		"     \"array\": [\n"
-		"          1,\n"
-		"          2,\n"
-		"          3,\n"
-		"          4,\n"
-		"          5,\n"
-		"          6,\n"
-		"          7,\n"
-		"          8,\n"
-		"          9,\n"
-		"          10\n"
-		"     ],\n"
-		"     \"bool\": false,\n"
-		"     \"int\": 1,\n"
-		"     \"obj\": {\n"
-		"          \"real\": 1.0,\n"
-		"          \"string\": \"value\"\n"
-		"     }\n"
+		"   \"array\": [\n"
+		"     1,\n"
+		"     2,\n"
+		"     3,\n"
+		"     4,\n"
+		"     5,\n"
+		"     6,\n"
+		"     7,\n"
+		"     8,\n"
+		"     9,\n"
+		"     10\n"
+		"   ],\n"
+		"   \"bool\": false,\n"
+		"   \"int\": 1,\n"
+		"   \"obj\": {\n"
+		"     \"negative\": -1,\n"
+		"     \"string\": \"value\"\n"
+		"   }\n"
+		" }" );
+#else
+	assert_string_equal( json_str,
+		"{\n"
+		"  \"array\": [\n"
+		"    1,\n"
+		"    2,\n"
+		"    3,\n"
+		"    4,\n"
+		"    5,\n"
+		"    6,\n"
+		"    7,\n"
+		"    8,\n"
+		"    9,\n"
+		"    10\n"
+		"  ],\n"
+		"  \"bool\": false,\n"
+		"  \"int\": 1,\n"
+		"  \"obj\": {\n"
+		"    \"negative\": -1,\n"
+		"    \"string\": \"value\"\n"
+		"  }\n"
 		"}" );
+#endif
 	iot_json_encode_terminate( e );
 }
 
@@ -970,6 +1060,16 @@ static void test_iot_json_encode_object_clear_in_object( void **state )
 
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
+#if defined( IOT_JSON_JSONC )
+	assert_string_equal( json_str,
+	"{\n"
+	"   \"one\": 1,\n"
+	"   \"two\": 2,\n"
+	"   \"three\": 3,\n"
+	"   \"obj\": {\n"
+	"   }\n"
+	" }" );
+#else
 	assert_string_equal( json_str,
 	"{\n"
 	"  \"one\": 1,\n"
@@ -977,6 +1077,7 @@ static void test_iot_json_encode_object_clear_in_object( void **state )
 	"  \"three\": 3,\n"
 	"  \"obj\": {}\n"
 	"}" );
+#endif
 	iot_json_encode_terminate( e );
 }
 
@@ -1093,6 +1194,16 @@ static void test_iot_json_encode_object_clear_then_add( void **state )
 
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
+#if defined( IOT_JSON_JSONC )
+	assert_string_equal( json_str,
+		"{\n"
+		"   \"6\": 6,\n"
+		"   \"7\": 7,\n"
+		"   \"8\": 8,\n"
+		"   \"9\": 9,\n"
+		"   \"10\": 10\n"
+		" }" );
+#else
 	assert_string_equal( json_str,
 		"{\n"
 		"  \"6\": 6,\n"
@@ -1101,7 +1212,7 @@ static void test_iot_json_encode_object_clear_then_add( void **state )
 		"  \"9\": 9,\n"
 		"  \"10\": 10\n"
 		"}" );
-
+#endif
 	iot_json_encode_terminate( e );
 }
 
@@ -1352,12 +1463,12 @@ static void test_iot_json_encode_real_inside_array_valid_key( void **state )
 	result = iot_json_encode_array_start( e, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 
-	result = iot_json_encode_real( e, "test", 0.0 );
+	result = iot_json_encode_integer( e, "test", 0 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
-	assert_string_equal( json_str, "[{\"test\":0.0}]" );
+	assert_string_equal( json_str, "[{\"test\":0}]" );
 
 	iot_json_encode_terminate( e );
 }
@@ -1428,7 +1539,11 @@ static void test_iot_json_encode_real_outside_object( void **state )
 
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
+#ifdef IOT_JSON_JSONC
+	assert_string_equal( json_str, "{\"test\":2131231}" );
+#else
 	assert_string_equal( json_str, "{\"test\":2131231.0}" );
+#endif
 
 	iot_json_encode_terminate( e );
 }
@@ -1634,8 +1749,13 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_json_encode_dump_null_item ),
 		cmocka_unit_test( test_iot_json_encode_dump_expand ),
 		cmocka_unit_test( test_iot_json_encode_dump_indent_0 ),
+#ifndef IOT_JSON_JSONC
 		cmocka_unit_test( test_iot_json_encode_dump_indent_1 ),
+#endif
+		cmocka_unit_test( test_iot_json_encode_dump_indent_2 ),
+#ifndef IOT_JSON_JSONC
 		cmocka_unit_test( test_iot_json_encode_dump_indent_5 ),
+#endif
 		cmocka_unit_test( test_iot_json_encode_dump_indent_expand ),
 		cmocka_unit_test( test_iot_json_encode_integer_as_root_item ),
 		cmocka_unit_test( test_iot_json_encode_integer_inside_array_null_key ),

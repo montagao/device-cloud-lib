@@ -689,7 +689,7 @@ iot_status_t iot_update_parse_json(
 			{
 				char buf[1024u];
 				iot_json_decoder_t *json;
-				iot_json_item_t *root;
+				const iot_json_item_t *root;
 
 				size = os_file_read( json_string, 1, size, fd );
 				json_string[size] = '\0';
@@ -702,7 +702,7 @@ iot_status_t iot_update_parse_json(
 					{
 						const char *bad_field = NULL;
 						size_t i = 0;
-						iot_json_item_t *j_obj;
+						const iot_json_item_t *j_obj;
 						/*iot_json_decode_array_start( json );*/
 						while (iot_update_install[i].name != NULL
 							&& iot_update_install[i].script

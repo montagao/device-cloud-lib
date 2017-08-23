@@ -202,17 +202,6 @@ iot_status_t __wrap_iot_telemetry_free( iot_telemetry_t *telemetry,
 	return IOT_STATUS_SUCCESS;
 }
 
-
-iot_status_t iot_json_decode_array_at(
-	const iot_json_decoder_t *json,
-	iot_json_item_t *item,
-	size_t index,
-	iot_json_item_t **out )
-{
-	if ( out ) *out = (iot_json_item_t *)0x4;
-	return IOT_STATUS_SUCCESS;
-}
-
 iot_status_t __wrap_iot_json_decode_bool(
 	const iot_json_decoder_t *json,
 	const iot_json_item_t *item,

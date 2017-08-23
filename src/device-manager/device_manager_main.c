@@ -1368,7 +1368,7 @@ iot_status_t device_manager_config_read(
 			size_t json_size = 0u;
 			size_t json_max_size = 4096u;
 			iot_json_decoder_t *json;
-			iot_json_item_t *json_root = NULL;
+			const iot_json_item_t *json_root = NULL;
 			char *json_string = NULL;
 
 			result = IOT_STATUS_NO_MEMORY;
@@ -1400,8 +1400,8 @@ iot_status_t device_manager_config_read(
 				{
 					int i = 0;
 					unsigned int action_mask = 0u;
-					iot_json_item_t *j_action_top;
-					iot_json_item_t *const j_actions_enabled =
+					const iot_json_item_t *j_action_top;
+					const iot_json_item_t *const j_actions_enabled =
 						iot_json_decode_object_find(
 							json, json_root,
 							"actions_enabled" );
@@ -1411,7 +1411,7 @@ iot_status_t device_manager_config_read(
 					for ( i = 0; j_actions_enabled && action_cfg_names[i];++i)
 					{
 						iot_bool_t enabled = IOT_FALSE;
-						iot_json_item_t *const j_action = iot_json_decode_object_find(
+						const iot_json_item_t *const j_action = iot_json_decode_object_find(
 							json, j_actions_enabled,action_cfg_names[i]);
 						iot_json_decode_bool(json, j_action, &enabled );
 						if ( enabled == IOT_TRUE )

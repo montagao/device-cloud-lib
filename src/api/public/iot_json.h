@@ -128,9 +128,9 @@ typedef void iot_json_object_iterator_t;
  */
 IOT_API IOT_SECTION iot_status_t iot_json_decode_array_at(
 	const iot_json_decoder_t *decoder,
-	iot_json_item_t *item,
+	const iot_json_item_t *item,
 	size_t index,
-	iot_json_item_t **out );
+	const iot_json_item_t **out );
 
 /**
  * @brief Returns an iterator for iterating through a JSON array
@@ -145,9 +145,9 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_array_at(
  * @see iot_json_decode_array_iterator_next
  * @see iot_json_decode_array_size
  */
-IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator(
+IOT_API IOT_SECTION const iot_json_array_iterator_t *iot_json_decode_array_iterator(
 	const iot_json_decoder_t *decoder,
-	iot_json_item_t *item );
+	const iot_json_item_t *item );
 
 /**
  * @brief Returns an iterator pointing to the next item in a JSON array
@@ -166,10 +166,10 @@ IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator(
  * @see iot_json_decode_array_iterator_value
  * @see iot_json_decode_array_size
  */
-IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator_next(
+IOT_API IOT_SECTION const iot_json_array_iterator_t *iot_json_decode_array_iterator_next(
 	const iot_json_decoder_t *decoder,
-	iot_json_item_t *item,
-	iot_json_array_iterator_t *iter );
+	const iot_json_item_t *item,
+	const iot_json_array_iterator_t *iter );
 
 /**
  * @brief Returns value for the object that an iterator currently points to
@@ -188,8 +188,8 @@ IOT_API IOT_SECTION iot_json_array_iterator_t *iot_json_decode_array_iterator_ne
 IOT_API IOT_SECTION iot_status_t iot_json_decode_array_iterator_value(
 	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
-	iot_json_array_iterator_t *iter,
-	iot_json_item_t **out );
+	const iot_json_array_iterator_t *iter,
+	const iot_json_item_t **out );
 
 /**
  * @brief Returns the number of elements in an array
@@ -301,9 +301,9 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_number(
  * @see iot_json_decode_object_iterator
  * @see iot_json_decode_object_iterator_key
  */
-IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find(
+IOT_API IOT_SECTION const iot_json_item_t *iot_json_decode_object_find(
 	const iot_json_decoder_t *decoder,
-	iot_json_item_t *object,
+	const iot_json_item_t *object,
 	const char *key );
 
 /**
@@ -320,9 +320,9 @@ IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find(
  * @see iot_json_decode_object_iterator
  * @see iot_json_decode_object_iterator_key
  */
-IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find_len(
+IOT_API IOT_SECTION const iot_json_item_t *iot_json_decode_object_find_len(
 	const iot_json_decoder_t *decoder,
-	iot_json_item_t *object,
+	const iot_json_item_t *object,
 	const char *key,
 	size_t key_len );
 
@@ -339,9 +339,10 @@ IOT_API IOT_SECTION iot_json_item_t *iot_json_decode_object_find_len(
  * @see iot_json_decode_object_iterator_next
  * @see iot_json_decode_object_size
  */
-IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator(
-	const iot_json_decoder_t *decoder,
-	iot_json_item_t *item );
+IOT_API IOT_SECTION const iot_json_object_iterator_t *
+	iot_json_decode_object_iterator(
+		const iot_json_decoder_t *decoder,
+		const iot_json_item_t *item );
 
 /**
  * @brief Returns key for the object that an iterator currently points to
@@ -369,7 +370,7 @@ IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator(
 IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_key(
 	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
-	iot_json_object_iterator_t *iter,
+	const iot_json_object_iterator_t *iter,
 	const char **key,
 	size_t *key_len );
 
@@ -391,10 +392,11 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_key(
  * @see iot_json_decode_object_iterator_value
  * @see iot_json_decode_object_size
  */
-IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator_next(
-	const iot_json_decoder_t *decoder,
-	iot_json_item_t *item,
-	iot_json_object_iterator_t *iter );
+IOT_API IOT_SECTION const iot_json_object_iterator_t *
+	iot_json_decode_object_iterator_next(
+		const iot_json_decoder_t *decoder,
+		const iot_json_item_t *item,
+		const iot_json_object_iterator_t *iter );
 
 /**
  * @brief Returns value for the object that an iterator currently points to
@@ -414,8 +416,8 @@ IOT_API IOT_SECTION iot_json_object_iterator_t *iot_json_decode_object_iterator_
 IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_value(
 	const iot_json_decoder_t *decoder,
 	const iot_json_item_t *item,
-	iot_json_object_iterator_t *iter,
-	iot_json_item_t **out );
+	const iot_json_object_iterator_t *iter,
+	const iot_json_item_t **out );
 
 /**
  * @brief Returns the number of elements in an object
@@ -459,7 +461,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_parse(
 	iot_json_decoder_t *decoder,
 	const char* js,
 	size_t len,
-	iot_json_item_t **root,
+	const iot_json_item_t **root,
 	char *error,
 	size_t error_len );
 

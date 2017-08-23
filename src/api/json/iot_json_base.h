@@ -13,13 +13,15 @@
 #ifndef JSON_BASE_H
 #define JSON_BASE_H
 
-#ifdef IOT_JSON_JANSSON
+#if defined( IOT_JSON_JANSSON )
 #include <jansson.h>
-#else /* ifdef IOT_JSON_JANSSON */
+#elif defined( IOT_JSON_JSONC )
+#include <json-c/json.h>
+#else /* defined( IOT_JSON_JSMN ) */
 #include <jsmn.h>
-#endif /* else IOT_JSON_JANSSON */
+#endif
 
-#ifdef IOT_JSON_JANSSON
+#if defined( IOT_JSON_JANSSON )
 	/** @brief base structure used for decoding with JANSSON */
 	struct iot_json_decoder
 	{
@@ -28,7 +30,16 @@
 		/** @brief pointer to the root object */
 		json_t *j_root;
 	};
-#else /* ifdef IOT_JSON_JANSSON */
+#elif defined ( IOT_JSON_JSONC )
+	/** @brief base structure used for decoding with json-c */
+	struct iot_json_decoder
+	{
+		/** @brief output flags */
+		unsigned int flags;
+		/** @brief pointer to the root object */
+		struct json_object *j_root;
+	};
+#else /* defined( IOT_JSON_JSMN ) */
 	/** @brief base structure used for decoding with JSMN */
 	struct iot_json_decoder
 	{

@@ -27,9 +27,9 @@ static void test_iot_json_decode_array_at_invalid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *arr;
-	iot_json_item_t *obj;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *arr;
+	const iot_json_item_t *obj;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "{\"array\":{\"not\":\"an_array\"}}" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -51,7 +51,7 @@ static void test_iot_json_decode_array_at_invalid( void **state )
 static void test_iot_json_decode_array_at_null_array( void **state )
 {
 	iot_json_decoder_t *decoder = (iot_json_decoder_t*)0x1;
-	iot_json_item_t *obj = (iot_json_item_t*)0x2;
+	const iot_json_item_t *obj = (const iot_json_item_t*)0x2;
 	iot_status_t result;
 
 	result = iot_json_decode_array_at( decoder, NULL, 0u, &obj );
@@ -61,7 +61,7 @@ static void test_iot_json_decode_array_at_null_array( void **state )
 
 static void test_iot_json_decode_array_at_null_item( void **state )
 {
-	iot_json_item_t *arr = (iot_json_item_t*)0x1;
+	const iot_json_item_t *arr = (const iot_json_item_t*)0x1;
 	iot_json_decoder_t *json = (iot_json_decoder_t*)0x2;
 	iot_status_t result;
 
@@ -71,8 +71,8 @@ static void test_iot_json_decode_array_at_null_item( void **state )
 
 static void test_iot_json_decode_array_at_null_json( void **state )
 {
-	iot_json_item_t *arr = (iot_json_item_t*)0x1;
-	iot_json_item_t *item = (iot_json_item_t*)0x2;
+	const iot_json_item_t *arr = (const iot_json_item_t*)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t*)0x2;
 	iot_status_t result;
 
 	result = iot_json_decode_array_at( NULL, arr, 0u, &item );
@@ -87,9 +87,9 @@ static void test_iot_json_decode_array_at_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *arr;
-	iot_json_item_t *obj;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *arr;
+	const iot_json_item_t *obj;
+	const iot_json_item_t *root = NULL;
 	iot_int64_t value;
 
 	snprintf( json, 256u, "{\"array\":[1,2,3,5,8,13,21,34,55,89,144]}" );
@@ -133,7 +133,7 @@ static void test_iot_json_decode_array_at_valid( void **state )
 
 static void test_iot_json_decode_array_iterator_null_item( void **state )
 {
-	iot_json_object_iterator_t *i;
+	const iot_json_object_iterator_t *i;
 	iot_json_decoder_t *json = (iot_json_decoder_t*)0x1;
 	i = iot_json_decode_array_iterator( json, NULL );
 	assert_null( i );
@@ -141,8 +141,8 @@ static void test_iot_json_decode_array_iterator_null_item( void **state )
 
 static void test_iot_json_decode_array_iterator_null_json( void **state )
 {
-	iot_json_object_iterator_t *i;
-	iot_json_item_t *item = (iot_json_item_t*)0x1;
+	const iot_json_object_iterator_t *i;
+	const iot_json_item_t *item = (const iot_json_item_t*)0x1;
 	i = iot_json_decode_array_iterator( NULL, item );
 	assert_null( i );
 }
@@ -154,8 +154,8 @@ static void test_iot_json_decode_array_iterator_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -176,8 +176,8 @@ static void test_iot_json_decode_array_iterator_next_null_item( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -201,8 +201,8 @@ static void test_iot_json_decode_array_iterator_next_null_iterator( void **state
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -226,8 +226,8 @@ static void test_iot_json_decode_array_iterator_next_null_json( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -252,8 +252,8 @@ static void test_iot_json_decode_array_iterator_next_null_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 	size_t i, size;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
@@ -287,9 +287,9 @@ static void test_iot_json_decode_array_iterator_value_null_item( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
-	iot_json_item_t *item = (iot_json_item_t *)0x1;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
+	const iot_json_item_t *item = (const iot_json_item_t *)0x1;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -312,8 +312,8 @@ static void test_iot_json_decode_array_iterator_value_null_iterator( void **stat
 {
 	char buf[256u];
 	iot_json_decoder_t *decoder;
-	iot_json_item_t *arr = (iot_json_item_t *)0x1;
-	iot_json_item_t *item = (iot_json_item_t *)0x2;
+	const iot_json_item_t *arr = (const iot_json_item_t *)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t *)0x2;
 	iot_status_t result;
 
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
@@ -332,9 +332,9 @@ static void test_iot_json_decode_array_iterator_value_null_json( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *obj = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *obj = NULL;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -359,8 +359,8 @@ static void test_iot_json_decode_array_iterator_value_null_out( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -385,9 +385,9 @@ static void test_iot_json_decode_array_iterator_value_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *obj = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *obj = NULL;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "[ \"item1\", \"item2\", \"item3\", \"item4\" ]" );
 	decoder = iot_json_decode_initialize( buf, 512u, 0u );
@@ -408,7 +408,7 @@ static void test_iot_json_decode_array_iterator_value_valid( void **state )
 
 static void test_iot_json_decode_array_size_null_decoder( void **state )
 {
-	iot_json_item_t *item = (iot_json_item_t *)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t *)0x1;
 	size_t size;
 	size = iot_json_decode_array_size( NULL, item );
 	assert_int_equal( size, 0u );
@@ -428,8 +428,8 @@ static void test_iot_json_decode_array_size_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *obj;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *obj;
+	const iot_json_item_t *root = NULL;
 	size_t size;
 
 	snprintf( json, 256u, "{\"array0\":[],\"array1\":[1],\"array2\":[1,2,3,4]}" );
@@ -473,7 +473,7 @@ static void test_iot_json_decode_bool_null_item( void **state )
 
 static void test_iot_json_decode_bool_null_json( void **state )
 {
-	iot_json_item_t *item = (iot_json_item_t*)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t*)0x1;
 	iot_status_t result;
 	iot_bool_t value;
 
@@ -494,7 +494,7 @@ static void test_iot_json_decode_bool_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 	struct result_value_map results[] = {
 		{ "bool1", IOT_STATUS_SUCCESS, IOT_TRUE },
 		{ "bool2", IOT_STATUS_SUCCESS, IOT_FALSE },
@@ -512,7 +512,7 @@ static void test_iot_json_decode_bool_valid( void **state )
 
 	while ( rv->key )
 	{
-		iot_json_item_t *obj;
+		const iot_json_item_t *obj;
 		iot_status_t status;
 		iot_json_type_t type;
 		iot_bool_t value;
@@ -574,7 +574,7 @@ static void test_iot_json_decode_integer_null_item( void **state )
 
 static void test_iot_json_decode_integer_null_json( void **state )
 {
-	iot_json_item_t* item = (iot_json_item_t*)0x1;
+	const iot_json_item_t* item = (const iot_json_item_t*)0x1;
 	iot_status_t result;
 	iot_int64_t value;
 
@@ -594,7 +594,7 @@ static void test_iot_json_decode_integer_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 	struct result_value_map results[] = {
 		{ "int1", IOT_STATUS_SUCCESS, 0 },
 		{ "int2", IOT_STATUS_SUCCESS, 123456789 },
@@ -620,7 +620,7 @@ static void test_iot_json_decode_integer_valid( void **state )
 
 	while ( rv->key )
 	{
-		iot_json_item_t *obj;
+		const iot_json_item_t *obj;
 		iot_status_t status;
 		iot_json_type_t type;
 		iot_int64_t value;
@@ -642,7 +642,7 @@ static void test_iot_json_decode_integer_valid( void **state )
 
 static void test_iot_json_decode_number_null_item( void **state )
 {
-	iot_json_decoder_t *json = (iot_json_decoder_t*)0x1;
+	const iot_json_decoder_t *json = (const iot_json_decoder_t*)0x1;
 	iot_status_t result;
 	iot_float64_t value;
 
@@ -652,7 +652,7 @@ static void test_iot_json_decode_number_null_item( void **state )
 
 static void test_iot_json_decode_number_null_json( void **state )
 {
-	iot_json_item_t *item = (iot_json_item_t*)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t*)0x1;
 	iot_status_t result;
 	iot_float64_t value;
 
@@ -672,7 +672,7 @@ static void test_iot_json_decode_number_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 	struct result_value_map results[] = {
 		{ "real1", IOT_STATUS_SUCCESS, IOT_JSON_TYPE_REAL, 0.0 },
 		{ "real2", IOT_STATUS_SUCCESS, IOT_JSON_TYPE_REAL, 0.00000123456 },
@@ -711,7 +711,7 @@ static void test_iot_json_decode_number_valid( void **state )
 	while ( rv->key )
 	{
 		float v1, v2;
-		iot_json_item_t *obj;
+		const iot_json_item_t *obj;
 		iot_status_t status;
 		iot_json_type_t type;
 		iot_float64_t value = 0.999999999999;
@@ -738,8 +738,8 @@ static void test_iot_json_decode_object_find_invalid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *item;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *item;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -763,8 +763,8 @@ static void test_iot_json_decode_object_find_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *item;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *item;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -786,7 +786,7 @@ static void test_iot_json_decode_object_find_null_item( void **state )
 {
 	char buf[256u];
 	iot_json_decoder_t *json;
-	iot_json_item_t *item;
+	const iot_json_item_t *item;
 
 	json = iot_json_decode_initialize( buf, 256u, 0u );
 	assert_non_null( json );
@@ -802,8 +802,8 @@ static void test_iot_json_decode_object_find_null_json( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *item;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *item;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -828,8 +828,8 @@ static void test_iot_json_decode_object_find_null_key( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *item;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *item;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -849,7 +849,7 @@ static void test_iot_json_decode_object_find_null_key( void **state )
 
 static void test_iot_json_decode_object_iterator_null_item( void **state )
 {
-	iot_json_object_iterator_t *i;
+	const iot_json_object_iterator_t *i;
 	iot_json_decoder_t *json = (iot_json_decoder_t*)0x1;
 	i = iot_json_decode_object_iterator( json, NULL );
 	assert_null( i );
@@ -857,7 +857,7 @@ static void test_iot_json_decode_object_iterator_null_item( void **state )
 
 static void test_iot_json_decode_object_iterator_null_json( void **state )
 {
-	iot_json_object_iterator_t *i;
+	const iot_json_object_iterator_t *i;
 	iot_json_item_t *item = (iot_json_item_t*)0x1;
 	i = iot_json_decode_object_iterator( NULL, item );
 	assert_null( i );
@@ -870,8 +870,8 @@ static void test_iot_json_decode_object_iterator_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -896,8 +896,8 @@ static void test_iot_json_decode_object_iterator_key_none_defined( void **state 
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 	const char *key;
 	size_t key_len;
 
@@ -929,8 +929,8 @@ static void test_iot_json_decode_object_iterator_key_null_item( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 	const char *key;
 	size_t key_len;
 
@@ -962,7 +962,7 @@ static void test_iot_json_decode_object_iterator_key_null_iterator( void **state
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 	const char *key;
 	size_t key_len;
 
@@ -991,8 +991,8 @@ static void test_iot_json_decode_object_iterator_key_null_json( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 	const char *key;
 	size_t key_len;
 
@@ -1024,8 +1024,8 @@ static void test_iot_json_decode_object_iterator_key_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 	const char *key = NULL;
 	size_t key_len = 0u;
 
@@ -1058,8 +1058,8 @@ static void test_iot_json_decode_object_iterator_next_null_item( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1087,8 +1087,8 @@ static void test_iot_json_decode_object_iterator_next_null_iterator( void **stat
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1116,8 +1116,8 @@ static void test_iot_json_decode_object_iterator_next_null_json( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *i;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *i;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1146,8 +1146,8 @@ static void test_iot_json_decode_object_iterator_next_null_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 	size_t i, size;
 
 	snprintf( json, 256u, "{"
@@ -1185,9 +1185,9 @@ static void test_iot_json_decode_object_iterator_value_null_item( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *item = (iot_json_item_t *)0x1;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *item = (const iot_json_item_t *)0x1;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1214,8 +1214,8 @@ static void test_iot_json_decode_object_iterator_value_null_iterator( void **sta
 {
 	char buf[256u];
 	iot_json_decoder_t *decoder;
-	iot_json_item_t *obj = (iot_json_item_t *)0x1;
-	iot_json_item_t *item = (iot_json_item_t *)0x2;
+	const iot_json_item_t *obj = (const iot_json_item_t *)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t *)0x2;
 	iot_status_t result;
 
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
@@ -1234,9 +1234,9 @@ static void test_iot_json_decode_object_iterator_value_null_json( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *obj = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *obj = NULL;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1265,8 +1265,8 @@ static void test_iot_json_decode_object_iterator_value_null_out( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1294,9 +1294,9 @@ static void test_iot_json_decode_object_iterator_value_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
-	iot_json_item_t *obj = NULL;
-	iot_json_object_iterator_t *iter;
+	const iot_json_item_t *root = NULL;
+	const iot_json_item_t *obj = NULL;
+	const iot_json_object_iterator_t *iter;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1326,7 +1326,7 @@ static void test_iot_json_decode_object_size_empty( void **state )
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
 	size_t size;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "{}" );
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
@@ -1347,7 +1347,7 @@ static void test_iot_json_decode_object_size_non_object( void **state )
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
 	size_t size;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "[ 1, 2, 3, 4]" );
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
@@ -1364,7 +1364,7 @@ static void test_iot_json_decode_object_size_non_object( void **state )
 static void test_iot_json_decode_object_size_null_decoder( void **state )
 {
 	size_t size;
-	iot_json_item_t *item = (iot_json_item_t *)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t *)0x1;
 	size = iot_json_decode_object_size( NULL, item );
 	assert_int_equal( size, 0u );
 }
@@ -1384,7 +1384,7 @@ static void test_iot_json_decode_object_size_single( void **state )
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
 	size_t size;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "{\"item1\":\"value1\"}" );
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
@@ -1405,7 +1405,7 @@ static void test_iot_json_decode_object_size_multiple( void **state )
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
 	size_t size;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "{"
 		"\"item1\":\"value1\","
@@ -1429,7 +1429,7 @@ static void test_iot_json_decode_parse_dynamic( void **state )
 	iot_json_decoder_t *decoder;
 #ifndef IOT_STACK_ONLY
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 #endif
 
 	snprintf( json, 256u, "{\"item1\":\"value1\"}" );
@@ -1453,7 +1453,7 @@ static void test_iot_json_decode_parse_invalid_character( void **state )
 	char json[300u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 300u,
 	"{\n"
@@ -1476,11 +1476,13 @@ static void test_iot_json_decode_parse_invalid_character( void **state )
 	assert_non_null( decoder );
 	result = iot_json_decode_parse( decoder, json, strlen(json), &root, error, 128u );
 	assert_int_equal( result, IOT_STATUS_PARSE_ERROR );
-#ifdef IOT_JSON_JANSSON
+#if defined( IOT_JSON_JANSSON )
 	assert_string_equal( error, "':' expected near '{' (line: 2, column: 9)" );
-#else /* ifdef IOT_JSON_JANSSON */
+#elif defined( IOT_JSON_JSONC )
+	assert_string_equal( error, "object property name separator ':' expected" );
+#else /* defined( IOT_JSON_JSMN ) */
 	assert_string_equal( error, "invalid character" );
-#endif /* else IOT_JSON_JANSSON */
+#endif /* defined( IOT_JSON_JSMN ) */
 	assert_null( root );
 
 	iot_json_decode_terminate( decoder );
@@ -1493,18 +1495,20 @@ static void test_iot_json_decode_parse_invalid_partial( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "{ \"not\": 12.34" );
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
 	assert_non_null( decoder );
 	result = iot_json_decode_parse( decoder, json, strlen(json), &root, error, 128u );
 	assert_int_equal( result, IOT_STATUS_PARSE_ERROR );
-#ifdef IOT_JSON_JANSSON
+#if defined( IOT_JSON_JANSSON )
 	assert_string_equal( error, "'}' expected near end of file (line: 1, column: 14)" );
-#else /* ifdef IOT_JSON_JANSSON */
+#elif defined( IOT_JSON_JSONC )
+	assert_string_equal( error, "object value separator ',' expected" );
+#else /* defined( IOT_JSON_JSMN ) */
 	assert_string_equal( error, "incomplete json string" );
-#endif /* else IOT_JSON_JANSSON */
+#endif /* defined( IOT_JSON_JSMN ) */
 	assert_null( root );
 
 	iot_json_decode_terminate( decoder );
@@ -1515,7 +1519,7 @@ static void test_iot_json_decode_parse_null_json( void **state )
 	char buf[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
 	assert_non_null( decoder );
@@ -1548,7 +1552,7 @@ static void test_iot_json_decode_parse_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	snprintf( json, 256u, "{\"item1\":\"value1\"}" );
 	decoder = iot_json_decode_initialize( buf, 256u, 0u );
@@ -1572,7 +1576,7 @@ static void test_iot_json_decode_real_null_item( void **state )
 
 static void test_iot_json_decode_real_null_json( void **state )
 {
-	iot_json_item_t *item = (iot_json_item_t*)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t*)0x1;
 	iot_status_t result;
 	iot_float64_t value;
 
@@ -1591,7 +1595,7 @@ static void test_iot_json_decode_real_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 	struct result_value_map results[] = {
 		{ "real1", IOT_STATUS_SUCCESS, 0.0 },
 		{ "real2", IOT_STATUS_SUCCESS, 0.00000123456 },
@@ -1624,7 +1628,7 @@ static void test_iot_json_decode_real_valid( void **state )
 	while ( rv->key )
 	{
 		float v1, v2;
-		iot_json_item_t *obj;
+		const iot_json_item_t *obj;
 		iot_status_t status;
 		iot_json_type_t type;
 		iot_float64_t value = 0.999999999999;
@@ -1663,7 +1667,7 @@ static void test_iot_json_decode_string_null_item( void **state )
 
 static void test_iot_json_decode_string_null_json( void **state )
 {
-	iot_json_item_t *item = (iot_json_item_t*)0x1;
+	const iot_json_item_t *item = (const iot_json_item_t*)0x1;
 	iot_status_t result;
 	const char *value = "";
 	size_t value_len = 1u;
@@ -1686,7 +1690,7 @@ static void test_iot_json_decode_string_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 	struct result_value_map results[] = {
 		{ "str1", IOT_STATUS_SUCCESS, "", 0u },
 		{ "str2", IOT_STATUS_SUCCESS, "The quick brown fox jumps over the lazy dog", 43u },
@@ -1710,7 +1714,7 @@ static void test_iot_json_decode_string_valid( void **state )
 
 	while ( rv->key )
 	{
-		iot_json_item_t *obj;
+		const iot_json_item_t *obj;
 		iot_status_t status;
 		iot_json_type_t type;
 		const char *value;
@@ -1748,7 +1752,6 @@ static void test_iot_json_decode_type_null_json( void **state )
 	assert_int_equal( result, IOT_JSON_TYPE_NULL );
 }
 
-
 static void test_iot_json_decode_type_valid( void **state )
 {
 	struct key_type_map {
@@ -1759,7 +1762,7 @@ static void test_iot_json_decode_type_valid( void **state )
 	char json[256u];
 	iot_json_decoder_t *decoder;
 	iot_status_t result;
-	iot_json_item_t *root = NULL;
+	const iot_json_item_t *root = NULL;
 
 	struct key_type_map types[] = {
 		{ "string", IOT_JSON_TYPE_STRING },
@@ -1792,7 +1795,7 @@ static void test_iot_json_decode_type_valid( void **state )
 
 	while ( km->key )
 	{
-		iot_json_item_t *obj;
+		const iot_json_item_t *obj;
 		iot_json_type_t type;
 		obj = iot_json_decode_object_find( decoder, root, km->key );
 		assert_non_null( obj );
