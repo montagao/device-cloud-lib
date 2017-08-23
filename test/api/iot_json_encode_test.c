@@ -1485,12 +1485,15 @@ static void test_iot_json_encode_real_inside_object( void **state )
 	result = iot_json_encode_object_start( e, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 
-	result = iot_json_encode_real( e, "test", 1.25 );
+	result = iot_json_encode_real( e, "test1", -0.25 );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
+
+	result = iot_json_encode_real( e, "test2", 1.25 );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 
 	json_str = iot_json_encode_dump( e );
 	assert_non_null( json_str );
-	assert_string_equal( json_str, "{\"test\":1.25}" );
+	assert_string_equal( json_str, "{\"test1\":-0.25,\"test2\":1.25}" );
 
 	iot_json_encode_terminate( e );
 }

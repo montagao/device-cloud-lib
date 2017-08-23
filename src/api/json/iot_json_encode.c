@@ -1084,14 +1084,18 @@ iot_status_t iot_json_encode_real(
 		if ( result == IOT_STATUS_SUCCESS )
 		{
 			char *dest = &encoder->cur[int_len - 1u];
-			if ( value < 0.0 || i == 0 )
+			if ( value < 0.0 )
 			{
-				if ( value < 0.0 )
-					*encoder->cur = '-';
-				else
-					*encoder->cur = '0';
+				*encoder->cur = '-';
 				++encoder->cur;
 			}
+
+			if ( i == 0 )
+			{
+				*encoder->cur = '0';
+				++encoder->cur;
+			}
+
 			while ( i > 0u )
 			{
 				*dest = (i % 10 + '0');
