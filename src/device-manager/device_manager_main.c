@@ -543,7 +543,7 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 				device_manager->runtime_dir, OS_DIR_SEP, "iot-relay-stdout.log");
 			out_files[0] = os_file_open(log_file,OS_CREATE | OS_WRITE);
 
-			os_snprintf(log_file, PATH_MAX, "%s%c%s", IOT_RUNTIME_DIR_DEFAULT,
+			os_snprintf(log_file, PATH_MAX, "%s%c%s", device_manager->runtime_dir,
 				OS_DIR_SEP, "iot-relay-stderr.log");
 			out_files[1] = os_file_open(log_file,OS_CREATE | OS_WRITE);
 		}
@@ -1027,16 +1027,6 @@ iot_status_t device_manager_initialize( const char *app_path,
 #ifndef NO_FILEIO_SUPPORT
 		struct device_manager_file_io_info *file_io = &device_manager->file_io_info;
 		os_thread_mutex_t *file_transfer_lock = &file_io->file_transfer_mutex;
-
-		/*FIXME*/
-		/* file-io init is not thread safe, has to be called first */
-		/*if ( device_manager_file_initialize( device_manager, IOT_TRUE )*/
-		/*!= IOT_STATUS_SUCCESS )*/
-		/*{*/
-		/*os_fprintf( OS_STDERR,*/
-		/*"Error: %s", "Failed to initialize curl library for file-io" );*/
-		/*return IOT_STATUS_FAILURE;*/
-		/*}*/
 #endif /* ifndef NO_FILEIO_SUPPORT */
 
 		iot_lib = iot_initialize( "device-manager", NULL, 0u );
@@ -1172,10 +1162,14 @@ const char *const action_cfg_names[] ={
 static iot_status_t device_manager_check_service_listening( int port_number )
 {
 	iot_status_t result = IOT_STATUS_NOT_SUPPORTED;
+
+	/*FIXME:*/
+	/* windows can do something like netstat -anp tcp | find ":%d " I
+	 * think a better way is to do a getsockopt on the port */
 #if defined( __ANDROID__ )
 #	define CMD_TEMPLATE  "netstat | grep %d | grep -c LISTEN"
 #else
-#	define CMD_TEMPLATE  "netstat -tln | grep -c %d "
+#	define CMD_TEMPLATE  "netstat -tln | grep -c ':%d ' "
 #endif
 #	define MAX_CMD_LEN 128
 #	define buf_sz 32u
@@ -1234,7 +1228,10 @@ iot_status_t device_manager_config_read(
 		iot_directory_name_get( IOT_DIR_RUNTIME,
 			device_manager_info->runtime_dir,
 			PATH_MAX );
+		os_env_expand( device_manager_info->runtime_dir, PATH_MAX );
 		device_manager_info->runtime_dir[PATH_MAX] = '\0';
+		printf("  * Setting default runtime dir to %s\n",
+			device_manager_info->runtime_dir);
 
 		/* set the default value for remote login.  Can be
 		 * overriden in the iot.cfg file. */
@@ -1388,7 +1385,7 @@ iot_status_t device_manager_config_read(
 					json_string[ json_size ] = '\0';
 					if ( json_size > 0 )
 						result = IOT_STATUS_SUCCESS;
-					printf("  * Read %s = %s\n", config_file, json_string);
+					/*printf("  * Read %s = %s\n", config_file, json_string);*/
 				}
 			}
 			/* now parse the json string read above */
@@ -1413,7 +1410,7 @@ iot_status_t device_manager_config_read(
 							"actions_enabled" );
 
 					/* handle all the boolean default actions */
-					printf("Default Configuration:\n");
+					printf("\nDefault Configuration:\n");
 					for ( i = 0; j_actions_enabled && action_cfg_names[i];++i)
 					{
 						iot_bool_t enabled = IOT_FALSE;

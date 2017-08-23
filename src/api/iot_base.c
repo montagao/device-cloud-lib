@@ -733,7 +733,7 @@ iot_status_t iot_base_device_id_set(
 				device_id[device_id_len] = '\0';
 				if ( device_id_len > 0u )
 					IOT_LOG( NULL, IOT_LOG_INFO,
-						"Obtained device id: %s",
+						"Device id: %s\n",
 						device_id );
 			}
 
