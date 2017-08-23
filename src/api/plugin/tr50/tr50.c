@@ -651,13 +651,13 @@ void tr50_append_location(
 		iot_json_encode_real( json, "lat", location->latitude );
 		iot_json_encode_real( json, "lng", location->longitude );
 		if ( location->flags & IOT_FLAG_LOCATION_HEADING )
-			iot_json_encode_integer( json, "heading", location->heading );
+			iot_json_encode_real( json, "heading", location->heading );
 		if ( location->flags & IOT_FLAG_LOCATION_ALTITUDE )
-			iot_json_encode_integer( json, "altitude", location->altitude );
+			iot_json_encode_real( json, "altitude", location->altitude );
 		if ( location->flags & IOT_FLAG_LOCATION_SPEED )
-			iot_json_encode_integer( json, "speed", location->speed );
+			iot_json_encode_real( json, "speed", location->speed );
 		if ( location->flags & IOT_FLAG_LOCATION_ACCURACY )
-			iot_json_encode_integer( json, "fixAcc", location->accuracy );
+			iot_json_encode_real( json, "fixAcc", location->accuracy );
 		if ( location->flags & IOT_FLAG_LOCATION_SOURCE )
 		{
 			const char *source;
