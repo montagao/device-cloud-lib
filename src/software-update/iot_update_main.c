@@ -189,141 +189,6 @@ iot_status_t iot_update_get_device_id(
 
 /** @brief it should be implemented in osal. will be removed from here */
 #define LOOP_WAIT_TIME 100u
-static iot_status_t iot_os_system_run(
-	const char *command,
-	int *exit_status,
-	char *out_buf[2u],
-	size_t out_len[2u],
-	iot_millisecond_t max_time_out );
-
-iot_status_t iot_os_system_run(
-	const char *command,
-	int *exit_status,
-	char *out_buf[2u],
-	size_t out_len[2u],
-	iot_millisecond_t max_time_out )
-{
-	int command_output_fd[2u][2u] =
-		{ { -1, -1 }, { -1, -1 } };
-	size_t i;
-	const int output_fd[2u] = { STDOUT_FILENO, STDERR_FILENO };
-	iot_status_t result = IOT_STATUS_SUCCESS;
-	iot_timestamp_t start_time;
-	int system_result = -1;
-	/*iot_millisecond_t time_elapsed;*/
-	const iot_bool_t wait_for_return =
-		( out_buf[0] != NULL && out_len[0] > 0 ) ||
-		( out_buf[1] != NULL && out_len[1] > 0 );
-
-	os_time( &start_time, NULL );
-
-	/* set a default exit status */
-	if ( exit_status )
-		*exit_status = -1;
-
-	/* capture the stdout & stderr of the command and send it back
-	 * as the response */
-	if ( wait_for_return != IOT_FALSE )
-		for ( i = 0u; i < 2u && result == IOT_STATUS_SUCCESS; ++i )
-			if ( pipe( command_output_fd[i] ) != 0 )
-				result = IOT_STATUS_IO_ERROR;
-
-	if ( result == IOT_STATUS_SUCCESS )
-	{
-		if (  wait_for_return != IOT_FALSE )
-		{
-			const pid_t pid = fork();
-			result = IOT_STATUS_NOT_EXECUTABLE;
-			if ( pid != -1 )
-			{
-				if ( pid == 0 )
-				{
-					/* Create a new session for the child process.
-					 */
-					pid_t sid = setsid();
-					if ( sid < 0 )
-						exit( errno );
-					/* redirect child stdout/stderr to the pipe */
-					for ( i = 0u; i < 2u; ++i )
-					{
-						dup2( command_output_fd[i][1], output_fd[i] );
-						close( command_output_fd[i][0] );
-					}
-#ifdef __ANDROID__
-					execl( "/system/bin/sh", "sh", "-c", command, (char *)NULL );
-#else
-					execl( "/bin/sh", "sh", "-c", command, (char *)NULL );
-#endif
-					/* Process failed to be replaced, return failure */
-					exit( errno );
-				}
-
-				for ( i = 0u; i < 2u; ++i )
-					close( command_output_fd[i][1] );
-
-				result = IOT_STATUS_INVOKED;
-				errno = 0;
-				do {
-					waitpid( pid, &system_result, WNOHANG );
-					/*iot_os_time_elapsed( &start_time, &time_elapsed );*/
-					os_time_sleep( LOOP_WAIT_TIME, IOT_FALSE );
-				} while ( ( errno != ECHILD ) &&
-					( !WIFEXITED( system_result ) ) &&
-					( !WIFSIGNALED( system_result ) ) &&
-					( max_time_out == 0u /*|| time_elapsed < max_time_out */) );
-
-				if ( ( errno != ECHILD ) &&
-					!WIFEXITED( system_result ) &&
-					!WIFSIGNALED( system_result ) )
-				{
-					kill( pid, SIGTERM );
-					waitpid( pid, &system_result, WNOHANG );
-					result = IOT_STATUS_TIMED_OUT;
-				}
-				else
-					result = IOT_STATUS_SUCCESS;
-
-				fflush( stdout );
-				fflush( stderr );
-
-				for ( i = 0u; i < 2u; ++i )
-				{
-					if ( out_buf[i] && out_len[i] > 0u )
-					{
-						out_buf[i][0] = '\0';
-						/* if we are able to read from pipe */
-						if ( command_output_fd[i][0] != -1 )
-						{
-							const ssize_t output_size =
-								read( command_output_fd[i][0],
-								out_buf[i], out_len[i] - 1u );
-							if ( output_size >= 0 )
-								out_buf[i][ output_size ] = '\0';
-						}
-					}
-				}
-
-				if ( WIFEXITED( system_result ) )
-					system_result = WEXITSTATUS( system_result );
-				else if ( WIFSIGNALED( system_result ) )
-					system_result = WTERMSIG( system_result );
-				else
-					system_result = WIFEXITED( system_result );
-				if ( exit_status )
-					*exit_status = system_result;
-			}
-		}
-		else
-		{
-			system_result = system( command );
-			if ( exit_status &&
-			     system_result != -1 &&
-			     system_result != 127 )
-				*exit_status = 0;
-		}
-	}
-	return result;
-}
 
 iot_status_t iot_update_get_device_id(
 	char *buf,
@@ -372,7 +237,7 @@ iot_status_t iot_update(
 	if ( sw_update_path /*&& iot_os_directory_exists( sw_update_path )*/ )
 	{
 		char cwd[1024u];
-		os_file_t sw_update_logfile = NULL;
+		os_file_t log_fd = NULL;
 		iot_t * iot_lib;
 		char device_id[IOT_ID_MAX_LEN + 1u];
 
@@ -391,17 +256,18 @@ iot_status_t iot_update(
 
 		if ( result == IOT_STATUS_SUCCESS && iot_lib )
 		{
-			iot_update_log( iot_lib, NULL,
-				IOT_UPDATE_LOG_CLOUD_ONLY, "%s: Started",
-				IOT_TARGET_UPDATE );
-
 			os_directory_current( cwd, PATH_MAX );
 			os_directory_change(sw_update_path);
 
-			sw_update_logfile = os_file_open(
+			log_fd = os_file_open(
 				IOT_UPDATE_LOGFILE, OS_WRITE|OS_APPEND );
-			if ( sw_update_logfile == NULL)
+			if ( log_fd == NULL)
 				result = OS_STATUS_FAILURE;
+			else
+				iot_update_log( log_fd,
+					IOT_UPDATE_LOG_CLOUD_ONLY, "%s: Started",
+					IOT_TARGET_UPDATE );
+
 		}
 
 		if ( result == IOT_STATUS_SUCCESS && iot_lib )
@@ -447,7 +313,7 @@ iot_status_t iot_update(
 				if ( mec_original_status == IOT_UPDATE_MEC_STATUS_ENABLED)
 				{
 					result = iot_update_mec_enable( IOT_UPDATE_MEC_DISABLE );
-					if ( result == OS_STATUS_SUCCESS )
+					if ( result == IOT_STATUS_SUCCESS )
 						iot_update_log( log_fd,
 							IOT_UPDATE_LOG_FILE_ONLY,
 							"MEC security is disabled" );
@@ -526,7 +392,7 @@ iot_status_t iot_update(
 							iot_update_install[i].script );
 
 						result = os_system_run_wait(
-							iot_update_install[i].script, 
+							iot_update_install[i].script,
 							&exit_status,
 							out_buf, out_len, 0 );
 
@@ -615,7 +481,7 @@ iot_status_t iot_update(
 						{
 							if ( ( result = iot_update_mec_enable(IOT_UPDATE_MEC_ENABLE)) !=
 								IOT_STATUS_SUCCESS )
-								iot_update_log( iot_lib, sw_update_logfile,
+								iot_update_log( log_fd,
 									IOT_UPDATE_LOG_FILE_ONLY,
 									"Enable MEC failed" );
 							else
@@ -922,7 +788,6 @@ int iot_update_main( int argc, char *argv[] )
 }
 
 void iot_update_log(
-	iot_t *UNUSED(lib),
 	os_file_t log_file,
 	enum iot_update_log_output output,
 	const char *fmt, ... )

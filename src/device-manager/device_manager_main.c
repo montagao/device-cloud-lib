@@ -423,7 +423,7 @@ iot_status_t device_manager_file_download(
 			file_path = file_name;
 
 		if ( dm )
-			result = iot_file_receive(
+			result = iot_file_download(
 				dm->iot_lib,
 				NULL,
 				0u,
@@ -479,7 +479,7 @@ iot_status_t device_manager_file_upload(
 			(int)use_global_store, (int)result);
 
 		if ( dm )
-			result = iot_file_send(
+			result = iot_file_upload(
 				dm->iot_lib,
 				NULL,
 				0u,

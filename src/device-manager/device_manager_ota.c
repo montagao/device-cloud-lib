@@ -65,7 +65,7 @@ int device_manager_ota_copy_data(struct archive *ar, struct archive *aw);
 /**
  * @brief Execute ota install
  *
- * @param[in]  device_manager_info  pointer to device manager data structure 
+ * @param[in]  device_manager_info  pointer to device manager data structure
  * @param[in]  package_path         pointer to ota package directory
  * @param[in]  file_name            pointer to ota package name
  *
@@ -186,7 +186,7 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 		/* get the parameter */
 		result = iot_action_parameter_get( request,
 						DEVICE_MANAGER_OTA_PKG_PARAM,
-						IOT_FALSE, IOT_TYPE_STRING, 
+						IOT_FALSE, IOT_TYPE_STRING,
 						&file_to_download);
 		if ( result != IOT_STATUS_SUCCESS )
 		{
@@ -199,14 +199,18 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 			char sw_update_dir[ PATH_MAX + 1u ];
 			char local_archive_path[ PATH_MAX + 1u ];
 			char sw_update_log[  PATH_MAX + 1u ];
+			char runtime_dir[ PATH_MAX + 1u];
 
 			printf( "Value for parameter: %s = %s\n",
 				DEVICE_MANAGER_OTA_PKG_PARAM,
 				file_to_download);
 
+			iot_directory_name_get( IOT_DIR_RUNTIME, runtime_dir,
+				PATH_MAX );
+
 			/* set the software update and package download directories */
 			if ( OS_STATUS_SUCCESS == os_make_path( sw_update_dir,
-				PATH_MAX, IOT_RUNTIME_DIR_DEFAULT, "update", NULL ) )
+				PATH_MAX, runtime_dir, "update", NULL ) )
 			{
 				/*
 				 * Create update directory before starting.
@@ -226,7 +230,7 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 			{
 				/* FIXME: this should be an optional
 				 * parameter to the cb */
-				iot_file_store_t global = 0x0u;
+				iot_file_flags_t global = 0x0u;
 
 				/* Setup the local path */
 				os_snprintf(local_archive_path, PATH_MAX,
@@ -235,7 +239,7 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 				printf("Downloading to %s\n", local_archive_path);
 
 				global |= IOT_FILE_FLAG_GLOBAL;
-				result = iot_file_receive(
+				result = iot_file_download(
 						iot_lib,
 						NULL,
 						0u,
@@ -270,13 +274,13 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 			/* upload the log file, when we can read the
 			 * device id, prepend it */
 			os_snprintf(sw_update_log, PATH_MAX, "%s%c%s%c%s",
-				IOT_RUNTIME_DIR_DEFAULT, OS_DIR_SEP, 
+				runtime_dir, OS_DIR_SEP,
 				"update", OS_DIR_SEP,
 				IOT_UPDATE_LOGFILE);
 
 			/* don't check the retcode here, it is not
 			 * important*/
-			iot_file_send(iot_lib,        /* lib handle */
+			iot_file_upload(iot_lib,        /* lib handle */
 				NULL,                 /* transaction id */
 				0,                    /* max time out */
 				0,                    /* global flag */
@@ -291,7 +295,7 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 
 /*FIXME*/
 #if 0
-size_t device_manager_software_update_del_characters( 
+size_t device_manager_software_update_del_characters(
 		char *command_param, const char *word )
 {
 	size_t word_length = os_strlen( word );
