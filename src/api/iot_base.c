@@ -1250,7 +1250,8 @@ iot_status_t iot_terminate(
 		os_free_null( (void **)&lib->option );
 #endif /* ifndef IOT_STACK_ONLY */
 
-		iot_disconnect( lib, max_time_out );
+		if( !lib->to_quit )
+			iot_disconnect( lib, max_time_out );
 		/*os_socket_terminate();*/
 
 		/* set lib pointers to NULL */
