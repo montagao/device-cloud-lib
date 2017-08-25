@@ -381,7 +381,7 @@ static iot_t* initialize( void )
 		enable_telemetry_cmd = iot_action_allocate( iot_lib,
 			"telemetry_ON_OFF" );
 		status = iot_action_register_callback( enable_telemetry_cmd,
-			&on_enable_disable_telemetry, NULL, NULL, 0u );
+			&on_enable_disable_telemetry, iot_lib, NULL, 0u );
 		if ( status != IOT_STATUS_SUCCESS )
 		{
 			IOT_LOG( iot_lib, IOT_LOG_ERROR,
@@ -394,7 +394,7 @@ static iot_t* initialize( void )
 		enable_location_cmd = iot_action_allocate( iot_lib,
 			"location_ON_OFF" );
 		status = iot_action_register_callback( enable_location_cmd,
-			&on_enable_disable_location, NULL, NULL, 0u );
+			&on_enable_disable_location, iot_lib, NULL, 0u );
 		if ( status != IOT_STATUS_SUCCESS )
 		{
 			IOT_LOG( iot_lib, IOT_LOG_ERROR,
@@ -481,16 +481,18 @@ iot_status_t on_enable_disable_location(
 	iot_action_request_t* request,
 	void* user_data )
 {
+	iot_t *iot_lib = (iot_t *)user_data;
 	(void)(request);
-	(void)(user_data);
 	if ( send_location == IOT_FALSE )
 	{
 		printf( "Sending location...\n" );
+		iot_event_publish( iot_lib, 0, "Sending location...\n" );
 		send_location = IOT_TRUE;
 	}
 	else
 	{
 		printf( "Disabling location...\n" );
+		iot_event_publish( iot_lib, 0, "Disabling location...\n" );
 		send_location = IOT_FALSE;
 	}
 	return IOT_STATUS_SUCCESS;
@@ -500,16 +502,18 @@ iot_status_t on_enable_disable_telemetry(
 	iot_action_request_t* request,
 	void* user_data )
 {
+	iot_t *iot_lib = (iot_t *)user_data;
 	(void)(request);
-	(void)(user_data);
 	if ( send_telemetry == IOT_FALSE )
 	{
 		printf( "Sending telemetry...\n" );
+		iot_event_publish( iot_lib, 0, "Sending telemetry...\n" );
 		send_telemetry = IOT_TRUE;
 	}
 	else
 	{
 		printf( "Disabling telemetry...\n" );
+		iot_event_publish( iot_lib, 0, "Disabling telemetry...\n" );
 		send_telemetry = IOT_FALSE;
 	}
 	return IOT_STATUS_SUCCESS;
@@ -854,10 +858,18 @@ int main( int argc, char *argv[] )
 
 		/* If any arg is passed in, then start telemetry */
 		if ( argc > 1 )
+		{
 			send_telemetry = IOT_TRUE;
+			send_location = IOT_TRUE;
+		}
 
 		IOT_LOG( iot_lib, IOT_LOG_INFO,
 			"Telemetry interval: %d seconds", POLL_INTERVAL_SEC );
+
+		if ( send_telemetry != IOT_FALSE )
+			iot_event_publish( iot_lib, 0, "Sending telemetry enabled" );
+		if ( send_location != IOT_FALSE )
+			iot_event_publish( iot_lib, 0, "Sending location enabled" );
 
 		while ( running != IOT_FALSE )
 		{
@@ -875,20 +887,33 @@ int main( int argc, char *argv[] )
 				{
 					/* empty place holders to call
 					 * on_enable_disable_telemetry */
-					iot_action_request_t* request = NULL;
-					void* user_data = NULL;
 					IOT_LOG( iot_lib, IOT_LOG_INFO,
 						"Max poll interval reached %d. "
 						"Stopping telemetry and/or location",
 						POLL_INTERVAL_SEC );
+
+					iot_event_publish( iot_lib, 0,
+						"iteration limit reached. "
+						"Stopped sending telemetry & "
+						"location data." );
 					if ( send_telemetry == IOT_TRUE )
-						on_enable_disable_telemetry(
-							request,
-							user_data);
+					{
+						iot_action_request_t* const request =
+							iot_action_request_allocate(
+								iot_lib,
+								"telemetry_ON_OFF",
+								NULL );
+						iot_action_request_execute( request, 0u );
+					}
 					if ( send_location == IOT_TRUE )
-						on_enable_disable_location(
-							request,
-							user_data);
+					{
+						iot_action_request_t* const request =
+							iot_action_request_allocate(
+								iot_lib,
+								"location_ON_OFF",
+								NULL );
+						iot_action_request_execute( request, 0u );
+					}
 					count = 0;
 				}
 				do_sleep( POLL_INTERVAL_SEC );

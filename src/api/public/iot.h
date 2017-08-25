@@ -1356,7 +1356,6 @@ IOT_API IOT_SECTION iot_status_t iot_alarm_deregister(
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FAILURE          internal system failure
- * @retval IOT_STATUS_NO_MEMORY        no memory to store alarm state
  * @retval IOT_STATUS_NOT_INITIALIZED  alarm object is not initialized
  * @retval IOT_STATUS_SUCCESS          on success
  */
@@ -1373,7 +1372,6 @@ IOT_API IOT_SECTION iot_status_t iot_alarm_publish(
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FAILURE          internal system failure
- * @retval IOT_STATUS_NO_MEMORY        no memory to store alarm state
  * @retval IOT_STATUS_NOT_INITIALIZED  alarm object is not initialized
  * @retval IOT_STATUS_SUCCESS          on success
  */
@@ -1386,9 +1384,26 @@ IOT_API IOT_SECTION iot_status_t iot_alarm_publish_string(
 #define IOT_FILE_FLAG_GLOBAL           0x1
 
 /**
+ * @brief allows the ability to log events
+ *
+ * @param[in]      lib                 library handle
+ * @param[in]      max_time_out        maximum time to wait in milliseconds
+ *                                     (0 = wait indefinitely)
+ * @param[in]      message             message to log
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
+IOT_API IOT_SECTION iot_status_t iot_event_publish(
+	iot_t *lib,
+	iot_millisecond_t max_time_out,
+	const char *message );
+
+/**
  * @brief Download a file from the cloud
  *
- * @param[in]      handle              library handle
+ * @param[in]      lib                 library handle
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
@@ -1413,7 +1428,7 @@ IOT_API IOT_SECTION iot_status_t iot_alarm_publish_string(
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
 IOT_API IOT_SECTION iot_status_t iot_file_download(
-	iot_t *handle,
+	iot_t *lib,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
 	iot_file_flags_t flags,
@@ -1467,7 +1482,7 @@ IOT_API IOT_SECTION iot_status_t iot_file_progress_is_completed(
 /**
  * @brief Upload a file or directory to the cloud
  *
- * @param[in]      handle              library handle
+ * @param[in]      lib                 library handle
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
@@ -1496,7 +1511,7 @@ IOT_API IOT_SECTION iot_status_t iot_file_progress_is_completed(
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
 IOT_API IOT_SECTION iot_status_t iot_file_upload(
-	iot_t *handle,
+	iot_t *lib,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
 	iot_file_flags_t flags,

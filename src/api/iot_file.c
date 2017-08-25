@@ -36,7 +36,7 @@
 /**
  * @brief Transfer a file/directory to/from cloud
  *
- * @param[in]      handle              library handle
+ * @param[in]      lib                 library handle
  * @param[out]     txn                 transaction status (optional)
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
@@ -65,7 +65,7 @@
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
 static iot_status_t iot_file_transfer(
-	iot_t *handle,
+	iot_t *lib,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
 	iot_file_flags_t flags,
@@ -168,7 +168,7 @@ iot_status_t iot_file_archive_directory(
 }
 
 iot_status_t iot_file_download(
-	iot_t *handle,
+	iot_t *lib,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
 	iot_file_flags_t flags,
@@ -179,9 +179,9 @@ iot_status_t iot_file_download(
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 
-	if ( handle && file_path )
+	if ( lib && file_path )
 		result = iot_file_transfer(
-			handle, txn, max_time_out,
+			lib, txn, max_time_out,
 			flags, IOT_OPERATION_FILE_DOWNLOAD,
 			file_name, file_path,
 			func, user_data );
@@ -189,7 +189,7 @@ iot_status_t iot_file_download(
 }
 
 iot_status_t iot_file_transfer(
-	iot_t *handle,
+	iot_t *lib,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
 	iot_file_flags_t flags,
@@ -200,7 +200,7 @@ iot_status_t iot_file_transfer(
 	void *user_data )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( handle && file_path )
+	if ( lib && file_path )
 	{
 		char *heap_name = NULL;
 		char *heap_path = NULL;
@@ -387,7 +387,7 @@ iot_status_t iot_file_transfer(
 
 		/* send the request */
 		if ( result == IOT_STATUS_SUCCESS )
-			result = iot_plugin_perform( handle,
+			result = iot_plugin_perform( lib,
 				txn, &max_time_out, op, &transfer, NULL );
 
 		/* clean up memory on the heap */
@@ -439,7 +439,7 @@ iot_status_t iot_file_progress_status_get(
 }
 
 iot_status_t iot_file_upload(
-	iot_t *handle,
+	iot_t *lib,
 	iot_transaction_t *txn,
 	iot_millisecond_t max_time_out,
 	iot_file_flags_t flags,
@@ -450,9 +450,9 @@ iot_status_t iot_file_upload(
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 
-	if ( handle && file_path )
+	if ( lib && file_path )
 		result = iot_file_transfer(
-			handle, txn, max_time_out,
+			lib, txn, max_time_out,
 			flags, IOT_OPERATION_FILE_UPLOAD,
 			file_name, file_path,
 			func, user_data );

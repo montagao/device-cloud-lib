@@ -589,9 +589,10 @@ iot_status_t tr50_action_complete(
 					iot_json_encode_object_end( json );
 
 					msg = iot_json_encode_dump( json );
-					os_printf( "-->%s\n", msg );
+					IOT_LOG( data->lib, IOT_LOG_TRACE, "-->%s\n", msg );
 					iot_mqtt_publish( data->mqtt, "api",
-						msg, os_strlen( msg ), 0, IOT_FALSE, NULL );
+						msg, os_strlen( msg ),
+						TR50_MQTT_QOS, IOT_FALSE, NULL );
 					++data->msg_id;
 					result = IOT_STATUS_SUCCESS;
 				}
@@ -611,7 +612,7 @@ iot_status_t tr50_alarm_publish(
 	const char *out_msg;
 
 	iot_json_encoder_t *const json =
-		iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC);
+		iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 
 	/* convert id to string */
 	os_snprintf( id, 5u, "%d", data->msg_id );
@@ -631,7 +632,7 @@ iot_status_t tr50_alarm_publish(
 	iot_json_encode_object_end( json );
 
 	out_msg = iot_json_encode_dump( json );
-	os_printf( "-->%s\n", out_msg );
+	IOT_LOG( data->lib, IOT_LOG_TRACE, "-->%s\n", out_msg );
 	result = iot_mqtt_publish( data->mqtt, "api",
 		out_msg, os_strlen( out_msg ), TR50_MQTT_QOS, IOT_FALSE, NULL );
 	iot_json_encode_terminate( json );
@@ -737,7 +738,8 @@ iot_status_t tr50_check_mailbox(
 		msg = iot_json_encode_dump( req_json );
 		if ( msg )
 			iot_mqtt_publish( data->mqtt, "api", msg,
-				os_strlen( msg ), 0, IOT_FALSE, NULL );
+				os_strlen( msg ), TR50_MQTT_QOS,
+				IOT_FALSE, NULL );
 		else
 			os_printf( "Error failed to generate mesage for checking mail\n" );
 		iot_json_encode_terminate( req_json );
@@ -980,11 +982,12 @@ iot_status_t tr50_event_log_publish(
 	const char *message )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( data && message)
+	printf( "HEREE!!!\n" );
+	if ( data && message )
 	{
-		char buf[ 256u ];
 		iot_json_encoder_t *json;
-		json = iot_json_encode_initialize( buf, 256u, 0 );
+		json = iot_json_encode_initialize(
+			NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 		result = IOT_STATUS_NO_MEMORY;
 		if ( json )
 		{
@@ -1001,9 +1004,10 @@ iot_status_t tr50_event_log_publish(
 			iot_json_encode_object_end( json );
 
 			msg = iot_json_encode_dump( json );
-			os_printf( "-->%s\n", msg );
+			IOT_LOG( data->lib, IOT_LOG_TRACE, "-->%s\n", msg );
 			iot_mqtt_publish( data->mqtt, "api",
-				msg, os_strlen( msg ), 0, IOT_FALSE, NULL );
+				msg, os_strlen( msg ), TR50_MQTT_QOS,
+				IOT_FALSE, NULL );
 			iot_json_encode_terminate( json );
 			result = IOT_STATUS_SUCCESS;
 		}
@@ -1120,12 +1124,13 @@ void tr50_on_message(
 	const iot_json_item_t *root;
 
 	if ( data )
-		IOT_LOG( data->lib, IOT_LOG_TRACE,
+		IOT_LOG( data->lib, IOT_LOG_DEBUG,
 			"tr50: received (%u bytes on %s): %.*s\n",
 			(unsigned int)payload_len, topic,
 			(int)payload_len, (const char *)payload );
 
-	os_printf( "-->received: %.*s\n", (int)payload_len, (const char *)payload );
+	IOT_LOG( data->lib, IOT_LOG_TRACE,
+		"-->received: %.*s\n", (int)payload_len, (const char *)payload );
 
 	json = iot_json_decode_initialize( buf, 1024u, 0u );
 	if ( data && json &&
@@ -1537,7 +1542,7 @@ iot_status_t tr50_telemetry_publish(
 		iot_json_encode_object_end( json );
 
 		msg = iot_json_encode_dump( json );
-		os_printf( "-->%s\n", msg );
+		IOT_LOG( data->lib, IOT_LOG_TRACE, "-->%s\n", msg );
 		result = iot_mqtt_publish( data->mqtt, "api",
 			msg, os_strlen( msg ), TR50_MQTT_QOS, IOT_FALSE, NULL );
 		iot_json_encode_terminate( json );
@@ -1616,11 +1621,12 @@ iot_status_t tr50_file_request_send(
 				iot_json_encode_object_end( json );
 
 				msg = iot_json_encode_dump( json );
-				os_printf( "-->%s\n", msg );
+				IOT_LOG( data->lib, IOT_LOG_TRACE, "-->%s\n", msg );
 
 				/* publish */
 				result = iot_mqtt_publish( data->mqtt, "api",
-					msg, os_strlen( msg ), 0, IOT_FALSE, NULL );
+					msg, os_strlen( msg ), TR50_MQTT_QOS,
+					IOT_FALSE, NULL );
 				if ( result == IOT_STATUS_SUCCESS )
 				{
 					/* add it to the queue */

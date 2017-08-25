@@ -899,8 +899,6 @@ IOT_API IOT_SECTION iot_status_t iot_common_data_copy( struct iot_data *to,
 #if 0
 /* TODO ITEMS */
 
-/** @brief Type representing an expected periodic event */
-typedef struct iot_event                         iot_event_t;
 /** @brief Type repseenting client to client communication */
 typedef struct iot_message                       iot_message_t;
 
@@ -1008,51 +1006,6 @@ size_t iot_action_request_copy_size(
 	const iot_action_request_t *request );
 
 #if 0
-/* alarms (high priority events) */
-/** @todo provide implementation */
-IOT_SECTION iot_status_t iot_alarm_deregister(
-	iot_alarm_t *alarm,
-	iot_millisecond_t max_time_out );
-
-/** @todo provide implementation */
-IOT_SECTION iot_alarm_t *iot_alarm_register(
-	iot_alarm_t *alarm,
-	iot_millisecond_t max_time_out );
-
-/** @todo provide implementation */
-IOT_SECTION iot_status_t iot_alarm_raise(
-	iot_alarm_t *alarm );
-
-/* events */
-/** @todo provide implementation */
-IOT_SECTION iot_status_t iot_event_deregister(
-	const iot_event_t *event,
-	iot_millisecond_t max_time_out );
-
-/** @todo provide implementation */
-IOT_SECTION iot_event_t *iot_event_register(
-	const iot_event_t *event,
-	iot_millisecond_t max_time_out );
-
-/** @todo provide implementation */
-IOT_SECTION iot_status_t iot_event_raise(
-	const iot_event_t *event );
-
-/* file */
-/** @todo provide implementation */
-IOT_SECTION iot_status_t iot_file_send(
-	iot_t *lib,
-	iot_transaction_t *txn,
-	iot_millisecond_t max_time_out,
-	const char *file_path );
-
-/** @todo provide implementation */
-IOT_SECTION iot_status_t iot_file_receive(
-	iot_t *lib,
-	iot_transaction_t *txn,
-	iot_millisecond_t max_time_out,
-	const char *file_path );
-
 /* messaging */
 /** @todo provide implementation */
 IOT_SECTION iot_status_t iot_message_callback_set(
@@ -1135,37 +1088,6 @@ IOT_SECTION iot_status_t iot_state_callback_set(
 	iot_t *lib,
 	iot_state_callback_t *state_callback,
 	void *user_data );
-
-/* telemetry */
-/**
- * @brief Determine the number of samples
- *
- * @param[in,out]  telemetry           telemetry object to check
- * @param[in,out]  first_sample_idx    first sample's index
- *
- * @retval size_t                      number of samples
- */
-IOT_API IOT_SECTION size_t iot_telemetry_sample_count (
-	const iot_telemetry_t *telemetry,
-	size_t *first_sample_idx );
-
-/**
- * @brief Determine the next sample array index
- *
- * @param[in,out]  idx                 current sample's index
- *
- * @retval size_t                      next sample's index
- */
-IOT_API IOT_SECTION size_t iot_telemetry_sample_idx_next ( size_t idx );
-
-/**
- * @brief Determine the previous sample array index
- *
- * @param[in,out]  idx                 current sample's index
- *
- * @retval size_t                      previous sample's index
- */
-IOT_API IOT_SECTION size_t iot_telemetry_sample_idx_prev ( size_t idx );
 
 /* transaction */
 /**

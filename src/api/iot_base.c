@@ -832,6 +832,15 @@ const char *iot_error( iot_status_t code )
 	return result;
 }
 
+iot_status_t iot_event_publish(
+	iot_t *lib,
+	iot_millisecond_t max_time_out,
+	const char *message )
+{
+	return iot_plugin_perform( lib, NULL, &max_time_out,
+		IOT_OPERATION_EVENT_LOG_PUBLISH, NULL, message );
+}
+
 const char *iot_id( const iot_t *lib )
 {
 	const char *result = NULL;
