@@ -775,7 +775,7 @@ iot_status_t iot_base_device_id_set(
 				if ( lib->device_id )
 #endif /* ifdef IOT_STACK_ONLY */
 				{
-					strncpy( lib->device_id, device_id, device_id_len );
+					os_strncpy( lib->device_id, device_id, device_id_len );
 					lib->device_id[ device_id_len ] = '\0';
 					result = IOT_STATUS_SUCCESS;
 				}
@@ -907,7 +907,7 @@ iot_t *iot_initialize(
 				result->id = (char*)result + sizeof(struct iot);
 #endif /* else IOT_STACK_ONLY */
 				/* setup the app (or client) id */
-				strncpy( result->id, id, len );
+				os_strncpy( result->id, id, len );
 				result->id[len] = '\0';
 
 				if ( iot_base_device_id_set( result )

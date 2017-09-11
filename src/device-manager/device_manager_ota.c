@@ -374,7 +374,7 @@ iot_status_t device_manager_ota_install_execute(
 					osal_status = os_file_copy(
 						iot_update_path,
 						iot_update_dup_path );
-					os_file_fsync ( iot_update_dup_path );
+					os_file_sync( iot_update_dup_path );
 					printf("file copy status %d\n", (int)osal_status);
 				}
 

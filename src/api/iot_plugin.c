@@ -59,7 +59,7 @@ iot_status_t iot_plugin_disable( iot_t *lib, const char *name )
 		for ( i = 0u; i < lib->plugin_enabled_count && !p; ++i )
 		{
 			p = lib->plugin_enabled[i].ptr;
-			if ( p && strcmp( p->name, name ) != 0 )
+			if ( p && os_strcmp( p->name, name ) != 0 )
 				p = NULL;
 		}
 
@@ -107,7 +107,7 @@ iot_status_t iot_plugin_disable_by_ptr( iot_t *lib, iot_plugin_t *p,
 			{
 				/* plug-in enabled, insert into plug-in list */
 				--lib->plugin_enabled_count;
-				memmove( &lib->plugin_enabled[i],
+				os_memmove( &lib->plugin_enabled[i],
 					&lib->plugin_enabled[i + 1u],
 					sizeof( struct iot_plugin_enabled ) *
 						(lib->plugin_enabled_count - i) );
@@ -190,7 +190,7 @@ iot_status_t iot_plugin_enable_by_ptr( iot_t *lib, iot_plugin_t *p )
 				if ( result == IOT_STATUS_SUCCESS )
 				{
 					/* plug-in enabled, insert into plug-in list */
-					memmove( &lib->plugin_enabled[cur_idx + 1u],
+					os_memmove( &lib->plugin_enabled[cur_idx + 1u],
 						&lib->plugin_enabled[cur_idx],
 						sizeof( struct iot_plugin_enabled ) *
 							(lib->plugin_enabled_count - cur_idx) );
@@ -277,7 +277,7 @@ iot_status_t iot_plugin_load(
 		result = IOT_STATUS_FULL;
 		if ( lib->plugin_count < IOT_PLUGIN_MAX )
 		{
-			os_lib_handle handle = os_lib_open( file );
+			os_lib_handle handle = os_library_open( file );
 			result = IOT_STATUS_NOT_EXECUTABLE;
 			if ( handle )
 			{
@@ -289,9 +289,9 @@ iot_status_t iot_plugin_load(
 				iot_plugin_info_fptr info_func;
 				iot_plugin_load_fptr load_func;
 				*(void **)(&info_func) =
-					os_lib_find( handle, "iot_info" );
+					os_library_find( handle, "iot_info" );
 				*(void **)(&load_func) =
-					os_lib_find( handle, "iot_load" );
+					os_library_find( handle, "iot_load" );
 				if ( info_func && load_func &&
 					info_func( &name, &order, NULL, &min, &max ) )
 				{
@@ -311,7 +311,7 @@ iot_status_t iot_plugin_load(
 
 				/* enable plug-in */
 				if ( result != IOT_STATUS_SUCCESS )
-					os_lib_close( handle );
+					os_library_close( handle );
 			}
 		}
 	}
@@ -341,7 +341,7 @@ iot_status_t iot_plugin_unload( iot_t *lib, const char *name )
 			/* unload the plug-in */
 			iot_plugin_terminate( lib, p );
 			if ( p->handle )
-				os_lib_close( p->handle );
+				os_library_close( p->handle );
 
 			/* remove the plug-in from the list */
 			--lib->plugin_count;

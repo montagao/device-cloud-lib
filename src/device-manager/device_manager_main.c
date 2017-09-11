@@ -505,7 +505,7 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 	if ( device_manager && request )
 	{
 		char relay_cmd[ PATH_MAX + 1u ];
-		size_t relay_cmd_len;
+		size_t relay_cmd_len = 0u;
 		const char *host_in = NULL;
 		const char *url_in = NULL;
 		const char *protocol_in = NULL;

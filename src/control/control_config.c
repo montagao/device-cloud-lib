@@ -17,6 +17,7 @@
 #include "os.h"
 
 #include <stdarg.h>                    /* for va_list, va_start, va_end */
+#include <stdlib.h>                    /* for EXIT_FAILURE */
 
 /**
  * @brief Handles obtaining values for a JSON array when required by a schema

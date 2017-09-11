@@ -16,6 +16,8 @@
 
 /** @brief Length of the formatted time stamp */
 #define APP_LOG_TIMESTAMP_LENGTH  16
+/** @brief Maximum number of times to repeat log message */
+#define LOG_MESSAGE_REPEAT_MAX    4294967295u
 
 void app_log( iot_log_level_t log_level, iot_log_source_t *source,
 	const char *message, void *UNUSED(user_data) )
@@ -44,7 +46,7 @@ void app_log( iot_log_level_t log_level, iot_log_source_t *source,
 			hash = ((hash << 5) + hash) + (unsigned long)c;
 	}
 
-	if ( hash == last_msg_hash && last_msg_count < UINT_MAX )
+	if ( hash == last_msg_hash && last_msg_count < LOG_MESSAGE_REPEAT_MAX )
 		++last_msg_count;
 	else
 	{

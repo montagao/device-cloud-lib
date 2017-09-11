@@ -1646,13 +1646,13 @@ iot_bool_t iot_json_schema_string(
 								{
 									if ( add_comma != IOT_FALSE )
 									{
-										strncpy(
+										os_strncpy(
 											&error_msg_buf[msg_len - add_info_post_len],
 											", ", 2u );
 										msg_len += 2u;
 									}
 
-									strncpy( &error_msg_buf[msg_len - add_info_post_len],
+									os_strncpy( &error_msg_buf[msg_len - add_info_post_len],
 										str, str_len );
 									msg_len = new_len;
 									add_comma = IOT_TRUE;

@@ -327,8 +327,8 @@ int relay_client( const char *url,
 iot_bool_t insecure, iot_bool_t verbose,
 	const char *notification_file )
 {
-	os_socket_t socket;
-	os_socket_t socket_accept;
+	os_socket_t *socket = NULL;
+	os_socket_t *socket_accept = NULL;
 	int packet_type = SOCK_STREAM;
 	int result = EXIT_FAILURE;
 
@@ -368,8 +368,6 @@ iot_bool_t insecure, iot_bool_t verbose,
 				   LLL_DEBUG | LLL_CLIENT, &relay_lws_log );
 	else
 		lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE, &relay_lws_log );
-	os_memzero( &socket, sizeof( os_socket_t ) );
-	os_memzero( &socket_accept, sizeof( os_socket_t ) );
 	if ( os_socket_open( &socket, host, port, packet_type, 0, 0u )
 		== OS_STATUS_SUCCESS )
 	{
@@ -382,15 +380,15 @@ iot_bool_t insecure, iot_bool_t verbose,
 			os_status_t retval;
 			wsd->state = RELAY_STATE_BIND;
 			/* setup socket as a server */
-			retval = os_socket_bind( &socket, 1u );
+			retval = os_socket_bind( socket, 1u );
 			if ( retval == OS_STATUS_SUCCESS )
 			{
 				/* wait for an incoming connection */
-				if ( os_socket_accept( &socket,
+				if ( os_socket_accept( socket,
 					&socket_accept, 0u ) == OS_STATUS_SUCCESS )
 				{
 					result = EXIT_SUCCESS;
-					wsd->socket = &socket_accept;
+					wsd->socket = socket_accept;
 					wsd->state = RELAY_STATE_BOUND;
 				}
 				else
@@ -404,7 +402,7 @@ iot_bool_t insecure, iot_bool_t verbose,
 		}
 		else
 		{
-			wsd->socket = &socket;
+			wsd->socket = socket;
 			wsd->state = RELAY_STATE_CONNECT;
 			result = EXIT_SUCCESS;
 		}
@@ -739,8 +737,8 @@ iot_bool_t insecure, iot_bool_t verbose,
 		os_free_null( (void **)&wsd->tx_buffer );
 	}
 
-	os_socket_close( &socket_accept );
-	os_socket_close( &socket );
+	os_socket_close( socket_accept );
+	os_socket_close( socket );
 	return result;
 }
 

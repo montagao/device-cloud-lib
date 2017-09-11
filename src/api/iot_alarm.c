@@ -222,8 +222,8 @@ iot_status_t iot_alarm_publish_string(
 				alarm->lib, NULL, &max_time_out,
 				IOT_OPERATION_ALARM_PUBLISH,
 				alarm, payload );
-			os_free_null( &payload->message );
-			os_free_null( &payload );
+			os_free_null( (void**)&payload->message );
+			os_free_null( (void**)&payload );
 		}
 	}
 	return result;

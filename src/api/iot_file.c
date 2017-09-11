@@ -97,7 +97,7 @@ iot_status_t iot_file_archive_directory(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( archive_path && path )
 	{
-		os_dir_t dir;
+		os_dir_t *dir = NULL;
 		struct archive *archive;
 
 		/* compress all files in upload directories */
@@ -106,7 +106,7 @@ iot_status_t iot_file_archive_directory(
 		archive_write_set_format_pax_restricted( archive );
 		archive_write_open_filename( archive, archive_path );
 
-		if ( os_directory_open( path, &dir ) == OS_STATUS_SUCCESS )
+		if ( ( dir = os_directory_open( path ) ) != NULL )
 		{
 			char file_name[ PATH_MAX + 1u ];
 			iot_bool_t walk_directory = IOT_TRUE;
@@ -117,7 +117,7 @@ iot_status_t iot_file_archive_directory(
 				os_file_t input_file;
 				struct stat file_stat;
 
-				os_directory_next( &dir, IOT_TRUE, file_name, PATH_MAX );
+				os_directory_next( dir, IOT_TRUE, file_name, PATH_MAX );
 
 				os_snprintf( file_path, PATH_MAX, "%s%c%s", path, OS_DIR_SEP, file_name );
 
@@ -158,7 +158,7 @@ iot_status_t iot_file_archive_directory(
 				else
 					walk_directory = IOT_FALSE;
 			}
-			os_directory_close( &dir );
+			os_directory_close( dir );
 		}
 
 		archive_write_close( archive );
@@ -268,7 +268,7 @@ iot_status_t iot_file_transfer(
 				{
 					char *pos;
 
-					strncpy( heap_name, transfer.path,
+					os_strncpy( heap_name, transfer.path,
 						heap_len );
 
 					/* remove ending slashes */
@@ -280,7 +280,7 @@ iot_status_t iot_file_transfer(
 					}
 
 					/* add extension to end of name */
-					strncpy( &heap_name[path_len],
+					os_strncpy( &heap_name[path_len],
 						ext, heap_len - path_len + 1u);
 					pos = heap_name;
 
