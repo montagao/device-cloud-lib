@@ -69,6 +69,18 @@ option_select( IOT_MQTT_LIBRARY
 option( IOT_NO_THREAD_SUPPORT "do not support the use of threads" OFF )
 option( IOT_STACK_ONLY "build library without the use of the heap" OFF )
 
+# Enforce Build Type
+# set a default build type if none was specified
+set( DEFAULT_BUILD_TYPE "Debug" )
+if( NOT CMAKE_CONFIGURATION_TYPES )
+	if ( NOT CMAKE_BUILD_TYPE )
+		message( STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified." )
+	endif ( NOT CMAKE_BUILD_TYPE )
+	option_select( CMAKE_BUILD_TYPE DEFAULT ${DEFAULT_BUILD_TYPE} DESCRIPTION "Type of build"
+		Coverage Debug MinSizeRel Release RelWithDebInfo )
+	message( STATUS "Selected build type is '${CMAKE_BUILD_TYPE}'" )
+endif( NOT CMAKE_CONFIGURATION_TYPES )
+
 # Base build configuration file
 set( IOT_IN_FILE  "iot_build.h.in" )
 set( IOT_OUT_FILE "iot_build.h" )
