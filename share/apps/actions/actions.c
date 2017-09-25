@@ -176,7 +176,8 @@ static iot_t* initialize( void )
 		if ( (script_name_location = strrchr( script_path, DIR_SEP )) != NULL )
 		{
 			script_name_location++;
-			strncpy( script_name_location, TEST_SCRIPT, PATH_MAX - ( script_name_location - script_path ) - 1u );
+			strncpy( script_name_location, TEST_SCRIPT,
+				(size_t)(PATH_MAX - ( script_name_location - script_path ) - 1u) );
 		}
 		script_path[PATH_MAX - 1u] = '\0';
 

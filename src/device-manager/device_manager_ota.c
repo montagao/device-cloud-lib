@@ -16,10 +16,6 @@
 #include "device_manager_file.h"
 #include "api/shared/iot_base64.h"
 #include "api/shared/iot_types.h"     /* for IOT_ACTION_NO_RETURN, IOT_RUNTIME_DIR */
-#if defined( __unix__ ) && !defined( __ANDROID__ )
-/*FIXME*/
-/*#include "device_manager_scripts.h"*/
-#endif /*defined( __unix__ ) && !defined( __ANDROID__ )*/
 #include "iot_build.h"
 #include "iot.h"
 
@@ -27,18 +23,9 @@
 #include <archive_entry.h>             /* for adding files to an archive */
 
 /** @brief Name of the parameter to manifest action */
-#define DEVICE_MANAGER_OTA_PKG_PARAM       "package"
+#define DEVICE_MANAGER_OTA_PKG_PARAM   "package"
 /** @brief Name of the manifest action */
-#define DEVICE_MANAGER_UPDATE_CMD           "software_update"
-/** @brief Name of ota software update package */
-#define DEVICE_MANAGER_OTA_PACKAGE_NAME     "software_update_package"
-/** @brief Time for an ota package downloading to expired in ms */
-#define DEVICE_MANAGER_OTA_TRANSFER_EXPIRY_TIME 3600000u
-/** @brief Number of main loop's iteration to check pending ota package downloading */
-#define DEVICE_MANAGER_OTA_PACKAGE_CHECK_PENDING \
-	DEVICE_MANAGER_OTA_TRANSFER_EXPIRY_TIME / POLL_INTERVAL_MSEC
-/** @brief Operation type of ota local install*/
-#define OTA_LOCAL_INSTALL_OPERATION        "local-install"
+#define DEVICE_MANAGER_UPDATE_CMD      "software_update"
 
 /**
  * @brief Callback function to handle ota action
@@ -83,30 +70,34 @@ int device_manager_ota_copy_data(struct archive *ar, struct archive *aw);
  * @param[in]      word                the word to be deleted
  *
  * @return         the length of the input param after adjustment
-*/
+ */
 /*FIXME*/
 /*static size_t device_manager_software_update_del_characters(*/
 /*char *command_param, const char *word );*/
 /**
- * @brief  parameter adjustment
+ * @brief  Extracts an OTA package
  *
- * @param[in,out]  command_param       param to be adjusted
- * @param[in]      word                the word to be deleted
+ * @param[in,out]  iot_lib             library handle
+ * @param[in]      package_path        path to the package
+ * @param[in]      file_name           extraction file name
  *
- * @return         the length of the input param after adjustment
-*/
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to function
+ * @retval IOT_STATUS_FAILURE          system failure
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
 static iot_status_t device_manager_ota_extract_package(
-	iot_t *iot_lib, const char *package_path, const char * file_name );
+	iot_t *iot_lib, const char *package_path, const char *file_name );
 /**
  * @brief Function to extract ota package
  *
  * @param[in]      sw_update_package        ota package file
  *
- * @retval IOT_STATUS_FAILURE          on failure
+ * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to function
+ * @retval IOT_STATUS_FAILURE          system failure
  * @retval IOT_STATUS_SUCCESS          on success
  */
 iot_status_t device_manager_ota_extract_package_perform(
-	iot_t *iot_lib, const char * sw_update_package);
+	iot_t *iot_lib, const char * sw_update_package );
 
 iot_status_t device_manager_ota_deregister(
 	struct device_manager_info  *device_manager )
@@ -209,6 +200,7 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 				PATH_MAX );
 
 			/* set the software update and package download directories */
+			result = IOT_STATUS_FAILURE;
 			if ( OS_STATUS_SUCCESS == os_make_path( sw_update_dir,
 				PATH_MAX, runtime_dir, "update", NULL ) )
 			{
@@ -220,11 +212,15 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 					os_directory_delete( sw_update_dir,
 						NULL, IOT_TRUE );
 
-				result = os_directory_create(
+				if ( os_directory_create(
 					sw_update_dir,
-					DIRECTORY_CREATE_MAX_TIMEOUT );
-				printf("Created sw_update_dir %s (%d)\n",
-					sw_update_dir, (int)result );
+					DIRECTORY_CREATE_MAX_TIMEOUT ) == OS_STATUS_SUCCESS )
+				{
+					IOT_LOG( iot_lib, IOT_LOG_INFO,
+						"Created Update Directory: %s\n",
+						sw_update_dir );
+					result = IOT_STATUS_SUCCESS;
+				}
 			}
 			if ( result == IOT_STATUS_SUCCESS )
 			{
@@ -236,7 +232,9 @@ iot_status_t device_manager_ota( iot_action_request_t *request, void *user_data 
 				os_snprintf(local_archive_path, PATH_MAX,
 					"%s%c%s",sw_update_dir,
 					OS_DIR_SEP, file_to_download );
-				printf("Downloading to %s\n", local_archive_path);
+				IOT_LOG( iot_lib, IOT_LOG_INFO,
+					"Downloading to %s",
+					local_archive_path );
 
 				global |= IOT_FILE_FLAG_GLOBAL;
 				result = iot_file_download(
@@ -408,7 +406,8 @@ iot_status_t device_manager_ota_install_execute(
 			IOT_LOG( iot_lib, IOT_LOG_TRACE,
 				"Executing command: %s", command_with_params );
 
-			result = os_system_run_wait( command_with_params,
+			result = IOT_STATUS_SUCCESS;
+			os_system_run_wait( command_with_params,
 				&system_ret, out_buf, out_len, 0U );
 
 			IOT_LOG( iot_lib, IOT_LOG_TRACE,
@@ -462,7 +461,7 @@ printf("%s:%d package_path=%s file_name=%s\n", __func__,__LINE__,package_path, f
 iot_status_t device_manager_ota_extract_package_perform(
 	iot_t *iot_lib, const char * sw_update_package)
 {
-	int result = IOT_STATUS_BAD_PARAMETER;
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if( sw_update_package )
 	{
 		struct archive *a;
@@ -580,7 +579,7 @@ int device_manager_ota_copy_data(struct archive *ar, struct archive *aw)
 	{
 		while( status == IOT_TRUE)
 		{
-			r= archive_read_data_block(ar, &buff, &size, &offset);
+			r = archive_read_data_block(ar, &buff, &size, &offset);
 			if (r == ARCHIVE_EOF)
 			{
 				status = IOT_FALSE;
@@ -591,8 +590,14 @@ int device_manager_ota_copy_data(struct archive *ar, struct archive *aw)
 
 			if ( status == IOT_TRUE )
 			{
-				r = archive_write_data_block(aw, buff, size, offset);
-				if (r < ARCHIVE_OK)
+#if ARCHIVE_VERSION_NUMBER < 4000000
+				__LA_SSIZE_T amount_wrote;
+#else
+				la_ssize_t amount_wrote;
+#endif
+				amount_wrote = archive_write_data_block(
+					aw, buff, size, offset );
+				if (amount_wrote < ARCHIVE_OK)
 				{
 					status = IOT_FALSE;
 				}

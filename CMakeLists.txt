@@ -115,7 +115,7 @@ elseif ( IOT_JSON_LIBRARY STREQUAL "json-c" )
 	set( JSON_INCLUDE_DIR "${JSONC_INCLUDE_DIR}" )
 	set( JSON_LIBRARIES   "${JSONC_LIBRARIES}" )
 else()
-	find_package( Jsmn REQUIRED )
+	find_package( Jsmn )
 	set( JSON_INCLUDE_DIR "${JSMN_INCLUDE_DIR}" )
 	set( JSON_LIBRARIES   "${JSMN_LIBRARIES}" )
 	set( JSON_DEFINES     "${JSMN_DEFINES}" )
@@ -128,7 +128,7 @@ if ( IOT_MQTT_LIBRARY STREQUAL "mosquitto" )
 	set( MQTT_LIBRARIES "${MOSQUITTO_LIBRARIES}" )
 	set( MQTT_SSL_SUPPORT ON )
 else()
-	find_package( Paho REQUIRED )
+	find_package( Paho )
 	set( MQTT_INCLUDE_DIR "${PAHO_INCLUDE_DIR}" )
 	set( MQTT_LIBRARIES "${PAHO_LIBRARIES}" )
 	set( MQTT_SSL_SUPPORT ${PAHO_SSL_SUPPORT} )
@@ -136,8 +136,11 @@ endif()
 
 set( OSAL_PREFER_STATIC ON )
 find_package( Osal REQUIRED )
+include_directories( SYSTEM
+	"${OSAL_INCLUDE_DIR}"
+)
 
-if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
+if( NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 	build_command( CMAKE_BUILD_COMMAND )
 	separate_arguments( CMAKE_BUILD_COMMAND )
 	set( 3RDPARTY_DIR "${CMAKE_CURRENT_BINARY_DIR}/3rdparty" )
@@ -167,20 +170,16 @@ if( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 	set( JSON_LIBRARIES   "${JSMN_LIBRARIES}" )
 	set( JSON_DEFINES     "${JSMN_DEFINES}" )
 
-	# osal
-	set( OSAL_ROOT_DIR "${3RDPARTY_DIR}/osal/out" )
-	find_package( Osal REQUIRED )
-
 	# paho
 	set( PAHO_ROOT_DIR "${3RDPARTY_DIR}/paho/out" )
 	find_package( Paho REQUIRED )
 	set( MQTT_INCLUDE_DIR "${PAHO_INCLUDE_DIR}" )
 	set( MQTT_LIBRARIES "${PAHO_LIBRARIES}" )
 	set( MQTT_SSL_SUPPORT ${PAHO_SSL_SUPPORT} )
-endif( NOT OSAL_INCLUDE_DIR OR NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
+endif( NOT MQTT_LIBRARIES OR NOT JSON_LIBRARIES )
 
 set( CMAKE_POSITION_INDEPENDENT_CODE ON )
-include_directories( "src/api/public" "src" "${OSAL_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}" )
+include_directories( "src/api/public" "src" "${CMAKE_BINARY_DIR}" )
 add_subdirectory( "src" )
 add_subdirectory( "share" )
 

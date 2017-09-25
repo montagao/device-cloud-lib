@@ -38,7 +38,6 @@ set( API_SRCS_C ${API_SRCS_C}
 include_directories( SYSTEM
 	"${JSON_INCLUDE_DIR}"
 	"${MQTT_INCLUDE_DIR}"
-	"${OSAL_INCLUDE_DIR}"
 	"${LibArchive_INCLUDE_DIRS}"
 )
 if( JSON_DEFINES )
@@ -65,6 +64,7 @@ add_library( "${IOT_LIBRARY_NAME}"
 	${API_HDRS_C}
 	${API_SRCS_C}
 )
+
 target_link_libraries( "${IOT_LIBRARY_NAME}" "dl" "m"
 	${CMAKE_THREAD_LIBS_INIT}
 	${JSON_LIBRARIES}

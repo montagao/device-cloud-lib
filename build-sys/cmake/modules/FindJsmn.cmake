@@ -20,16 +20,28 @@
 
 include( FindPackageHandleStandardArgs )
 
+# Try and find paths
+set( LIB_SUFFIX "" )
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+endif()
+
+# Allow the ability to specify a global dependency root directory
+if ( NOT JSMN_ROOT_DIR )
+	set( JSMN_ROOT_DIR ${DEPENDS_ROOT_DIR} )
+endif()
+
 find_path( JSMN_INCLUDE_DIR
 	NAMES "jsmn.h"
 	DOC "jsmn include directory"
-	PATHS "${JSMN_ROOT_DIR}"
+	PATHS "${JSMN_ROOT_DIR}/include"
 )
 
 find_library( JSMN_LIBRARIES
 	NAMES jsmn
 	DOC "Required jsmn libraries"
-	PATHS "${JSMN_ROOT_DIR}"
+	PATHS "${JSMN_ROOT_DIR}/lib${LIB_SUFFIX}"
 )
 
 if( JSMN_INCLUDE_DIR AND JSMN_LIBRARIES )
@@ -37,9 +49,15 @@ if( JSMN_INCLUDE_DIR AND JSMN_LIBRARIES )
 	set( JSMN_TEST_OUT_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/jsmn_test.c" )
 	file( WRITE "${JSMN_TEST_OUT_FILE}"
 		"#define JSMN_PARENT_LINKS\n"
+		"#ifdef __clang__\n"
+		"#pragma clang diagnostic push\n"
+		"#pragma clang diagnostic ignored \"-Wreserved-id-macro\"\n"
+		"#endif /* ifdef __clang__ */\n"
 		"#include <jsmn.h>\n"
+		"#ifdef __clang__\n"
+		"#pragma clang diagnostic pop\n"
+		"#endif /* ifdef __clang__ */\n"
 		"#include <stdio.h>\n"
-
 		"int main( void ) {\n"
 		"  const char *const js = \"{\\\"key\\\":bad_value}\";\n"
 		"  jsmn_parser p;\n"
@@ -52,19 +70,23 @@ if( JSMN_INCLUDE_DIR AND JSMN_LIBRARIES )
 		"  return 0;\n"
 		"}\n"
 	)
-	try_run( JSMN_PARENT_LINKS_RUN_RESULT JSMN_PARENT_LINKS_COMPILE_RESULT
+	try_run( JSMN_RUN_RESULT JSMN_COMPILE_RESULT
 		"${CMAKE_BINARY_DIR}" "${JSMN_TEST_OUT_FILE}"
 		CMAKE_FLAGS
 			"-DINCLUDE_DIRECTORIES:STRING=${JSMN_INCLUDE_DIR}"
 			"-DLINK_LIBRARIES:STRING=${JSMN_LIBRARIES}"
+		COMPILE_OUTPUT_VARIABLE JSMN_COMPILE
 		RUN_OUTPUT_VARIABLE JSMN_DEFINES )
 	string( STRIP "${JSMN_DEFINES}" JSMN_DEFINES )
 	string( REPLACE "\n" ";" JSMN_DEFINES "${JSMN_DEFINES}" )
+	if( NOT JSMN_COMPILE_RESULT )
+		message( FATAL_ERROR "Failed to compile simple JSMN application:\n${JSMN_COMPILE}" )
+	endif( NOT JSMN_COMPILE_RESULT )
 endif( JSMN_INCLUDE_DIR AND JSMN_LIBRARIES )
 
-find_package_handle_standard_args( jsmn
+find_package_handle_standard_args( Jsmn
 	FOUND_VAR JSMN_FOUND
-	REQUIRED_VARS JSMN_LIBRARIES JSMN_INCLUDE_DIR
+	REQUIRED_VARS JSMN_INCLUDE_DIR JSMN_LIBRARIES
 	FAIL_MESSAGE DEFAULT_MSG
 )
 

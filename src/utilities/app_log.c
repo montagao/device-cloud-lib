@@ -14,8 +14,10 @@
 #include "app_log.h"
 #include "os.h"
 
+#ifdef IOT_LOG_TIMESTAMP
 /** @brief Length of the formatted time stamp */
 #define APP_LOG_TIMESTAMP_LENGTH  16
+#endif /* ifdef IOT_LOG_TIMESTAMP */
 /** @brief Maximum number of times to repeat log message */
 #define LOG_MESSAGE_REPEAT_MAX    4294967295u
 

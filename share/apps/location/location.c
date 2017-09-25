@@ -24,13 +24,11 @@
 #endif
 
 /** @brief Number of milliseconds in a second */
-#define MILLISECONDS_IN_SECOND     1000u
-/** @brief Number of nanoseconds in a millisecond */
-#define NANOSECONDS_IN_MILLISECOND 1000000u
+#define MILLISECONDS_IN_SECOND         1000u
 /** @brief Interval between samples */
-#define POLL_INTERVAL_MSEC 2000u
+#define POLL_INTERVAL_MSEC             2000u
 /** @brief Tag max length */
-#define TAG_MAX_LEN 128u
+#define TAG_MAX_LEN                    128u
 
 #ifdef _WRS_KERNEL
 	/**
@@ -105,7 +103,7 @@ static void generate_random_string( char *dest, size_t length,
  * @retval IOT_TRUE                    on success
  * @retval IOT_FALSE                   on failure
  */
-static iot_bool_t initialize( );
+static iot_bool_t initialize( void );
 
 /**
  * @brief Send telemetry data to the agent.
@@ -182,8 +180,8 @@ void generate_random_string( char *dest, size_t length,
 {
 	while ( length-- > 0 )
 	{
-		size_t index = (size_t) generate_random_number( min, max );
-		*dest++ = text_buffer[index];
+		double index = generate_random_number( min, max );
+		*dest++ = text_buffer[(size_t)index];
 	}
 	*dest = '\0';
 }
@@ -243,6 +241,7 @@ static void send_telemetry_sample( void )
 	/* Location tag */
 	char tag[TAG_MAX_LEN];
 
+	double random_value;
 	iot_uint32_t tag_size;
 #define LOG_FORMAT "Location:\n" \
 	"\tlatitude         :%f\n" \
@@ -263,10 +262,12 @@ static void send_telemetry_sample( void )
 	altitude_accuracy = generate_random_number( 0.0, 1000.0 );
 	heading = generate_random_number( 0.0, 360.0 );
 	speed = generate_random_number( 0.0, 10000.0 );
-	source = (iot_location_source_t)generate_random_number(
+	random_value = generate_random_number(
 		IOT_LOCATION_SOURCE_FIXED, IOT_LOCATION_SOURCE_WIFI );
+	source = (iot_location_source_t)random_value;
 
-	tag_size = (iot_uint32_t) generate_random_number( 0, TAG_MAX_LEN );
+	random_value = generate_random_number( 0, TAG_MAX_LEN );
+	tag_size = (iot_uint32_t)random_value;
 	generate_random_string( tag, tag_size, 0, TAG_MAX_LEN - 1 );
 
 	/* create a sample with random values */

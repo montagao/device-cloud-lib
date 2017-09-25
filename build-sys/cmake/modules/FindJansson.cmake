@@ -1,13 +1,15 @@
 #
 # Jansson support
 #
-# If found the following will be defined:
-# JANSSON_FOUND - System has jansson
-# JANSSON_INCLUDE_DIRS/JANSSON_INCLUDES - Include directories for jansson
-# JANSSON_LIBRARIES/JANSSON_LIBS - Libraries needed for jansson
-# JANSSON_DEFINITIONS - Compiler switches required for jansson
-# JANSSON_VERSION - Library version
+# The following variables can be set to add additional find support:
+# - JANSSON_ROOT_DIR, specified an explicit root path to test
 #
+# If found the following will be defined:
+# - JANSSON_FOUND - System has jansson
+# - JANSSON_INCLUDE_DIRS/JANSSON_INCLUDES - Include directories for jansson
+# - JANSSON_LIBRARIES/JANSSON_LIBS - Libraries needed for jansson
+# - JANSSON_DEFINITIONS - Compiler switches required for jansson
+# - JANSSON_VERSION - Library version
 #
 # Copyright (C) 2014-2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -19,14 +21,29 @@
 
 include( FindPackageHandleStandardArgs )
 
+# Try and find paths
+set( LIB_SUFFIX "" )
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+endif()
+
+# Allow the ability to specify a global dependency root directory
+if ( NOT JANSSON_ROOT_DIR )
+	set( JANSSON_ROOT_DIR ${JANSSON_ROOT_DIR} )
+endif()
+
+
 find_path( JANSSON_INCLUDE_DIR
 	NAMES jansson.h
 	DOC "Jansson include directory"
+	PATHS "${JANSSON_ROOT_DIR}/include"
 )
 
 find_library( JANSSON_LIBRARY
 	NAMES jansson
 	DOC "Required jansson libraries"
+	PATHS "${JANSSON_ROOT_DIR}/lib${LIB_SUFFIX}"
 )
 
 # determine version
@@ -51,7 +68,7 @@ endif ( JANSSON_INCLUDE_DIR AND EXISTS "${JANSSON_INCLUDE_DIR}/jansson.h" )
 
 find_package_handle_standard_args( Jansson
 	FOUND_VAR JANSSON_FOUND
-	REQUIRED_VARS JANSSON_LIBRARY JANSSON_INCLUDE_DIR
+	REQUIRED_VARS JANSSON_INCLUDE_DIR JANSSON_LIBRARY
 	VERSION_VAR JANSSON_VERSION
 	FAIL_MESSAGE DEFAULT_MSG
 )

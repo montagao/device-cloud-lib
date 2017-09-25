@@ -35,7 +35,11 @@
 #define IOT_NAME_MAX_LEN               128u
 /** @brief Maximum length of a host name on POSIX systems */
 #ifndef _POSIX_HOST_NAME_MAX
-#	define _POSIX_HOST_NAME_MAX    64
+#	ifdef __clang__
+#	pragma clang diagnostic push
+#	pragma clang diagnostic ignored "-Wreserved-id-macro"
+#		define _POSIX_HOST_NAME_MAX    64
+#	endif /* ifdef __clang__ */
 #endif
 /** @brief Maximum host name length */
 #define IOT_HOST_MAX_LEN _POSIX_HOST_NAME_MAX

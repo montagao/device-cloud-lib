@@ -888,7 +888,7 @@ iot_t *iot_initialize(
 			if ( iot_configuration_file_set( result, cfg_path )
 				!= IOT_STATUS_NO_MEMORY )
 			{
-				result->flags = flags;
+				result->flags = (iot_uint8_t)flags;
 #ifdef IOT_NO_THREAD_SUPPORT
 				result->flags |= IOT_FLAG_SINGLE_THREAD;
 #else /* ifndef IOT_NO_THREAD_SUPPORT */
@@ -1101,13 +1101,17 @@ iot_status_t iot_loop_start( iot_t *lib )
 		else if ( lib->main_thread == 0 )
 		{
 			size_t i;
-			result = os_thread_create( &lib->main_thread,
+			os_status_t os_result;
+			result = IOT_STATUS_FAILURE;
+			os_result = os_thread_create( &lib->main_thread,
 				iot_base_main_thread, lib );
-			for ( i = 0u; result == IOT_STATUS_SUCCESS  &&
+			for ( i = 0u; os_result == OS_STATUS_SUCCESS  &&
 				i < IOT_WORKER_THREADS; ++i )
-				result = os_thread_create(
+				os_result = os_thread_create(
 					&lib->worker_thread[i],
 					iot_base_worker_thread_main, lib );
+			if ( os_result == OS_STATUS_SUCCESS )
+				result = IOT_STATUS_SUCCESS;
 		}
 		else
 			result = IOT_STATUS_SUCCESS;
@@ -1275,7 +1279,7 @@ iot_status_t iot_terminate(
 		iot_plugin_disable_all( lib );
 
 		/* terminate all plug-ins */
-		for ( i = lib->plugin_count; i > 0; --i )
+		for ( i = (iot_uint8_t)lib->plugin_count; i > 0; --i )
 			iot_plugin_terminate( lib, &lib->plugin[i - 1u] );
 		result = IOT_STATUS_SUCCESS;
 

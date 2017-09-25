@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief unit testing for IoT library (json encoding/decoding support)
+ * @brief unit testing for IoT library (json encoding support)
  *
  * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
  *
@@ -26,6 +26,7 @@ static void test_iot_json_encode_array_end_at_root( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -42,6 +43,7 @@ static void test_iot_json_encode_array_end_in_array( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -69,6 +71,7 @@ static void test_iot_json_encode_array_end_in_object( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -95,6 +98,7 @@ static void test_iot_json_encode_array_start_after_non_primative( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -125,6 +129,7 @@ static void test_iot_json_encode_array_start_key_outside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -144,6 +149,7 @@ static void test_iot_json_encode_array_start_valid_base_item( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -163,6 +169,7 @@ static void test_iot_json_encode_array_start_valid_inside_object_blank_key( void
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -182,6 +189,7 @@ static void test_iot_json_encode_array_start_valid_inside_object_key( void **sta
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -201,6 +209,7 @@ static void test_iot_json_encode_array_start_valid_inside_object_null_key( void 
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -222,6 +231,7 @@ static void test_iot_json_encode_bool_as_root_item( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -237,6 +247,7 @@ static void test_iot_json_encode_bool_inside_array_null_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -259,6 +270,7 @@ static void test_iot_json_encode_bool_inside_array_valid_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -281,6 +293,7 @@ static void test_iot_json_encode_bool_inside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -303,6 +316,7 @@ static void test_iot_json_encode_bool_inside_object_blank_key( void **state )
 	iot_status_t result;
 	const char *json_str;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -333,6 +347,7 @@ static void test_iot_json_encode_bool_outside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -349,6 +364,9 @@ static void test_iot_json_encode_bool_outside_object( void **state )
 static void test_iot_json_encode_initialize_null( void **state )
 {
 	iot_json_encoder_t *result;
+#ifndef IOT_STACK_ONLY
+	will_return_always( __wrap_os_realloc, 1 );
+#endif
 	result = iot_json_encode_initialize( NULL, 0u, 0u );
 #ifdef IOT_STACK_ONLY
 	assert_null( result );
@@ -388,6 +406,7 @@ static void test_iot_json_encode_dump_no_items( void **state )
 	iot_json_encoder_t *e;
 	const char *result;
 
+	will_return( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, 0u );
 	assert_non_null( e );
 
@@ -404,6 +423,7 @@ static void test_iot_json_encode_dump_expand( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_EXPAND );
 	assert_non_null( e );
 
@@ -450,6 +470,7 @@ static void test_iot_json_encode_dump_indent_0( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_INDENT(0) );
 	assert_non_null( e );
 
@@ -491,6 +512,7 @@ static void test_iot_json_encode_dump_indent_1( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_INDENT(1) );
 	assert_non_null( e );
 
@@ -552,6 +574,7 @@ static void test_iot_json_encode_dump_indent_2( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_INDENT(2) );
 	assert_non_null( e );
 
@@ -613,6 +636,7 @@ static void test_iot_json_encode_dump_indent_5( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_INDENT(5) );
 	assert_non_null( e );
 
@@ -674,6 +698,7 @@ static void test_iot_json_encode_dump_indent_expand( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_INDENT(2) );
 	assert_non_null( e );
 
@@ -757,6 +782,7 @@ static void test_iot_json_encode_integer_as_root_item( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -772,6 +798,7 @@ static void test_iot_json_encode_integer_inside_array_null_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -794,6 +821,7 @@ static void test_iot_json_encode_integer_inside_array_valid_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -816,6 +844,7 @@ static void test_iot_json_encode_integer_inside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -838,6 +867,7 @@ static void test_iot_json_encode_integer_inside_object_blank_key( void **state )
 	iot_status_t result;
 	const char *json_str;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -868,6 +898,7 @@ static void test_iot_json_encode_integer_outside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -886,6 +917,7 @@ static void test_iot_json_encode_object_cancel_at_root( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -900,6 +932,7 @@ static void test_iot_json_encode_object_cancel_in_array( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -919,6 +952,7 @@ static void test_iot_json_encode_object_cancel_in_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -961,6 +995,7 @@ static void test_iot_json_encode_object_cancel_in_root_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -997,6 +1032,7 @@ static void test_iot_json_encode_object_clear_at_root( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1011,6 +1047,7 @@ static void test_iot_json_encode_object_clear_in_array( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1030,6 +1067,7 @@ static void test_iot_json_encode_object_clear_in_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u,
 		IOT_JSON_FLAG_INDENT(2) | IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
@@ -1088,6 +1126,7 @@ static void test_iot_json_encode_object_clear_in_object_deep( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1126,6 +1165,7 @@ static void test_iot_json_encode_object_clear_in_root_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1166,6 +1206,7 @@ static void test_iot_json_encode_object_clear_then_add( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u,
 		IOT_JSON_FLAG_INDENT(2) | IOT_JSON_FLAG_EXPAND | IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
@@ -1221,6 +1262,7 @@ static void test_iot_json_encode_object_end_at_root( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1235,6 +1277,7 @@ static void test_iot_json_encode_object_end_in_array( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1254,6 +1297,7 @@ static void test_iot_json_encode_object_end_in_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1293,6 +1337,7 @@ static void test_iot_json_encode_object_start_after_non_primative( void **state 
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1323,6 +1368,7 @@ static void test_iot_json_encode_object_start_key_outside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1342,6 +1388,7 @@ static void test_iot_json_encode_object_start_valid_base_item( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1361,6 +1408,7 @@ static void test_iot_json_encode_object_start_valid_inside_object_blank_key( voi
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1380,6 +1428,7 @@ static void test_iot_json_encode_object_start_valid_inside_object_key( void **st
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1399,6 +1448,7 @@ static void test_iot_json_encode_object_start_valid_inside_object_null_key( void
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1420,6 +1470,7 @@ static void test_iot_json_encode_real_as_root_item( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1435,6 +1486,7 @@ static void test_iot_json_encode_real_inside_array_null_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1457,6 +1509,7 @@ static void test_iot_json_encode_real_inside_array_valid_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1479,6 +1532,7 @@ static void test_iot_json_encode_real_inside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1504,6 +1558,7 @@ static void test_iot_json_encode_real_inside_object_blank_key( void **state )
 	iot_status_t result;
 	const char *json_str;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1534,6 +1589,7 @@ static void test_iot_json_encode_real_outside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1556,6 +1612,7 @@ static void test_iot_json_encode_string_as_root_item( void **state )
 	iot_json_encoder_t *e;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1571,6 +1628,7 @@ static void test_iot_json_encode_string_escape_chars( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1591,6 +1649,7 @@ static void test_iot_json_encode_string_inside_array_null_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1613,6 +1672,7 @@ static void test_iot_json_encode_string_inside_array_valid_key( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1635,6 +1695,7 @@ static void test_iot_json_encode_string_inside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1657,6 +1718,7 @@ static void test_iot_json_encode_string_inside_object_blank_key( void **state )
 	iot_status_t result;
 	const char *json_str;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1677,7 +1739,7 @@ static void test_iot_json_encode_string_null_item( void **state )
 {
 	iot_status_t result;
 
-	result = iot_json_encode_string( NULL, "test", IOT_FALSE );
+	result = iot_json_encode_string( NULL, "test", "test_string" );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
@@ -1687,6 +1749,7 @@ static void test_iot_json_encode_string_outside_object( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 
@@ -1706,6 +1769,7 @@ static void test_iot_json_encode_string_utf8_chars( void **state )
 	const char *json_str;
 	iot_status_t result;
 
+	will_return_always( __wrap_os_realloc, 1 );
 	e = iot_json_encode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
 	assert_non_null( e );
 

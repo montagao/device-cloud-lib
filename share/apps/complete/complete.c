@@ -29,8 +29,6 @@
 #define MAX_JSON_INT 9007199254740991u
 /** @brief Default maximum number of iterations before stopping telemetry */
 #define MAX_LOOP_ITERATIONS 360
-/** @brief Number of milliseconds in a second */
-#define MILLISECONDS_IN_SECOND     1000u
 /** @brief minimum value of json integer in range [-(2**53)+1, (2**53)-1] */
 #define MIN_JSON_INT -9007199254740991
 /** @brief Default wait time between sending samples */
@@ -164,14 +162,28 @@ static iot_status_t on_action_test_parameters(
 	void* user_data );
 
 /**
- * @brief Random number generator
+ * @brief Random number generator for double precision floating-point numbers
  *
  * @param[in]      min                 minimum number to generate
  * @param[in]      max                 maximum number to generate
  *
  * @return a randomly generated number
+ *
+ * @see random_int
  */
-static double random_num( double min, double max );
+static double random_dbl( double min, double max );
+
+/**
+ * @brief Random number generator for integer numbers
+ *
+ * @param[in]      min                 minimum number to generate
+ * @param[in]      max                 maximum number to generate
+ *
+ * @return a randomly generated number
+ *
+ * @see random_dbl
+ */
+static long random_int( long min, long max );
 
 /**
  * @brief Send location data to the agent.
@@ -235,11 +247,11 @@ void generate_random_string( char *dest, size_t length )
 	/* copy words into buffer */
 	while( length > 1u )
 	{
-		double index;
+		unsigned int index;
 		const char *word;
 
-		index = (unsigned int)random_num( 0, word_count - 1u );
-		word = words[(unsigned int)index];
+		index = (unsigned int)random_int( 0, (int)(word_count - 1u) );
+		word = words[index];
 		while( isalnum( *word ) && ( length-- > 1u ) )
 			*dest++ = *word++;
 
@@ -280,7 +292,8 @@ static iot_t* initialize( void )
 		if ( (script_name_location = strrchr( script_path, DIR_SEP )) != NULL )
 		{
 			script_name_location++;
-			strncpy( script_name_location, TEST_SCRIPT, SCRIPT_PATH_MAX - ( script_name_location - script_path ) - 1u );
+			strncpy( script_name_location, TEST_SCRIPT,
+				(size_t)(SCRIPT_PATH_MAX - ( script_name_location - script_path ) - 1u) );
 		}
 		script_path[SCRIPT_PATH_MAX - 1u] = '\0';
 
@@ -599,17 +612,14 @@ iot_status_t on_action_test_parameters(
 	return result;
 }
 
-double random_num( double min, double max )
+double random_dbl( double min, double max )
 {
-	static int rand_init = 0;
-
-	/* take a time seed to get better randomness */
-	if (!rand_init )
-	{
-		srand( (unsigned int)time( NULL ) );
-		rand_init = 1;
-	}
 	return min + (rand() / (double)RAND_MAX) * ( max - min );
+}
+
+long random_int( long min, long max )
+{
+	return min + (rand() / (long)RAND_MAX) * ( max - min );
 }
 
 void send_location_sample( iot_t *iot_lib_hdl )
@@ -638,6 +648,7 @@ void send_location_sample( iot_t *iot_lib_hdl )
 	/* Location tag */
 	char tag[TAG_MAX_LEN];
 
+	long random_value;
 	iot_uint32_t tag_size;
 #define LOG_FORMAT "Location:\n" \
 	"\tlatitude         :%f\n" \
@@ -651,17 +662,18 @@ void send_location_sample( iot_t *iot_lib_hdl )
 	"\ttag              :%s\n"
 
 	/* Random location values */
-	latitude = random_num( -90.0, 90.0 );
-	longitude = random_num( -180.0, 180.0 );
-	accuracy = random_num( 0.0, 1000.0 );
-	altitude = random_num( -15.0, 10000.0 );
-	altitude_accuracy = random_num( 0.0, 1000.0 );
-	heading = random_num( 0.0, 360.0 );
-	speed = random_num( 0.0, 10000.0 );
-	source = (iot_location_source_t)random_num(
+	latitude = random_dbl( -90.0, 90.0 );
+	longitude = random_dbl( -180.0, 180.0 );
+	accuracy = random_dbl( 0.0, 1000.0 );
+	altitude = random_dbl( -15.0, 10000.0 );
+	altitude_accuracy = random_dbl( 0.0, 1000.0 );
+	heading = random_dbl( 0.0, 360.0 );
+	speed = random_dbl( 0.0, 10000.0 );
+	random_value = random_int(
 		IOT_LOCATION_SOURCE_FIXED, IOT_LOCATION_SOURCE_WIFI );
+	source = (iot_location_source_t)random_value;
 
-	tag_size = (iot_uint32_t)random_num( 0, TAG_MAX_LEN );
+	tag_size = (iot_uint32_t)random_int( 0, TAG_MAX_LEN );
 	generate_random_string( tag, tag_size );
 
 	/* create a sample with random values */
@@ -744,20 +756,19 @@ void send_telemetry_sample( iot_t *iot_lib )
 	iot_uint64_t uint_test;
 	char string_test[MAX_TEXT_SIZE];
 	size_t sample_size;
-	double random_value;
+	long random_value;
 	iot_severity_t alarm_severity;
 	(void)iot_lib;
 
-	random_value = random_num( (double)MIN_JSON_INT, (double)MAX_JSON_INT );
-	int_test = (iot_int64_t)random_value;
-	random_value = random_num( 0.0, (double)MAX_JSON_INT );
-	uint_test = (iot_uint64_t)random_value;
-	light = random_num( 100.0, 1000.0 );
-	temperature = (iot_float32_t)random_num( 1.0, 45.0 );
-	random_value = random_num( 0, MAX_TEXT_SIZE - 1);
-	sample_size = (size_t)random_value;
+	srand( (unsigned int)time( NULL ) );
+	int_test = (iot_int64_t)random_int( MIN_JSON_INT, MAX_JSON_INT );
+	uint_test = (iot_uint64_t)random_int( 0, MAX_JSON_INT );
+	light = random_dbl( 100.0, 1000.0 );
+	temperature = (iot_float32_t)random_dbl( 1.0, 45.0 );
+	sample_size = (size_t)random_int( 0, MAX_TEXT_SIZE - 1 );
 	generate_random_string( string_test, sample_size );
-	alarm_severity = (iot_int8_t)random_num(0, 6);
+	random_value = random_int( 0, 6 );
+	alarm_severity = (iot_severity_t)random_value;
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO,"%s",
 		"+--------------------------------------------------------+");
@@ -766,7 +777,7 @@ void send_telemetry_sample( iot_t *iot_lib )
 	IOT_LOG( iot_lib, IOT_LOG_INFO, " ...... Result: %s", iot_error( result ) );
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending temp  : %f", (double)((iot_float32_t)temperature) );
-	result = iot_telemetry_publish( telemetry_temp, NULL, 0, IOT_TYPE_FLOAT32, (iot_float32_t)temperature );
+	result = iot_telemetry_publish( telemetry_temp, NULL, 0, IOT_TYPE_FLOAT32, (iot_float64_t)temperature );
 	IOT_LOG( iot_lib, IOT_LOG_INFO, " ...... Result: %s", iot_error( result ) );
 
 	IOT_LOG( iot_lib, IOT_LOG_INFO, "Sending bool  : %s", (bool_test == IOT_FALSE ? "false" : "true") );
@@ -836,9 +847,10 @@ void sig_handler( int signo )
 
 void do_sleep( unsigned int delay )
 {
-
 	/* hide the ifdefs in a function for readability */
 #ifdef _WIN32
+/** @brief Number of milliseconds in a second */
+#define MILLISECONDS_IN_SECOND     1000u
 	/* windows sleep is milliseconds */
 	Sleep( delay * MILLISECONDS_IN_SECOND );
 #else

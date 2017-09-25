@@ -310,7 +310,7 @@ static void test_iot_common_arg_get_bool_from_raw_true( void **state )
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_BOOL, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, IOT_TRUE );
-	test_free( obj.heap_storage );
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_arg_get_bool_from_string_false( void **state )
@@ -318,18 +318,18 @@ static void test_iot_common_arg_get_bool_from_string_false( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_bool_t data;
-	char text[] = "false";
+	const char text[] = "false";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_BOOL, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, IOT_FALSE );
-	test_free( obj.heap_storage );
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_arg_get_bool_from_string_null( void **state )
@@ -345,7 +345,7 @@ static void test_iot_common_arg_get_bool_from_string_null( void **state )
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_BOOL, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, IOT_FALSE );
-	test_free( obj.heap_storage );
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_arg_get_bool_from_string_true( void **state )
@@ -353,18 +353,18 @@ static void test_iot_common_arg_get_bool_from_string_true( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_bool_t data;
-	char text[] = "true";
+	const char text[] = "true";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_BOOL, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, IOT_TRUE );
-	test_free( obj.heap_storage );
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_arg_get_bool_from_uint8_false( void **state )
@@ -566,7 +566,7 @@ static void test_iot_common_arg_get_int8_from_float32( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_int8_t data;
-	iot_float32_t value = 1234.5f;
+	iot_float32_t value = 123.4f;
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_FLOAT32;
@@ -582,7 +582,7 @@ static void test_iot_common_arg_get_int8_from_float64( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_int8_t data;
-	iot_float64_t value = 1234.5678;
+	iot_float64_t value = 123.45678;
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_FLOAT64;
@@ -675,14 +675,15 @@ static void test_iot_common_arg_get_int8_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_int8_t data;
-	char text[] = "25";
+	const char text[] = "25";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtol, 25 );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_INT8, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 25 );
@@ -882,14 +883,15 @@ static void test_iot_common_arg_get_int16_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_int16_t data;
-	char text[] = "2526";
+	const char text[] = "2526";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtol, 2526 );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_INT16, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 2526 );
@@ -1089,14 +1091,15 @@ static void test_iot_common_arg_get_int32_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_int32_t data;
-	char text[] = "252346";
+	const char text[] = "252346";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtol, 252346 );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_INT32, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 252346 );
@@ -1296,14 +1299,15 @@ static void test_iot_common_arg_get_int64_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_int64_t data;
-	char text[] = "256582427";
+	const char text[] = "256582427";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtol, 256582427 );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_INT64, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 256582427 );
@@ -1402,7 +1406,7 @@ static void test_iot_common_arg_get_location_from_location( void **state )
 	iot_float64_t longitude = 678.901;
 	iot_uint32_t source = 1;
 	iot_float64_t speed = 789.012;
-	char tag[] = "somelocation";
+	const char *tag = "somelocation";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_LOCATION;
@@ -1503,7 +1507,7 @@ static void test_iot_common_arg_get_raw_from_raw( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	struct iot_data_raw data;
-	char str[] = "this is some text";
+	const char str[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	memset( &data, 0u, sizeof( struct iot_data_raw ) );
@@ -1526,7 +1530,7 @@ static void test_iot_common_arg_get_raw_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	struct iot_data_raw data;
-	char str[] = "this is some text";
+	const char str[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	memset( &data, 0u, sizeof( struct iot_data_raw ) );
@@ -1580,7 +1584,7 @@ static void test_iot_common_arg_get_string_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	char *data;
-	char str[] = "this is some text";
+	const char str[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
@@ -1615,7 +1619,7 @@ static void test_iot_common_arg_get_uint8_from_float32( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_uint8_t data;
-	iot_float32_t value = 1234.5f;
+	iot_float32_t value = 123.4f;
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_FLOAT32;
@@ -1631,7 +1635,7 @@ static void test_iot_common_arg_get_uint8_from_float64( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_uint8_t data;
-	iot_float64_t value = 1234.5678;
+	iot_float64_t value = 123.45678;
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_FLOAT64;
@@ -1725,14 +1729,15 @@ static void test_iot_common_arg_get_uint8_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_uint8_t data;
-	char text[] = "25";
+	const char text[] = "25";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtoul, 25u );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_UINT8, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 25u );
@@ -1932,14 +1937,15 @@ static void test_iot_common_arg_get_uint16_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_uint16_t data;
-	char text[] = "2526";
+	const char *text = "2526";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtoul, 2526u );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_UINT16, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 2526u );
@@ -2139,14 +2145,15 @@ static void test_iot_common_arg_get_uint32_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_uint32_t data;
-	char text[] = "252346";
+	const char *text = "252346";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtoul, 252346u );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_UINT32, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 252346u );
@@ -2346,14 +2353,15 @@ static void test_iot_common_arg_get_uint64_from_string( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	iot_uint64_t data;
-	char text[] = "256582427";
+	const char *text = "256582427";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_STRING;
 	obj.heap_storage = test_malloc( sizeof( text ) );
 	obj.value.string = obj.heap_storage;
-	memcpy( obj.heap_storage, (void *)text, sizeof( text ) );
+	memcpy( obj.heap_storage, (const void *)text, sizeof( text ) );
 	obj.has_value = IOT_TRUE;
+	will_return( __wrap_os_strtoul, 256582427u );
 	result = iot_common_arg_get_wrapper( &obj, IOT_TRUE, IOT_TYPE_UINT64, &data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( data, 256582427u );
@@ -2443,7 +2451,7 @@ static void test_iot_common_arg_set_float32( void **state )
 	iot_float32_t data = 123.45f;
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
-	result = iot_common_arg_set_wrapper( &obj, IOT_FALSE, IOT_TYPE_FLOAT32, data );
+	result = iot_common_arg_set_wrapper( &obj, IOT_FALSE, IOT_TYPE_FLOAT32, (double)data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( obj.has_value, IOT_TRUE );
 	assert_int_equal( obj.type, IOT_TYPE_FLOAT32 );
@@ -2529,7 +2537,7 @@ static void test_iot_common_arg_set_location( void **state )
 	iot_float64_t longitude = 678.901;
 	iot_uint32_t source = 1;
 	iot_float64_t speed = 789.012;
-	char tag[] = "somelocation";
+	const char *tag = "somelocation";
 
 	memset( &location, 0u, sizeof( struct iot_location ) );
 	memset( &obj, 0u, sizeof( struct iot_data ) );
@@ -2543,7 +2551,7 @@ static void test_iot_common_arg_set_location( void **state )
 	location.speed = speed;
 	location.tag = test_malloc( IOT_NAME_MAX_LEN );
 	strncpy( location.tag, tag, IOT_NAME_MAX_LEN );
-	/*will_return( __wrap_os_heap_realloc, 1 );*/
+	will_return( __wrap_os_realloc, 1 );
 	result = iot_common_arg_set_wrapper( &obj, IOT_TRUE, IOT_TYPE_LOCATION, &location );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( obj.has_value, IOT_TRUE );
@@ -2559,7 +2567,7 @@ static void test_iot_common_arg_set_location( void **state )
 	assert_int_equal( obj.value.location->source, source );
 	assert_memory_equal( &obj.value.location->speed, &speed, sizeof( iot_float64_t ) );
 	assert_string_equal( obj.value.location->tag, tag );
-	/*test_free( obj.heap_storage );*/
+	os_free( obj.heap_storage );
 	test_free( location.tag );
 }
 
@@ -2576,7 +2584,7 @@ static void test_iot_common_arg_set_location_no_heap( void **state )
 	iot_float64_t longitude = 678.901;
 	iot_uint32_t source = 1;
 	iot_float64_t speed = 789.012;
-	char tag[] = "somelocation";
+	const char *tag = "somelocation";
 
 	memset( &location, 0u, sizeof( struct iot_location ) );
 	memset( &obj, 0u, sizeof( struct iot_data ) );
@@ -2638,21 +2646,21 @@ static void test_iot_common_arg_set_raw_heap( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	struct iot_data_raw raw_data;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &raw_data, 0u, sizeof( struct iot_data_raw ) );
 	memset( &obj, 0u, sizeof( struct iot_data ) );
-	raw_data.ptr = (void *)data;
+	raw_data.ptr = (const void *)data;
 	raw_data.length = sizeof( data );
-	/*will_return( __wrap_os_heap_realloc, 1 );*/
+	will_return( __wrap_os_realloc, 1 );
 	result = iot_common_arg_set_wrapper( &obj, IOT_TRUE, IOT_TYPE_RAW, &raw_data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( obj.has_value, IOT_TRUE );
 	assert_int_equal( obj.type, IOT_TYPE_RAW );
 	assert_string_equal( (const char *)obj.value.raw.ptr, "this is some text" );
-	assert_ptr_not_equal( obj.value.raw.ptr, (void *)data );
+	assert_ptr_not_equal( obj.value.raw.ptr, (const void *)data );
 	assert_int_equal( obj.value.raw.length, sizeof( data ) );
-	/*test_free( obj.heap_storage );*/
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_arg_set_raw_no_heap( void **state )
@@ -2660,18 +2668,18 @@ static void test_iot_common_arg_set_raw_no_heap( void **state )
 	iot_status_t result;
 	struct iot_data obj;
 	struct iot_data_raw raw_data;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &raw_data, 0u, sizeof( struct iot_data_raw ) );
 	memset( &obj, 0u, sizeof( struct iot_data ) );
-	raw_data.ptr = (void *)data;
+	raw_data.ptr = (const void *)data;
 	raw_data.length = sizeof( data );
 	result = iot_common_arg_set_wrapper( &obj, IOT_FALSE, IOT_TYPE_RAW, &raw_data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( obj.has_value, IOT_TRUE );
 	assert_int_equal( obj.type, IOT_TYPE_RAW );
 	assert_string_equal( (const char *)obj.value.raw.ptr, "this is some text" );
-	assert_ptr_equal( obj.value.raw.ptr, (void *)data );
+	assert_ptr_equal( obj.value.raw.ptr, (const void *)data );
 	assert_int_equal( obj.value.raw.length, sizeof( data ) );
 }
 
@@ -2679,24 +2687,24 @@ static void test_iot_common_arg_set_string_heap( void **state )
 {
 	iot_status_t result;
 	struct iot_data obj;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
-	/*will_return( __wrap_os_heap_realloc, 1 );*/
+	will_return( __wrap_os_realloc, 1 );
 	result = iot_common_arg_set_wrapper( &obj, IOT_TRUE, IOT_TYPE_STRING, data );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( obj.has_value, IOT_TRUE );
 	assert_int_equal( obj.type, IOT_TYPE_STRING );
 	assert_string_equal( obj.value.string, "this is some text" );
 	assert_ptr_not_equal( obj.value.string, data );
-	/*test_free( obj.heap_storage );*/
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_arg_set_string_no_heap( void **state )
 {
 	iot_status_t result;
 	struct iot_data obj;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	result = iot_common_arg_set_wrapper( &obj, IOT_FALSE, IOT_TYPE_STRING, data );
@@ -2772,7 +2780,7 @@ static void test_iot_common_data_copy_dynamic_data_false( void **state )
 	iot_status_t result;
 	struct iot_data to;
 	struct iot_data from;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -2823,7 +2831,7 @@ static void test_iot_common_data_copy_location( void **state )
 	iot_float64_t longitude = 678.901;
 	iot_uint32_t source = 1;
 	iot_float64_t speed = 789.012;
-	char tag[] = "somelocation";
+	const char *tag = "somelocation";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -2841,7 +2849,7 @@ static void test_iot_common_data_copy_location( void **state )
 	from.value.location->speed = speed;
 	from.value.location->tag = test_malloc( IOT_NAME_MAX_LEN );
 	strncpy( from.value.location->tag, tag, IOT_NAME_MAX_LEN );
-	/* will_return( __wrap_os_heap_malloc, 1 ); */
+	will_return( __wrap_os_malloc, 1 );
 	result = iot_common_data_copy( &to, &from, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_non_null( to.heap_storage );
@@ -2858,12 +2866,13 @@ static void test_iot_common_data_copy_location( void **state )
 	assert_int_equal( to.value.location->source, source );
 	assert_memory_equal( &to.value.location->speed, &speed, sizeof( iot_float64_t ) );
 	assert_string_equal( to.value.location->tag, tag );
-	test_free( from.heap_storage );
+
+	/* clean up */
+	os_free( to.heap_storage );
 	test_free( from.value.location->tag );
-	/*test_free( to.heap_storage );*/
+	test_free( from.heap_storage );
 }
 
-#if 0
 static void test_iot_common_data_copy_location_no_memory( void **state )
 {
 	iot_status_t result;
@@ -2877,7 +2886,7 @@ static void test_iot_common_data_copy_location_no_memory( void **state )
 	iot_float64_t longitude = 678.901;
 	iot_uint32_t source = 1;
 	iot_float64_t speed = 789.012;
-	char tag[] = "somelocation";
+	const char *tag = "somelocation";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -2896,24 +2905,25 @@ static void test_iot_common_data_copy_location_no_memory( void **state )
 	from.value.location->tag = test_malloc( IOT_NAME_MAX_LEN );
 	assert_non_null( from.value.location->tag );
 	strncpy( from.value.location->tag, tag, IOT_NAME_MAX_LEN );
-	will_return( __wrap_os_heap_malloc, 0 );
+	will_return( __wrap_os_malloc, 0 );
 	result = iot_common_data_copy( &to, &from, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_NO_MEMORY );
 	assert_null( to.heap_storage );
 	assert_null( to.value.location );
 	assert_int_equal( to.type, IOT_TYPE_LOCATION );
 	assert_int_equal( to.has_value, IOT_FALSE );
-	test_free( from.heap_storage );
+
+	/* clean up */
 	test_free( from.value.location->tag );
+	test_free( from.heap_storage );
 }
-#endif
 
 static void test_iot_common_data_copy_raw( void **state )
 {
 	iot_status_t result;
 	struct iot_data to;
 	struct iot_data from;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -2923,7 +2933,7 @@ static void test_iot_common_data_copy_raw( void **state )
 	memcpy( from.heap_storage, data, sizeof( data ) );
 	from.value.raw.ptr = from.heap_storage;
 	from.value.raw.length = sizeof( data );
-	/*will_return( __wrap_os_heap_malloc, 1 );*/
+	will_return( __wrap_os_malloc, 1 );
 	result = iot_common_data_copy( &to, &from, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_non_null( to.heap_storage );
@@ -2933,7 +2943,7 @@ static void test_iot_common_data_copy_raw( void **state )
 	assert_int_equal( to.has_value, IOT_TRUE );
 	assert_string_equal( (const char *)to.value.raw.ptr, "this is some text" );
 	test_free( from.heap_storage );
-	/*test_free( to.heap_storage );*/
+	os_free( to.heap_storage );
 }
 
 static void test_iot_common_data_copy_raw_no_heap( void **state )
@@ -2953,13 +2963,12 @@ static void test_iot_common_data_copy_raw_no_heap( void **state )
 	assert_int_equal( to.type, IOT_TYPE_RAW );
 }
 
-#if 0
 static void test_iot_common_data_copy_raw_no_memory( void **state )
 {
 	iot_status_t result;
 	struct iot_data to;
 	struct iot_data from;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -2969,7 +2978,7 @@ static void test_iot_common_data_copy_raw_no_memory( void **state )
 	memcpy( from.heap_storage, data, sizeof( data ) );
 	from.value.raw.ptr = from.heap_storage;
 	from.value.raw.length = sizeof( data );
-	will_return( __wrap_os_heap_malloc, 0 );
+	will_return( __wrap_os_malloc, 0 );
 	result = iot_common_data_copy( &to, &from, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_NO_MEMORY );
 	assert_null( to.heap_storage );
@@ -2979,13 +2988,12 @@ static void test_iot_common_data_copy_raw_no_memory( void **state )
 	assert_int_equal( to.has_value, IOT_FALSE );
 	test_free( from.heap_storage );
 }
-#endif
 
 static void test_iot_common_data_copy_same_pointer_heap( void **state )
 {
 	iot_status_t result;
 	struct iot_data obj;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_RAW;
@@ -3006,21 +3014,21 @@ static void test_iot_common_data_copy_same_pointer_stack( void **state )
 {
 	iot_status_t result;
 	struct iot_data obj;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &obj, 0u, sizeof( struct iot_data ) );
 	obj.type = IOT_TYPE_RAW;
 	obj.has_value = IOT_TRUE;
-	obj.value.raw.ptr = (void *)data;
+	obj.value.raw.ptr = (const void *)data;
 	obj.value.raw.length = sizeof( data );
-	/*will_return( __wrap_os_heap_malloc, 1 );*/
+	will_return( __wrap_os_malloc, 1 );
 	result = iot_common_data_copy( &obj, &obj, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_int_equal( obj.value.raw.length, sizeof( data ) );
 	assert_int_equal( obj.type, IOT_TYPE_RAW );
 	assert_ptr_equal( obj.value.raw.ptr, obj.heap_storage );
 	assert_string_equal( (const char *)obj.value.raw.ptr, "this is some text" );
-	/*test_free( obj.heap_storage );*/
+	os_free( obj.heap_storage );
 }
 
 static void test_iot_common_data_copy_string( void **state )
@@ -3028,7 +3036,7 @@ static void test_iot_common_data_copy_string( void **state )
 	iot_status_t result;
 	struct iot_data to;
 	struct iot_data from;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -3037,7 +3045,7 @@ static void test_iot_common_data_copy_string( void **state )
 	from.heap_storage = test_malloc( sizeof( data ) );
 	memcpy( from.heap_storage, data, sizeof( data ) );
 	from.value.string = from.heap_storage;
-	/*will_return( __wrap_os_heap_malloc, 1 );*/
+	will_return( __wrap_os_malloc, 1 );
 	result = iot_common_data_copy( &to, &from, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_non_null( to.heap_storage );
@@ -3046,16 +3054,15 @@ static void test_iot_common_data_copy_string( void **state )
 	assert_int_equal( to.has_value, IOT_TRUE );
 	assert_string_equal( to.value.string, "this is some text" );
 	test_free( from.heap_storage );
-	/*test_free( to.heap_storage );*/
+	os_free( to.heap_storage );
 }
 
-#if 0
 static void test_iot_common_data_copy_string_no_memory( void **state )
 {
 	iot_status_t result;
 	struct iot_data to;
 	struct iot_data from;
-	char data[] = "this is some text";
+	const char data[] = "this is some text";
 
 	memset( &to, 0u, sizeof( struct iot_data ) );
 	memset( &from, 0u, sizeof( struct iot_data ) );
@@ -3064,7 +3071,7 @@ static void test_iot_common_data_copy_string_no_memory( void **state )
 	from.heap_storage = test_malloc( sizeof( data ) );
 	memcpy( from.heap_storage, data, sizeof( data ) );
 	from.value.string = from.heap_storage;
-	will_return( __wrap_os_heap_malloc, 0 );
+	will_return( __wrap_os_malloc, 0 );
 	result = iot_common_data_copy( &to, &from, IOT_TRUE );
 	assert_int_equal( result, IOT_STATUS_NO_MEMORY );
 	assert_null( to.heap_storage );
@@ -3073,7 +3080,6 @@ static void test_iot_common_data_copy_string_no_memory( void **state )
 	assert_int_equal( to.type, IOT_TYPE_STRING );
 	test_free( from.heap_storage );
 }
-#endif
 
 int main( int argc, char *argv[] )
 {
@@ -3250,20 +3256,14 @@ int main( int argc, char *argv[] )
 		cmocka_unit_test( test_iot_common_data_copy_dynamic_data_false ),
 		cmocka_unit_test( test_iot_common_data_copy_int32 ),
 		cmocka_unit_test( test_iot_common_data_copy_location ),
-#if 0
 		cmocka_unit_test( test_iot_common_data_copy_location_no_memory ),
-#endif
 		cmocka_unit_test( test_iot_common_data_copy_raw ),
 		cmocka_unit_test( test_iot_common_data_copy_raw_no_heap ),
-#if 0
 		cmocka_unit_test( test_iot_common_data_copy_raw_no_memory ),
-#endif
 		cmocka_unit_test( test_iot_common_data_copy_same_pointer_heap ),
 		cmocka_unit_test( test_iot_common_data_copy_same_pointer_stack ),
 		cmocka_unit_test( test_iot_common_data_copy_string ),
-#if 0
 		cmocka_unit_test( test_iot_common_data_copy_string_no_memory )
-#endif
 	};
 	MOCK_SYSTEM_ENABLED = 1;
 	result = cmocka_run_group_tests( tests, NULL, NULL );

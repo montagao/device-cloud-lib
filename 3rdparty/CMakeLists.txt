@@ -34,8 +34,10 @@ ExternalProject_Add( "jsmn"
 	BUILD_COMMAND          "make" "CFLAGS=-DJSMN_PARENT_LINKS=1 -DJSMN_STRICT=1 -fPIC"
 	BUILD_IN_SOURCE        1
 	INSTALL_DIR            "${JSMN_INSTALL_DIR}" # creates empty directory
-	INSTALL_COMMAND        "${CMAKE_COMMAND}" "-E" "copy" "${JSMN_BUILD_DIR}/src/jsmn/libjsmn.a" "${JSMN_INSTALL_DIR}"
-	        COMMAND        "${CMAKE_COMMAND}" "-E" "copy" "${JSMN_BUILD_DIR}/src/jsmn/jsmn.h" "${JSMN_INSTALL_DIR}"
+	INSTALL_COMMAND        "${CMAKE_COMMAND}" "-E" "make_directory" "${JSMN_INSTALL_DIR}/lib${LIB_SUFFIX}"
+	        COMMAND        "${CMAKE_COMMAND}" "-E" "copy" "${JSMN_BUILD_DIR}/src/jsmn/libjsmn.a" "${JSMN_INSTALL_DIR}/lib${LIB_SUFFIX}"
+	        COMMAND        "${CMAKE_COMMAND}" "-E" "make_directory" "${JSMN_INSTALL_DIR}/include"
+	        COMMAND        "${CMAKE_COMMAND}" "-E" "copy" "${JSMN_BUILD_DIR}/src/jsmn/jsmn.h" "${JSMN_INSTALL_DIR}/include"
 	TEST_BEFORE_INSTALL    1
 	TEST_COMMAND           "make" "test"
 )
@@ -59,25 +61,6 @@ ExternalProject_Add( "paho"
 	BUILD_COMMAND          ${PAHO_BUILD_COMMAND}
 	BUILD_IN_SOURCE        1
 	INSTALL_DIR            "${PAHO_INSTALL_DIR}" # creates empty directory
-	INSTALL_COMMAND        ${CMAKE_MAKE_PROGRAM} "install"
-	#TEST_BEFORE_INSTALL    1
-	#TEST_COMMAND            ${CMAKE_MAKE_PROGRAM} "test"
-)
-
-set( OSAL_BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/osal" )
-set( OSAL_BINARY_DIR "${OSAL_BASE_DIR}/src/osal-build" )
-set( OSAL_INSTALL_DIR  "${OSAL_BASE_DIR}/out" )
-set( OSAL_SOURCE_DIR "${OSAL_BASE_DIR}/src/osal" )
-string( REPLACE ";.;" ";${OSAL_SOURCE_DIR};" OSAL_BUILD_COMMAND "${CMAKE_BUILD_COMMAND}" )
-ExternalProject_Add( "osal"
-	GIT_REPOSITORY         "http://stash.wrs.com/scm/hpr/wr-osal.git"
-	GIT_TAG                "master"
-	PREFIX                 "${OSAL_BASE_DIR}"
-	CMAKE_ARGS             "-DCMAKE_INSTALL_PREFIX:PATH=${OSAL_INSTALL_DIR}"
-	#BINARY_DIR             "${OSAL_BINARY_DIR}"
-	BUILD_COMMAND          ${OSAL_BUILD_COMMAND}
-	BUILD_IN_SOURCE        1
-	INSTALL_DIR            "${OSAL_INSTALL_DIR}" # creates empty directory
 	INSTALL_COMMAND        ${CMAKE_MAKE_PROGRAM} "install"
 	#TEST_BEFORE_INSTALL    1
 	#TEST_COMMAND            ${CMAKE_MAKE_PROGRAM} "test"

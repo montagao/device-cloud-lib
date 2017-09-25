@@ -1151,7 +1151,7 @@ iot_bool_t iot_common_data_convert(
 			switch ( to_type )
 			{
 			case IOT_TYPE_FLOAT32:
-				if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= FLT_MAX )
+				if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= (iot_float64_t)FLT_MAX )
 					IOT_CONVERT( obj->value.float32, iot_float32_t, obj->value.float64 )
 				else if ( obj->type == IOT_TYPE_INT8 )
 					IOT_CONVERT( obj->value.float32, iot_float32_t, obj->value.int8 )
@@ -1206,10 +1206,10 @@ iot_bool_t iot_common_data_convert(
 				else if( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= SCHAR_MAX )
 					IOT_CONVERT( obj->value.int8, iot_int8_t, obj->value.uint64)
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= SCHAR_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.int8, iot_int8_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= SCHAR_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.int8, iot_int8_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_INT16:
@@ -1228,10 +1228,10 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= SHRT_MAX )
 					IOT_CONVERT( obj->value.int16, iot_int16_t, obj->value.uint64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= SHRT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.int16, iot_int16_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= SHRT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.int16, iot_int16_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_INT32:
@@ -1250,10 +1250,10 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= INT_MAX )
 					IOT_CONVERT( obj->value.int32, iot_int32_t, obj->value.uint64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= INT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.int32, iot_int32_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= INT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.int32, iot_int32_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_INT64:
@@ -1272,10 +1272,10 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= LONG_MAX )
 					IOT_CONVERT( obj->value.int64, iot_int64_t, obj->value.uint64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= LONG_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.int64, iot_int64_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= LONG_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.int64, iot_int64_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_UINT8:
@@ -1294,10 +1294,10 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= UCHAR_MAX )
 					IOT_CONVERT( obj->value.uint8, iot_uint8_t, obj->value.uint64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= UCHAR_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.uint8, iot_uint8_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= UCHAR_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.uint8, iot_uint8_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_UINT16:
@@ -1316,10 +1316,10 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= USHRT_MAX )
 					IOT_CONVERT( obj->value.uint16, iot_uint16_t, obj->value.uint64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= USHRT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.uint16, iot_uint16_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= USHRT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.uint16, iot_uint16_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_UINT32:
@@ -1338,10 +1338,10 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_UINT64 && obj->value.uint64 <= UINT_MAX )
 					IOT_CONVERT( obj->value.uint32, iot_uint32_t, obj->value.uint64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= UINT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.uint32, iot_uint32_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= UINT_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.uint32, iot_uint32_t, obj->value.float64 )
 				break;
 			case IOT_TYPE_UINT64:
@@ -1360,12 +1360,17 @@ iot_bool_t iot_common_data_convert(
 				else if ( obj->type == IOT_TYPE_INT64 && obj->value.int64 >= 0 )
 					IOT_CONVERT( obj->value.uint64, iot_uint64_t, obj->value.int64 )
 				else if ( obj->type == IOT_TYPE_FLOAT32 && obj->value.float32 <= ULONG_MAX &&
-					  iot_common_data_no_decimal( obj->value.float32 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float32 ) )
 					IOT_CONVERT( obj->value.uint64, iot_uint64_t, obj->value.float32 )
 				else if ( obj->type == IOT_TYPE_FLOAT64 && obj->value.float64 <= ULONG_MAX &&
-					  iot_common_data_no_decimal( obj->value.float64 ) )
+					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.uint64, iot_uint64_t, obj->value.float64 )
 				break;
+			case IOT_TYPE_BOOL:
+			case IOT_TYPE_LOCATION:
+			case IOT_TYPE_NULL:
+			case IOT_TYPE_RAW:
+			case IOT_TYPE_STRING:
 			default: /* all non-convertible types */
 				break;
 			}
@@ -1414,6 +1419,8 @@ iot_bool_t iot_common_data_convert(
 				if ( obj->type == IOT_TYPE_STRING || obj->type == IOT_TYPE_NULL )
 					result = IOT_TRUE;
 				break;
+			case IOT_TYPE_LOCATION:
+			case IOT_TYPE_NULL:
 			default: /* all non-convertible types */
 				break;
 			}
@@ -1446,7 +1453,7 @@ iot_bool_t iot_common_data_convert_check(
 			switch ( to_type )
 			{
 			case IOT_TYPE_FLOAT32:
-				if ( ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= FLT_MAX ) ||
+				if ( ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= (iot_float64_t)FLT_MAX ) ||
 				     from->type == IOT_TYPE_INT8 ||
 				     from->type == IOT_TYPE_INT16 ||
 				     from->type == IOT_TYPE_INT32 ||
@@ -1477,8 +1484,8 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_UINT16 && from->value.uint16 <= SCHAR_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT32 && from->value.uint32 <= SCHAR_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= SCHAR_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= SCHAR_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= SCHAR_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= SCHAR_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= SCHAR_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_INT16:
@@ -1488,8 +1495,8 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_UINT16 && from->value.uint16 <= SHRT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT32 && from->value.uint32 <= SHRT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= SHRT_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= SHRT_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= SHRT_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= SHRT_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= SHRT_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_INT32:
@@ -1498,8 +1505,8 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_INT64 && from->value.int64 >= INT_MIN && from->value.int64 <= INT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT32 && from->value.uint32 <= INT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= INT_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= INT_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= INT_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= INT_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= INT_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_INT64:
@@ -1507,8 +1514,8 @@ iot_bool_t iot_common_data_convert_check(
 				     from->type == IOT_TYPE_INT16 || from->type == IOT_TYPE_UINT16 ||
 				     from->type == IOT_TYPE_INT32 || from->type == IOT_TYPE_UINT32 ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= LONG_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= LONG_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= LONG_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= LONG_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= LONG_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_UINT8:
@@ -1519,8 +1526,8 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_UINT16 && from->value.uint16 <= UCHAR_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT32 && from->value.uint32 <= UCHAR_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= UCHAR_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= UCHAR_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= UCHAR_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= UCHAR_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= UCHAR_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_UINT16:
@@ -1531,8 +1538,8 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_INT64 && from->value.int64 >= 0 && from->value.int64 <= USHRT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT32 && from->value.uint32 <= USHRT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= USHRT_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= USHRT_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= USHRT_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= USHRT_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= USHRT_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_UINT32:
@@ -1542,8 +1549,8 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_INT32 && from->value.int32 >= 0 ) ||
 				     ( from->type == IOT_TYPE_INT64 && from->value.int64 >= 0 && from->value.int64 <= UINT_MAX ) ||
 				     ( from->type == IOT_TYPE_UINT64 && from->value.uint64 <= UINT_MAX ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= UINT_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= UINT_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= UINT_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= UINT_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
 			case IOT_TYPE_UINT64:
@@ -1552,10 +1559,15 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_INT16 && from->value.int16 >= 0 ) ||
 				     ( from->type == IOT_TYPE_INT32 && from->value.int32 >= 0 ) ||
 				     ( from->type == IOT_TYPE_INT64 && from->value.int64 >= 0 ) ||
-				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= ULONG_MAX && iot_common_data_no_decimal( from->value.float32 ) ) ||
-				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= ULONG_MAX && iot_common_data_no_decimal( from->value.float64 ) ) )
+				     ( from->type == IOT_TYPE_FLOAT32 && from->value.float32 <= ULONG_MAX && iot_common_data_no_decimal( (double)from->value.float32 ) ) ||
+				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= ULONG_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
+			case IOT_TYPE_BOOL:
+			case IOT_TYPE_LOCATION:
+			case IOT_TYPE_NULL:
+			case IOT_TYPE_RAW:
+			case IOT_TYPE_STRING:
 			default: /* all non-convertible types */
 				break;
 			}
@@ -1604,6 +1616,8 @@ iot_bool_t iot_common_data_convert_check(
 				if ( from->type == IOT_TYPE_STRING || from->type == IOT_TYPE_NULL )
 					result = IOT_TRUE;
 				break;
+			case IOT_TYPE_LOCATION:
+			case IOT_TYPE_NULL:
 			default: /* all non-convertible types */
 				break;
 			}

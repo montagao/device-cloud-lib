@@ -86,7 +86,7 @@ static iot_status_t iot_file_transfer(
  * @retval IOT_STATUS_SUCCESS          operation successful
  */
 static iot_status_t iot_file_archive_directory(
-	const char *archvie_file,
+	const char *archive_path,
 	const char *path );
 
 
@@ -363,7 +363,8 @@ iot_status_t iot_file_transfer(
 			else if ( os_file_exists( transfer.path ) )
 				result = IOT_STATUS_SUCCESS;
 			else
-				os_printf( "Error: %s does not exist\n",
+				IOT_LOG( lib, IOT_LOG_ERROR,
+					"File does not exist: %s",
 					transfer.path );
 		}
 		else
@@ -373,15 +374,20 @@ iot_status_t iot_file_transfer(
 			os_strncpy( dir, transfer.path, PATH_MAX );
 			*os_strrchr( dir, OS_DIR_SEP ) = '\0';
 
-			if ( os_file_exists( dir ) )
-				result = IOT_STATUS_SUCCESS;
-			else
+			result = IOT_STATUS_SUCCESS;
+			if ( os_file_exists( dir ) == OS_FALSE )
 			{
 				/* Create it if it doesn't exists */
-				os_printf( "Info: Creating directory %s\n", dir );
-				result = os_directory_create_nowait( dir );
-				if ( result != IOT_STATUS_SUCCESS )
-					os_printf( "Error: Failed to create dir %s\n", dir );
+				IOT_LOG( lib, IOT_LOG_INFO,
+					"Creating directory: %s", dir );
+				if ( os_directory_create_nowait( dir ) !=
+					OS_STATUS_SUCCESS )
+				{
+					IOT_LOG( lib, IOT_LOG_ERROR,
+						"Failed to create directory: %s",
+						dir );
+					result = IOT_STATUS_FAILURE;
+				}
 			}
 		}
 

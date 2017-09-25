@@ -15,6 +15,7 @@
 #include "iot_checksum_crc32.h"
 
 iot_status_t iot_checksum_file_get(
+	iot_t *lib,
 	os_file_t file,
 	iot_checksum_type_t type,
 	iot_uint64_t *checksum )
@@ -27,8 +28,11 @@ iot_status_t iot_checksum_file_get(
 		case IOT_CHECKSUM_TYPE_CRC32:
 			result = iot_checksum_crc32_file_get( file, checksum );
 			break;
+		case IOT_CHECKSUM_TYPE_MD5:
+		case IOT_CHECKSUM_TYPE_SHA256:
 		default:
-			os_printf( "Error: Checksum algorithm not supported" );
+			IOT_LOG( lib, IOT_LOG_ERROR, "%s",
+				"Checksum algorithm not support" );
 			break;
 		}
 	}

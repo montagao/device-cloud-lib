@@ -242,40 +242,38 @@ typedef uint32_t                                 iot_file_flags_t;
  */
 
 
+/** @brief Undefined type */
+#define IOT_TYPE_NULL                  0
+/** @brief Boolean type */
+#define IOT_TYPE_BOOL                  1
+/** @brief 32-bit floating point */
+#define IOT_TYPE_FLOAT32               2
+/** @brief 64-bit floating point */
+#define IOT_TYPE_FLOAT64               3
+/** @brief 8-bit signed integer */
+#define IOT_TYPE_INT8                  4
+/** @brief 16-bit signed integer */
+#define IOT_TYPE_INT16                 5
+/** @brief 32-bit signed integer */
+#define IOT_TYPE_INT32                 6
+/** @brief 64-bit signed integer */
+#define IOT_TYPE_INT64                 7
+/** @brief location object */
+#define IOT_TYPE_LOCATION              8
+/** @brief Raw binary data */
+#define IOT_TYPE_RAW                   9
+/** @brief UTF-8 String data */
+#define IOT_TYPE_STRING                10
+/** @brief 8-bit unsigned integer */
+#define IOT_TYPE_UINT8                 11
+/** @brief 16-bit unsigned integer */
+#define IOT_TYPE_UINT16                12
+/** @brief 32-bit unsigned integer */
+#define IOT_TYPE_UINT32                13
+/** @brief 64-bit unsigned integer */
+#define IOT_TYPE_UINT64                14
 /** @brief indicates data type */
-typedef enum iot_type
-{
-	/** @brief Undefined type */
-	IOT_TYPE_NULL = 0,
-	/** @brief Boolean type */
-	IOT_TYPE_BOOL,
-	/** @brief 32-bit floating point */
-	IOT_TYPE_FLOAT32,
-	/** @brief 64-bit floating point */
-	IOT_TYPE_FLOAT64,
-	/** @brief 8-bit signed integer */
-	IOT_TYPE_INT8,
-	/** @brief 16-bit signed integer */
-	IOT_TYPE_INT16,
-	/** @brief 32-bit signed integer */
-	IOT_TYPE_INT32,
-	/** @brief 64-bit signed integer */
-	IOT_TYPE_INT64,
-	/** @brief location object */
-	IOT_TYPE_LOCATION,
-	/** @brief Raw binary data */
-	IOT_TYPE_RAW,
-	/** @brief UTF-8 String data */
-	IOT_TYPE_STRING,
-	/** @brief 8-bit unsigned integer */
-	IOT_TYPE_UINT8,
-	/** @brief 16-bit unsigned integer */
-	IOT_TYPE_UINT16,
-	/** @brief 32-bit unsigned integer */
-	IOT_TYPE_UINT32,
-	/** @brief 64-bit unsigned integer */
-	IOT_TYPE_UINT64
-} iot_type_t;
+typedef unsigned int iot_type_t;
 
 /**
  * @brief Possible return code values
@@ -418,12 +416,18 @@ typedef struct iot_log_source
  * @brief Possible alarm severities
  */
 typedef enum iot_severity {
-    IOT_SEVERITY_0,
-    IOT_SEVERITY_1,
-    IOT_SEVERITY_2,
-    IOT_SEVERITY_3,
-    IOT_SEVERITY_4,
-    IOT_SEVERITY_5
+	/** @brief severity level 0 (not severe) */
+	IOT_SEVERITY_0,
+	/** @brief severity level 1 (very low serverity) */
+	IOT_SEVERITY_1,
+	/** @brief severity level 2 (low severity)*/
+	IOT_SEVERITY_2,
+	/** @brief severity level 3 (medium severity) */
+	IOT_SEVERITY_3,
+	/** @brief severity level 4 (high severity) */
+	IOT_SEVERITY_4,
+	/** @brief severity level 5 (very high severity) */
+	IOT_SEVERITY_5
 } iot_severity_t;
 
 /**
@@ -467,8 +471,6 @@ typedef iot_status_t (iot_action_callback_t)(
  * @param[in]      progress            information about the file transfer's
  *                                     progress
  * @param[in]      user_data           pointer to user specific data
- *
- * @return a return code indicating if action was handled
  */
 typedef void (iot_file_progress_callback_t)(
 	iot_file_progress_t *progress,

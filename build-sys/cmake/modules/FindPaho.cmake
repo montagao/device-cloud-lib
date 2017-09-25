@@ -5,7 +5,6 @@
 # - PAHO_ASYNC, If true, tries to find asynchronous C library
 # - PAHO_PREFER_STATIC, If true, only finds static library version
 # - PAHO_USE_SSL, If true, only finds ssl version
-# - PAHO_PREFER_STATIC, If true, tries to find static library versions
 # - PAHO_ROOT_DIR, specified an explicit root path to test
 #
 # If found the following will be defined:
@@ -57,6 +56,11 @@ if( LIB64 )
 	set( LIB_SUFFIX 64 )
 endif()
 
+# Allow the ability to specify a global dependency root directory
+if ( NOT PAHO_ROOT_DIR )
+	set( PAHO_ROOT_DIR ${DEPENDS_ROOT_DIR} )
+endif()
+
 find_path( PAHO_INCLUDE_DIR NAMES "${PAHO_TYPE}.h" DOC "paho include directory"
 	PATHS "${PAHO_ROOT_DIR}/include" )
 find_library( PAHO_LIBRARIES NAMES ${PAHO_LIBS} DOC "Required paho libraries"
@@ -100,9 +104,9 @@ if ( PAHO_INCLUDE_DIR AND PAHO_LIBRARIES )
 	string( STRIP "${PAHO_VERSION}" PAHO_VERSION )
 endif ( PAHO_INCLUDE_DIR AND PAHO_LIBRARIES )
 
-find_package_handle_standard_args( paho
+find_package_handle_standard_args( Paho
 	FOUND_VAR PAHO_FOUND
-	REQUIRED_VARS PAHO_LIBRARIES PAHO_INCLUDE_DIR
+	REQUIRED_VARS PAHO_INCLUDE_DIR PAHO_LIBRARIES
 	VERSION_VAR PAHO_VERSION
 	FAIL_MESSAGE DEFAULT_MSG
 )

@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief unit testing for IoT library (json encoding/decoding support)
+ * @brief unit testing for IoT library (json decoding support)
  *
  * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
  *
@@ -535,6 +535,9 @@ static void test_iot_json_decode_bool_valid( void **state )
 static void test_iot_json_decode_initialize_null( void **state )
 {
 	iot_json_decoder_t *result;
+#ifndef IOT_STACK_ONLY
+	will_return_always( __wrap_os_realloc, 1 );
+#endif
 	result = iot_json_decode_initialize( NULL, 0u, 0u );
 #ifdef IOT_STACK_ONLY
 	assert_null( result );
@@ -1430,6 +1433,7 @@ static void test_iot_json_decode_parse_dynamic( void **state )
 #ifndef IOT_STACK_ONLY
 	iot_status_t result;
 	const iot_json_item_t *root = NULL;
+	will_return_always( __wrap_os_realloc, 1 );
 #endif
 
 	snprintf( json, 256u, "{\"item1\":\"value1\"}" );
@@ -1696,7 +1700,7 @@ static void test_iot_json_decode_string_valid( void **state )
 		{ "str2", IOT_STATUS_SUCCESS, "The quick brown fox jumps over the lazy dog", 43u },
 		{ "str3", IOT_STATUS_SUCCESS, "123456789", 9u },
 		{ "int", IOT_STATUS_BAD_REQUEST, NULL, 0u },
-		{ NULL, IOT_STATUS_SUCCESS, IOT_FALSE, 0u }
+		{ NULL, IOT_STATUS_SUCCESS, NULL, 0u }
 	};
 	const struct result_value_map *rv = &results[0u];
 

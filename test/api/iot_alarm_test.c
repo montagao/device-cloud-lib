@@ -17,21 +17,26 @@
 #include "api/shared/iot_types.h"
 #include "iot_build.h"
 
+#include <strings.h> /* for bzero */
+
 static void test_iot_alarm_register_empty( void **state )
 {
 	size_t i;
 	iot_t lib;
-	char name[] = "alarm";
-	iot_alarm_t *result = NULL;
+	const char *name = "alarm";
+	iot_alarm_t *result;
 
 	bzero( &lib, sizeof( iot_t ) );
 	for ( i = 0u; i < IOT_ALARM_STACK_MAX; i++ )
 		lib.alarm_ptr[i] = &lib.alarm[i];
 	lib.alarm_count = 0u;
+	will_return( __wrap_os_malloc, 1 ); /* alarm name */
 	result = iot_alarm_register( &lib, name );
 	assert_non_null( result );
 	assert_int_equal( lib.alarm_count, 1u );
 	assert_ptr_equal( result, lib.alarm_ptr[0] );
+
+	os_free( lib.alarm_ptr[0]->name );
 }
 
 static void test_iot_alarm_register_full( void **state )
@@ -87,6 +92,10 @@ static void test_iot_alarm_register_stack_full( void **state )
 	}
 	snprintf( name, IOT_NAME_MAX_LEN, "alarm %03d.5", IOT_ALARM_STACK_MAX / 2u );
 	lib.alarm_count = IOT_ALARM_STACK_MAX;
+#ifndef IOT_STACK_ONLY
+	will_return( __wrap_os_malloc, 1 ); /* alarm object */
+	will_return( __wrap_os_malloc, 1 ); /* alarm name */
+#endif
 	result = iot_alarm_register( &lib, name );
 	if ( IOT_ALARM_MAX > IOT_ALARM_STACK_MAX )
 	{
@@ -95,6 +104,7 @@ static void test_iot_alarm_register_stack_full( void **state )
 #ifndef IOT_STACK_ONLY
 		assert_int_equal( result->is_in_heap, 1 );
 #endif
+		os_free( result->name );
 		os_free( result );
 	}
 	else
@@ -149,11 +159,13 @@ static void test_iot_alarm_register_valid( void **state )
 	}
 	lib.alarm_count = IOT_ALARM_STACK_MAX - 1u;
 	snprintf( name, IOT_NAME_MAX_LEN, "alarm %03d.5", IOT_ALARM_STACK_MAX / 2u );
+	will_return( __wrap_os_malloc, 1 ); /* for alarm message */
 	result = iot_alarm_register( &lib, name );
 	assert_non_null( result );
 	assert_int_equal( lib.alarm_count, IOT_ALARM_STACK_MAX );
 	assert_ptr_equal( result, lib.alarm_ptr[IOT_ALARM_STACK_MAX / 2u + 1] );
 	test_free( t_names );
+	test_free( lib.alarm[IOT_ALARM_STACK_MAX / 2u + 1 ].name );
 }
 
 static void test_iot_alarm_deregister_null_alarm( void **state )
@@ -237,9 +249,11 @@ static void test_iot_alarm_publish_string_no_memory( void **state )
 	lib.alarm_count = 1u;
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = &lib;
-	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
-	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1,"msg" );
-	assert_int_equal( result, IOT_STATUS_SUCCESS );
+	will_return( __wrap_os_malloc, 1 ); /* for payload */
+	will_return( __wrap_os_malloc, 1 ); /* for message */
+	will_return( __wrap_iot_plugin_perform, IOT_STATUS_NO_MEMORY );
+	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, "msg" );
+	assert_int_equal( result, IOT_STATUS_NO_MEMORY );
 }
 
 static void test_iot_alarm_publish_string_valid( void **state )
@@ -255,9 +269,11 @@ static void test_iot_alarm_publish_string_valid( void **state )
 	lib.alarm_count = 1u;
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = &lib;
-	will_return( __wrap_iot_plugin_perform, IOT_STATUS_NO_MEMORY );
+	will_return( __wrap_os_malloc, 1 ); /* for payload */
+	will_return( __wrap_os_malloc, 1 ); /* for message */
+	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
 	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, "msg" );
-	assert_int_equal( result, IOT_STATUS_NO_MEMORY );
+	assert_int_equal( result, IOT_STATUS_SUCCESS );
 }
 
 static void test_iot_alarm_publish_string_null_message( void **state )
@@ -273,6 +289,8 @@ static void test_iot_alarm_publish_string_null_message( void **state )
 	lib.alarm_count = 1u;
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = &lib;
+	will_return( __wrap_os_malloc, 1 ); /* for payload */
+	will_return( __wrap_os_malloc, 1 ); /* for message */
 	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
 	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, NULL );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
@@ -291,6 +309,8 @@ static void test_iot_alarm_publish_string_empty_message( void **state )
 	lib.alarm_count = 1u;
 	alarm = lib.alarm_ptr[0];
 	alarm->lib = &lib;
+	will_return( __wrap_os_malloc, 1 ); /* for payload */
+	will_return( __wrap_os_malloc, 1 ); /* for message */
 	will_return( __wrap_iot_plugin_perform, IOT_STATUS_SUCCESS );
 	result = iot_alarm_publish_string( alarm, IOT_SEVERITY_1, "" );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );

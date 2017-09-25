@@ -22,14 +22,8 @@
 
 /** @brief Maximum value of location heading property */
 #define IOT_LOCATION_HEADING_MAX 360u
-/** @brief Minimum value of location heading property */
-#define IOT_LOCATION_HEADING_MIN 0u
 /** @brief Minimum value of location latitude property */
 #define IOT_LOCATION_LATITUDE_MAX 90u
-/** @brief Minimum value of location latitude property */
-#define IOT_LOCATION_LATITUDE_MIN -90
-/** @brief Maximum value of location longitude property */
-#define IOT_LOCATION_LONGITUDE_MAX 180u
 /** @brief Minimum value of location longitude property */
 #define IOT_LOCATION_LONGITUDE_MIN -180
 
@@ -64,6 +58,7 @@ static void test_iot_location_allocate( void **state )
 	const iot_float64_t latitude = 1.23456789;
 	const iot_float64_t longitude = 9.87654321;
 
+	will_return( __wrap_os_malloc, 1 );
 	sample = iot_location_allocate( latitude, longitude );
 	assert_non_null( sample );
 
@@ -96,14 +91,9 @@ static void test_iot_location_allocate_no_memory( void **state )
 	const iot_float64_t latitude = 1.23456789;
 	const iot_float64_t longitude = 9.87654321;
 
-#if 0
-	will_return( os_malloc, 0 );
+	will_return( __wrap_os_malloc, 0 );
 	sample = iot_location_allocate( latitude, longitude );
 	assert_null( sample );
-#endif
-	sample = iot_location_allocate( latitude, longitude );
-	assert_non_null( sample );
-	iot_location_free( sample );
 }
 
 /* test_iot_location_altitude_accuracy_set */
@@ -162,6 +152,7 @@ static void test_iot_location_free( void **state )
 	const iot_float64_t latitude = 1.23456789;
 	const iot_float64_t longitude = 9.87654321;
 
+	will_return( __wrap_os_malloc, 1 ); /* for location */
 	sample = iot_location_allocate( latitude, longitude );
 	assert_non_null( sample );
 
@@ -276,11 +267,11 @@ static void test_iot_location_source_set( void **state )
 {
 	struct iot_location sample;
 	iot_status_t result;
-	const iot_int32_t value = rand() % ( IOT_LOCATION_SOURCE_WIFI + 1 );
+	const unsigned int value = rand() % ( IOT_LOCATION_SOURCE_WIFI + 1 );
 
 	memset( &sample, 0, sizeof( struct iot_location ) );
 
-	result = iot_location_source_set( &sample, value );
+	result = iot_location_source_set( &sample, (iot_location_source_t)value );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_true( sample.flags & IOT_FLAG_LOCATION_SOURCE );
 	assert_false( sample.source - value );
@@ -305,7 +296,7 @@ static void test_iot_location_source_set_null_sample( void **state )
 	iot_status_t result;
 	const iot_int32_t value = rand() % ( IOT_LOCATION_SOURCE_WIFI + 1 );
 
-	result = iot_location_source_set( NULL, value );
+	result = iot_location_source_set( NULL, (iot_location_source_t)value );
 	assert_int_equal( result, IOT_STATUS_BAD_PARAMETER );
 }
 
@@ -342,10 +333,12 @@ static void test_iot_location_tag_set( void **state )
 
 	memset( &sample, 0, sizeof( struct iot_location ) );
 
+	will_return( __wrap_os_realloc, 1 ); /* for tag */
 	result = iot_location_tag_set( &sample, value );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_true( sample.flags & IOT_FLAG_LOCATION_TAG );
 	assert_false( strcmp( sample.tag, value ) );
+	os_free( sample.tag );
 }
 
 static void test_iot_location_tag_set_empty_tag( void **state )
@@ -356,10 +349,12 @@ static void test_iot_location_tag_set_empty_tag( void **state )
 
 	memset( &sample, 0, sizeof( struct iot_location ) );
 
+	will_return( __wrap_os_realloc, 1 ); /* for tag */
 	result = iot_location_tag_set( &sample, value );
 	assert_int_equal( result, IOT_STATUS_SUCCESS );
 	assert_true( sample.flags & IOT_FLAG_LOCATION_TAG );
 	assert_false( strcmp( sample.tag, value ) );
+	os_free( sample.tag );
 }
 
 static void test_iot_location_tag_set_null_sample( void **state )

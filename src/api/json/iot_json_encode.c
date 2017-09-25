@@ -369,7 +369,7 @@ iot_status_t iot_json_encode_bool(
 	else
 	{
 		iot_bool_t added_parent = IOT_FALSE;
-		const size_t value_len = 5u + ( value ? -1 : 0 );
+		const size_t value_len = (size_t)(5 + ( value ? -1 : 0 ));
 		result = iot_json_encode_key( encoder, key, value_len + 2u, &added_parent );
 		if ( result == IOT_STATUS_SUCCESS )
 		{
@@ -516,7 +516,7 @@ const char *iot_json_encode_dump(
 }
 
 iot_json_encoder_t *iot_json_encode_initialize(
-	char *buf,
+	void *buf,
 	size_t len,
 	unsigned int flags )
 {
@@ -562,7 +562,7 @@ iot_json_encoder_t *iot_json_encode_initialize(
 #if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 			os_memzero( encoder, sizeof( struct iot_json_encoder ) );
 #else /* defined( IOT_JSON_JSMN ) */
-			encoder->buf = buf + sizeof(struct iot_json_encoder);
+			encoder->buf = (char*)buf + sizeof(struct iot_json_encoder);
 			encoder->cur = encoder->buf;
 			encoder->len = len - sizeof(struct iot_json_encoder);
 #endif /* defined( IOT_JSON_JSMN ) */
@@ -691,7 +691,7 @@ iot_status_t iot_json_encode_key(
 
 		if ( result == IOT_STATUS_SUCCESS )
 		{
-			size_t space = encoder->len - (encoder->cur - encoder->buf);
+			size_t space = encoder->len - (size_t)(encoder->cur - encoder->buf);
 			iot_bool_t add_comma = 0;
 			unsigned int indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
 			const unsigned int depth = iot_json_encode_depth( encoder );
@@ -1110,7 +1110,7 @@ iot_status_t iot_json_encode_real(
 				int j;
 				frac *= 10.0;
 				j = (int)(frac);
-				*encoder->cur++ = '0' + j;
+				*encoder->cur++ = '0' + (char)j;
 				frac -= j;
 				++i;
 			} while ( frac > 0.0 && i < JSON_ENCODE_MAX_DECIMALS );
@@ -1254,7 +1254,7 @@ iot_status_t iot_json_encode_struct_end(
 		{
 			unsigned int depth = iot_json_encode_depth( encoder ) - 1u;
 			const unsigned int indent = (encoder->flags >> IOT_JSON_INDENT_OFFSET);
-			size_t space = encoder->len - (encoder->cur - encoder->buf);
+			size_t space = encoder->len - (size_t)(encoder->cur - encoder->buf);
 			iot_json_encode_struct_t i;
 
 			/* ] } */

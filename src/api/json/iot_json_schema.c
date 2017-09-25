@@ -20,10 +20,12 @@
 
 /** @brief value for the field is required (applies to all types) */
 #define IOT_JSON_SCHEMA_FLAG_REQUIRED          0x1  /* 0001 */
+#if 0
 /** @brief whether 'maximum' value is exclusive (only applicable to numbers) */
 #define IOT_JSON_SCHEMA_FLAG_MAXIMUM_EXCLUSIVE 0x4  /* 0100 (number) */
 /** @brief whether 'minimum' value is exclusive (only applicable to numbers) */
 #define IOT_JSON_SCHEMA_FLAG_MINIMUM_EXCLUSIVE 0x8  /* 1000 (number) */
+#endif
 /** @brief whether all items must be unique (only applicable to arrays) */
 #define IOT_JSON_SCHEMA_FLAG_UNIQUE            0x4  /* 0100 (array) */
 /** @brief additional items are accepted (only applicable to arrays & objects) */
@@ -148,7 +150,7 @@ struct iot_json_schema
  *
  * @param[in]      schema              base schema object
  * @param[in]      item                object within the schema
- * @param[in]      keyword             id of the keyword being sought
+ * @param[in]      keyword_id          id of the keyword being sought
  * @param[in,out]  out                 pointer to string found  (NULL if not)
  * @param[in,out]  out_len             length of output string (0u if not found)
  */
@@ -246,6 +248,7 @@ iot_status_t iot_json_schema_allocate_item(
 			max_field_id = IOT_JSON_SCHEMA_KEYWORD_MAXIMUM_LENGTH;
 			min_field_id = IOT_JSON_SCHEMA_KEYWORD_MINIMUM_LENGTH;
 			break;
+		case IOT_JSON_TYPE_BOOL:
 		case IOT_JSON_TYPE_NULL:
 		default:
 			break;
@@ -561,7 +564,7 @@ iot_status_t iot_json_schema_allocate_item(
 		/* handle 'properties' for objects */
 		if ( item_type == IOT_JSON_TYPE_OBJECT )
 		{
-			unsigned int idx = *count - 1u;
+			unsigned int idx = (unsigned int)(*count - 1u);
 			const iot_json_item_t *j_properties;
 			const iot_json_item_t *j_required;
 			const iot_json_item_t *j_deps;
@@ -925,7 +928,7 @@ iot_status_t iot_json_schema_format(
 }
 
 iot_json_schema_t *iot_json_schema_initialize(
-	char *buf,
+	void *buf,
 	size_t len,
 	unsigned int flags )
 {
@@ -940,7 +943,7 @@ iot_json_schema_t *iot_json_schema_initialize(
 	if ( !result && buf && len > sizeof( struct iot_json_schema ) )
 	{
 		result = (iot_json_schema_t*)buf;
-		buf += sizeof( struct iot_json_schema );
+		buf = (char*)buf + sizeof( struct iot_json_schema );
 		len -= sizeof( struct iot_json_schema );
 
 #if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
@@ -1188,7 +1191,7 @@ iot_json_schema_object_iterator_t *
 		{
 			size_t children;
 #ifndef IOT_STACK_ONLY
-			unsigned int p_idx = i - schema->root;
+			unsigned int p_idx = (unsigned int)(i - schema->root);
 #else
 			unsigned int p_idx =
 				((char*)item - (char*)v - sizeof( struct iot_json_validate ))
@@ -1261,7 +1264,7 @@ iot_json_schema_object_iterator_t *
 			const unsigned int p_idx = it->parent;
 			const unsigned int last_child = i->last_child;
 #ifndef IOT_STACK_ONLY
-			unsigned int c_idx = it - schema->root;
+			unsigned int c_idx = (unsigned int)(it - schema->root);
 #else
 			unsigned int c_idx =
 				((char*)iter - (char*)v - sizeof( struct iot_json_validate ))
@@ -1639,7 +1642,7 @@ iot_bool_t iot_json_schema_string(
 							{
 								size_t new_len =
 									msg_len + str_len +
-									(add_comma * 2u);
+									(size_t)(add_comma * 2);
 								error_msg_buf = os_realloc(
 									error_msg_buf, new_len + 1u );
 								if ( error_msg_buf )

@@ -20,12 +20,27 @@
 /** @brief type checksum algorithm supported */
 typedef enum iot_checksum_type
 {
-	IOT_CHECKSUM_TYPE_CRC32,
+	/** @brief use CRC32 checksum algorithm */
+	IOT_CHECKSUM_TYPE_CRC32 = 0,
+	/** @brief use MD5 checksum algorithm */
 	IOT_CHECKSUM_TYPE_MD5,
+	/** @brief use SHA256 checksum algorithm */
 	IOT_CHECKSUM_TYPE_SHA256
 } iot_checksum_type_t;
 
+/**
+ * @brief Calculates the checksum of a file
+ *
+ * @param[in]      lib                 library handle
+ * @param[in]      file                handle to an open file
+ * @param[in]      type                checksum algorithm to use
+ * @param[out]     checksum            checksum output
+ *
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_SUCCESS          on success
+ */
 iot_status_t iot_checksum_file_get(
+	iot_t *lib,
 	os_file_t file,
 	iot_checksum_type_t type,
 	iot_uint64_t *checksum );

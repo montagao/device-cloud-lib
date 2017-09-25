@@ -24,17 +24,11 @@ extern "C" {
  */
 typedef enum iot_proxy_type
 {
-	/**
-	 * @brief UNKNOWN proxy type
-	 */
+	/** @brief UNKNOWN proxy type */
 	IOT_PROXY_UNKNOWN,
-	/**
-	 * @brief SOCKS5 proxy type
-	 */
+	/** @brief SOCKS5 proxy type */
 	IOT_PROXY_SOCKS5,
-	/**
-	 * @brief HTTP proxy type
-	 */
+	/** @brief HTTP proxy type */
 	IOT_PROXY_HTTP,
 } iot_proxy_type_t;
 
@@ -144,7 +138,9 @@ IOT_API IOT_SECTION iot_status_t iot_mqtt_disconnect(
  * @param[in]      mqtt                  MQTT object to disconnect
  * @param[out]     connected             server is connected
  * @param[out]     connection_changed    server connection is changed
- * @param[out]     ts_connection_changed time stamp when server connection was changed
+ * @param[out]     time_stamp_connection_changed
+ *                                       time stamp when server connection was
+ *                                       changed
  *
  * @retval IOT_STATUS_BAD_PARAMETER      invalid parameter passed to the function
  * @retval IOT_STATUS_FAILURE            operation failed

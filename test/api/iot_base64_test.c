@@ -118,7 +118,7 @@ static void test_iot_base64_decode_out_3X_length( void **state )
 	    "mind, that by a perseverance of delight in the continued and "
 	    "indefatigable generation of knowledge, exceeds the short "
 	    "vehemence of any carnal pleasur";
-	size_t result;
+	ssize_t result;
 	size_t out_length;
 	uint8_t *test_out;
 
@@ -149,7 +149,7 @@ static void test_iot_base64_decode_out_3Xplus2_length( void **state )
 	    "mind, that by a perseverance of delight in the continued and "
 	    "indefatigable generation of knowledge, exceeds the short "
 	    "vehemence of any carnal pleasure.";
-	size_t result;
+	ssize_t result;
 	size_t out_length;
 	uint8_t *test_out;
 

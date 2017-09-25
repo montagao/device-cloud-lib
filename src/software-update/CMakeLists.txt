@@ -8,8 +8,6 @@
 #
 set( TARGET "${IOT_TARGET_UPDATE}" )
 
-add_definitions( "-DIOT_STATIC" )
-find_package( Osal REQUIRED )
 set( IOT_HDRS_C ${IOT_HDRS_C}
 	"iot_update_main.h"
 )

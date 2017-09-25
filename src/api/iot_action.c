@@ -799,9 +799,10 @@ iot_status_t iot_action_execute_command(
 				max_time_out = action->time_limit;
 			}
 
-			result = os_system_run_wait( command_with_params,
-				&system_ret, buf, buf_len, max_time_out );
-			if ( result == IOT_STATUS_SUCCESS )
+			result = IOT_STATUS_FAILURE;
+			if ( os_system_run_wait( command_with_params,
+				&system_ret, buf, buf_len, max_time_out )
+				== OS_STATUS_SUCCESS )
 			{
 				if ( !( action->flags & IOT_ACTION_NO_RETURN ) )
 				{
@@ -1744,7 +1745,7 @@ iot_status_t iot_action_request_parameter_iterator(
 		iot_bool_t param_found = IOT_FALSE;
 		iot_uint8_t idx;
 		/* if not specified, return all parameters */
-		if ( type == 0 ) type = ~0;
+		if ( type == 0 ) type = (iot_parameter_type_t)(~0);
 
 		/* find first matching parameter */
 		for ( idx = 0u; idx < request->parameter_count &&
@@ -2007,14 +2008,15 @@ void iot_action_request_set_status(
 			if ( err_len > 0 )
 			{
 				char *err_msg = os_realloc(
-					request->error, err_len + 2u );
+					request->error, (unsigned int)err_len + 2u );
 				if ( err_msg )
 				{
 					request->error = err_msg;
 					va_start( args, err_msg_fmt );
 					os_vsnprintf( request->error,
-						err_len + 1u, err_msg_fmt, args );
-					request->error[ err_len + 1u ] = '\0';
+						(unsigned int)err_len + 1u,
+						err_msg_fmt, args );
+					request->error[ (unsigned int)err_len + 1u ] = '\0';
 				}
 			}
 #endif

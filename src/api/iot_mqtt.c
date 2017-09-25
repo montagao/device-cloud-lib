@@ -534,8 +534,9 @@ iot_status_t iot_mqtt_publish(
 		{
 			os_memcpy( pl, payload, payload_len );
 			result = IOT_STATUS_FAILURE;
-			if ( MQTTClient_publish( mqtt->client, topic, payload_len,
-				pl, qos, retain, &dt ) == MQTTCLIENT_SUCCESS )
+			if ( MQTTClient_publish( mqtt->client, topic,
+				(int)payload_len, pl, qos, retain, &dt )
+				== MQTTCLIENT_SUCCESS )
 			{
 				mid = (int)dt;
 				result = IOT_STATUS_SUCCESS;

@@ -22,6 +22,7 @@
 #include <string.h>
 
 /* mock definitions */
+void *__wrap_os_calloc( size_t nmemb, size_t size );
 os_status_t __wrap_os_directory_current( char *buffer, size_t size );
 os_status_t __wrap_os_directory_create( const char *path, os_millisecond_t timeout );
 os_bool_t __wrap_os_directory_exists( const char *dir_path );
@@ -29,18 +30,18 @@ size_t __wrap_os_env_expand( char *dest, size_t len );
 size_t __wrap_os_env_get( const char *env, char *dest, size_t len );
 os_status_t __wrap_os_file_chown( const char *path, const char *user );
 os_status_t __wrap_os_file_close( os_file_t handle );
+os_bool_t __wrap_os_file_eof( os_file_t stream );
 os_bool_t __wrap_os_file_exists( const char *file_path );
 os_file_t __wrap_os_file_open( const char *file_path, int flags );
 size_t __wrap_os_file_read( void *ptr, size_t size, size_t nmemb, os_file_t stream );
-size_t os_file_write( const void *ptr, size_t size, size_t nmemb, os_file_t stream );
+size_t __wrap_os_file_write( const void *ptr, size_t size, size_t nmemb, os_file_t stream );
 os_bool_t __wrap_os_flush( os_file_t stream );
 int __wrap_os_fprintf( os_file_t stream, const char *format, ... )
 	__attribute__((format(printf,2,3)));
-void *__wrap_os_heap_calloc( size_t nmemb, size_t size );
-void __wrap_os_heap_free( void **ptr );
-void *__wrap_os_heap_malloc( size_t size );
-void *__wrap_os_heap_realloc( void *ptr, size_t size );
+void __wrap_os_free( void *ptr );
+void __wrap_os_free_null( void **ptr );
 os_status_t __wrap_os_make_path( char *path, size_t len, ... );
+void *__wrap_os_malloc( size_t size );
 void __wrap_os_memcpy( void *dest, const void *src, size_t len );
 void __wrap_os_memmove( void *dest, const void *src, size_t len );
 void __wrap_os_memset( void *dest, int c, size_t len );
@@ -49,6 +50,7 @@ os_bool_t __wrap_os_path_is_absolute( const char *path );
 os_status_t __wrap_os_path_executable( char *path, size_t size );
 int __wrap_os_printf( const char *format, ... )
 	__attribute__((format(printf,1,2)));
+void *__wrap_os_realloc( void *ptr, size_t size );
 int __wrap_os_snprintf( char *str, size_t size, const char *format, ... )
 	__attribute__((format(printf,3,4)));
 os_status_t __wrap_os_socket_initialize( void );
@@ -108,6 +110,14 @@ os_status_t __wrap_os_uuid_generate( os_uuid_t *uuid );
 os_status_t __wrap_os_uuid_to_string_lower( os_uuid_t *uuid, char *dest, size_t len );
 
 /* mock functions */
+void *__wrap_os_calloc( size_t nmemb, size_t size )
+{
+	void* result = mock_ptr_type( void* );
+	if ( result )
+		result = test_calloc( nmemb, size );
+	return result;
+}
+
 os_status_t __wrap_os_directory_create( const char *path, os_millisecond_t timeout )
 {
 	return OS_STATUS_SUCCESS;
@@ -167,6 +177,11 @@ os_status_t __wrap_os_file_close( os_file_t handle )
 	return OS_STATUS_SUCCESS;
 }
 
+os_bool_t __wrap_os_file_eof( os_file_t stream )
+{
+	return mock_type( os_bool_t );
+}
+
 os_bool_t __wrap_os_file_exists( const char *file_path )
 {
 	return mock_type( os_bool_t );
@@ -182,7 +197,7 @@ size_t __wrap_os_file_read( void *ptr, size_t size, size_t nmemb, os_file_t stre
 	return size * nmemb;
 }
 
-size_t os_file_write( const void *ptr, size_t size, size_t nmemb, os_file_t stream )
+size_t __wrap_os_file_write( const void *ptr, size_t size, size_t nmemb, os_file_t stream )
 {
 	return size * nmemb;
 }
@@ -192,15 +207,12 @@ os_bool_t __wrap_os_flush( os_file_t stream )
 	return OS_TRUE;
 }
 
-void *__wrap_os_heap_calloc( size_t nmemb, size_t size )
+void __wrap_os_free( void *ptr )
 {
-	void* result = mock_ptr_type( void* );
-	if ( result )
-		result = test_calloc( nmemb, size );
-	return result;
+	test_free( ptr );
 }
 
-void __wrap_os_heap_free( void **ptr )
+void __wrap_os_free_null( void **ptr )
 {
 	/* ensure this function is called meeting pre-requirements */
 	if ( ptr && *ptr )
@@ -210,15 +222,7 @@ void __wrap_os_heap_free( void **ptr )
 	}
 }
 
-void *__wrap_os_heap_malloc( size_t size )
-{
-	void* result = mock_ptr_type( void* );
-	if ( result )
-		result = test_malloc( size );
-	return result;
-}
-
-void *__wrap_os_heap_realloc( void *ptr, size_t size )
+void *__wrap_os_realloc( void *ptr, size_t size )
 {
 	void* result = mock_ptr_type( void* );
 	if ( result )
@@ -233,6 +237,14 @@ os_status_t __wrap_os_make_path( char *path, size_t len, ... )
 {
 	strncpy( path, mock_ptr_type( char * ), len );
 	return OS_STATUS_SUCCESS;
+}
+
+void *__wrap_os_malloc( size_t size )
+{
+	void* result = mock_ptr_type( void* );
+	if ( result )
+		result = test_malloc( size );
+	return result;
 }
 
 void __wrap_os_memcpy( void *dest, const void *src, size_t len )
@@ -273,7 +285,9 @@ void __wrap_os_memmove( void *dest, const void *src, size_t len )
 		while ( len > 0u )
 		{
 			*c_dest = *c_src;
-			--c_dest, --c_src, --len;
+			--c_dest;
+			--c_src;
+			--len;
 		}
 	}
 	else
@@ -282,7 +296,9 @@ void __wrap_os_memmove( void *dest, const void *src, size_t len )
 		while ( len > 0u )
 		{
 			*c_dest = *c_src;
-			++c_dest, ++c_src, --len;
+			++c_dest;
+			++c_src;
+			--len;
 		}
 	}
 }
@@ -298,7 +314,8 @@ void __wrap_os_memset( void *dest, int c, size_t len )
 	while ( len > 0u )
 	{
 		*c_dest = (char)c;
-		++c_dest, --len;
+		++c_dest;
+		--len;
 	}
 }
 
@@ -313,7 +330,8 @@ void __wrap_os_memzero( void *dest, size_t len, os_bool_t secure )
 	while ( len > 0u )
 	{
 		*c_dest = '\0';
-		++c_dest, --len;
+		++c_dest;
+		--len;
 	}
 }
 
@@ -350,7 +368,10 @@ int __wrap_os_strcasecmp( const char *s1, const char *s2 )
 
 	/* perform strcasecmp */
 	while( ( *s1 ) && ( *s1 == *s2 || *s1 + offset == *s2 || *s1 == *s2 + offset ) )
-		s1++, s2++;
+	{
+		s1++;
+		s2++;
+	}
 	return *( const unsigned char* )s1 - *( const unsigned char* )s2;
 }
 
@@ -381,7 +402,10 @@ int __wrap_os_strcmp( const char *s1, const char *s2 )
 
 	/* perform strcmp */
 	while( ( *s1 ) && ( *s1 == *s2 ) )
-		s1++, s2++;
+	{
+		s1++;
+		s2++;
+	}
 	return *( const unsigned char* )s1 - *( const unsigned char* )s2;
 }
 
@@ -393,7 +417,10 @@ size_t __wrap_os_strlen( const char *s )
 	assert_non_null( s );
 
 	while ( *s != '\0' )
-		++result, ++s;
+	{
+		++result;
+		++s;
+	}
 	return result;
 }
 
@@ -407,7 +434,11 @@ int __wrap_os_strncmp( const char *s1, const char *s2, size_t len )
 
 	/* perform strncmp */
 	while( ( *s1 ) && ( *s1 == *s2 ) && ( i < len ) )
-		s1++, s2++, i++;
+	{
+		s1++;
+		s2++;
+		i++;
+	}
 	return *( const unsigned char* )s1 - *( const unsigned char* )s2;
 }
 

@@ -179,14 +179,18 @@ iot_status_t iot_json_decode_array_at(
 			unsigned int idx = 0u;
 			unsigned int p_idx = 0u;
 
-			p_idx = cur - decoder->tokens;
+			p_idx = (unsigned int)(cur - decoder->tokens);
 			idx = p_idx;
 			++cur;
 			++idx;
 			while ( obj == NULL && idx < decoder->objs )
 			{
+#ifdef JSMN_PARENT_LINKS
 				if ( cur->parent == (int)p_idx )
 					++array_idx;
+#else
+				/** @todo make this work without parent links */
+#endif /* ifdef JSMN_PARENT_LINKS */
 
 				if ( (size_t)array_idx == index )
 					obj = cur;
@@ -290,11 +294,11 @@ const iot_json_array_iterator_t *iot_json_decode_array_iterator_next(
 		unsigned int idx;
 		const int obj_end_pos = ((const jsmntok_t*)item)->end;
 #ifdef JSMN_PARENT_LINKS
-		const int parent = (const jsmntok_t *)item - decoder->tokens;
+		const int parent = (int)((const jsmntok_t *)item - decoder->tokens);
 #endif /* ifdef JSMN_PARENT_LINKS */
 
 		/* get index of current item */
-		idx = cur - decoder->tokens;
+		idx = (unsigned int)(cur - decoder->tokens);
 
 		++cur;
 		++idx;
@@ -337,7 +341,7 @@ size_t iot_json_decode_array_size(
 #else /* defined( IOT_JSON_JSMN )*/
 		const jsmntok_t *cur = (const jsmntok_t*)item;
 		if ( cur->type == JSMN_ARRAY )
-			result = cur->size;
+			result = (size_t)cur->size;
 #endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
@@ -394,7 +398,7 @@ iot_status_t iot_json_decode_bool(
 }
 
 iot_json_decoder_t *iot_json_decode_initialize(
-	char *buf,
+	void *buf,
 	size_t len,
 	unsigned int flags )
 {
@@ -431,16 +435,16 @@ iot_json_decoder_t *iot_json_decode_initialize(
 		decoder->flags = flags;
 		decoder->j_root = NULL;
 #else /* defined( IOT_JSON_JSMN ) */
-		const unsigned int max_objs =
+		const size_t max_objs =
 			(len - sizeof(struct iot_json_decoder)) /
 				sizeof(jsmntok_t);
 
 		if ( additional_size == 0u || max_objs >= 1u )
 		{
 			unsigned int i;
-			decoder = (struct iot_json_decoder *)buf;
+			decoder = (struct iot_json_decoder *)(void*)buf;
 			decoder->objs = 0u;
-			decoder->size = max_objs;
+			decoder->size = (unsigned int)max_objs;
 			decoder->flags = flags;
 			decoder->buf = NULL;
 			decoder->len = 0u;
@@ -448,7 +452,7 @@ iot_json_decoder_t *iot_json_decode_initialize(
 			if ( max_objs )
 			{
 				jsmntok_t *tok;
-				tok = (jsmntok_t *)( buf + sizeof(struct iot_json_decoder) );
+				tok = (jsmntok_t *)(void*)( (char*)buf + sizeof(struct iot_json_decoder) );
 				decoder->tokens = tok;
 				for ( i = 0u; i < max_objs; ++i )
 				{
@@ -626,25 +630,28 @@ const iot_json_item_t *iot_json_decode_object_find_len(
 		{
 			unsigned int idx = 0;
 			unsigned int p_idx = 0u;
-			p_idx = cur - decoder->tokens;
+			p_idx = (unsigned int)(cur - decoder->tokens);
 			idx = p_idx;
 			++cur;
 			++idx;
 			while ( result == NULL && idx < decoder->objs )
 			{
-				if ( cur->parent == (int)p_idx &&
+				if (
+#ifdef JSMN_PARENT_LINKS
+					cur->parent == (int)p_idx &&
+#endif /* ifdef JSMN_PARENT_LINKS */
 					cur->type == JSMN_STRING &&
 					cur->size == 1 )
 				{
 					/* compare key */
 					size_t k = 0u;
-					const size_t k_len = cur->end - cur->start;
+					const size_t k_len = (size_t)(cur->end - cur->start);
 					if ( key_len == 0u )
 						key_len = k_len;
 					else if ( key_len > k_len )
 						key_len = k_len;
 					while ( k < key_len &&
-						decoder->buf[cur->start + k] == key[k] )
+						decoder->buf[(size_t)(cur->start) + k] == key[k] )
 						++k;
 
 					/* match found */
@@ -730,7 +737,7 @@ iot_status_t iot_json_decode_object_iterator_key(
 		if ( cur->type == JSMN_STRING && cur->size == 1 )
 		{
 			k = &decoder->buf[cur->start];
-			k_len = cur->end - cur->start;
+			k_len = (size_t)(cur->end - cur->start);
 			result = IOT_STATUS_SUCCESS;
 		}
 #endif /* defined( IOT_JSON_JSMN ) */
@@ -771,11 +778,11 @@ const iot_json_object_iterator_t *iot_json_decode_object_iterator_next(
 		unsigned int idx;
 		const int obj_end_pos = ((const jsmntok_t*)item)->end;
 #ifdef JSMN_PARENT_LINKS
-		const int parent = (const jsmntok_t *)item - decoder->tokens;
+		const int parent = (int)((const jsmntok_t *)item - decoder->tokens);
 #endif /* ifdef JSMN_PARENT_LINKS */
 
 		/* get index of current item */
-		idx = cur - decoder->tokens;
+		idx = (unsigned int)(cur - decoder->tokens);
 
 		++cur;
 		++idx;
@@ -850,7 +857,7 @@ size_t iot_json_decode_object_size(
 #else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = (const jsmntok_t *)item;
 		if ( cur->type == JSMN_OBJECT )
-			result = cur->size;
+			result = (size_t)cur->size;
 #endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
@@ -1103,7 +1110,7 @@ iot_status_t iot_json_decode_string(
 		if ( cur->type == JSMN_STRING )
 		{
 			v = &decoder->buf[cur->start];
-			v_len = cur->end - cur->start;
+			v_len = (size_t)(cur->end - cur->start);
 			result = IOT_STATUS_SUCCESS;
 		}
 #endif /* defined( IOT_JSON_JSMN ) */

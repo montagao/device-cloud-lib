@@ -40,11 +40,12 @@ iot_status_t app_path_create(
 
 	token = os_strtok( path, "/\\" );
 
-	while( token != NULL )
+	while( token != NULL && result == IOT_STATUS_SUCCESS )
 	{
 		size_t offset = os_strlen( directory );
-		os_snprintf( directory + offset, 
-			APP_PATH_CREATE_MAX_LEN - offset, "%s%c", token, OS_DIR_SEP );
+		os_snprintf( directory + offset,
+			APP_PATH_CREATE_MAX_LEN - offset,
+			"%s%c", token, OS_DIR_SEP );
 		directory[APP_PATH_CREATE_MAX_LEN] = '\0';
 
 		token = os_strtok( NULL, "/\\" );
@@ -52,10 +53,9 @@ iot_status_t app_path_create(
 		if( token != NULL && *token != '\0' &&
 			os_directory_exists( directory ) == IOT_FALSE )
 		{
-			result = os_directory_create( directory, timeout );
-
-			if( result != IOT_STATUS_SUCCESS )
-				break;
+			if ( os_directory_create( directory, timeout ) !=
+				OS_STATUS_SUCCESS )
+				result = IOT_STATUS_FAILURE;
 		}
 	}
 	return result;
@@ -261,40 +261,8 @@ size_t app_path_which( char *path, size_t path_max, const char *cur_dir,
 	return result;
 }
 
-iot_status_t app_path_install_directory_get(
-	char *path, const size_t size )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( path )
-	{
-		char exe_dir[ PATH_MAX + 1u ];
-		os_memzero( path, size );
-		result = app_path_executable_directory_get( exe_dir, PATH_MAX );
-		if ( result == IOT_STATUS_SUCCESS )
-		{
-			const size_t bin_dir_len = os_strlen( IOT_BIN_DIR );
-			const size_t exe_dir_len = os_strlen( exe_dir );
-			result = IOT_STATUS_FAILURE;
-			if ( exe_dir_len >= bin_dir_len )
-			{
-				size_t path_len = exe_dir_len - bin_dir_len;
-				if ( os_strncmp( &exe_dir[ path_len ],
-					IOT_BIN_DIR, bin_dir_len ) == 0 &&
-					path_len < size )
-				{
-					os_strncpy( path, exe_dir, path_len );
-					if ( path[ path_len - 1u ] == OS_DIR_SEP )
-						path[ path_len - 1u ] = '\0';
-					result = IOT_STATUS_SUCCESS;
-				}
-			}
-		}
-	}
-	return result;
-}
-
 iot_status_t app_path_executable_directory_get(
-	char *path,	const size_t size )
+	char *path, const size_t size )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( path )
@@ -302,15 +270,15 @@ iot_status_t app_path_executable_directory_get(
 		char exe_path[ PATH_MAX + 1u ];
 		os_memzero( exe_path, PATH_MAX + 1u );
 		os_memzero( path, size );
-		result = os_path_executable( exe_path, PATH_MAX );
-		if ( result == IOT_STATUS_SUCCESS )
+		result = IOT_STATUS_FAILURE;
+		if ( os_path_executable( exe_path, PATH_MAX ) ==
+			OS_STATUS_SUCCESS )
 		{
 			char *dir_sep = NULL;
-			result = IOT_STATUS_FAILURE;
 			dir_sep = os_strrchr( exe_path, OS_DIR_SEP );
 			if ( dir_sep )
 			{
-				size_t dir_size = dir_sep - exe_path;
+				size_t dir_size = (size_t)(dir_sep - exe_path);
 				if ( dir_size < size )
 				{
 					os_strncpy( path, exe_path, dir_size );

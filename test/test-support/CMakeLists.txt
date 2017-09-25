@@ -8,7 +8,6 @@
 #
 
 include( TestSupport )
-#find_package( Jansson )
 
 add_test_library( test-support
 	"test_support.c"

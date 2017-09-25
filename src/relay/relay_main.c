@@ -45,8 +45,10 @@
 /** @brief Log timestamp max length */
 #define RELAY_LOG_TIMESTAMP_LEN    16u
 
+#if 0
 /** @brief How long to wait (in ms) when creating a directory before timing out */
 #define RELAY_DIR_CREATE_TIMEOUT   500u
+#endif
 
 /* FIXME: read this from iot.cfg */
 #ifdef __ANDROID__
@@ -218,7 +220,7 @@ static const char *const RELAY_LOG_LEVEL_TEXT[] =
  * @retval EXIT_FAILURE      application encountered an error
  */
 static int relay_client( const char *url,
-	const char *host, unsigned int port, iot_bool_t udp, iot_bool_t bind,
+	const char *host, os_uint16_t port, iot_bool_t udp, iot_bool_t bind,
 	const char *config_file, iot_bool_t insecure, iot_bool_t verbose,
 	const char * notification_file );
 
@@ -295,7 +297,7 @@ extern iot_bool_t TO_QUIT;
 iot_bool_t TO_QUIT = IOT_FALSE;
 
 /** @brief File/stream to use for logging */
-os_file_t LOG_FILE = NULL;
+static os_file_t LOG_FILE = NULL;
 
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 7 )
 /**
@@ -322,9 +324,8 @@ static const struct lws_extension EXTS[] = {
  * that the device manager and return a status to the cloud.  This
  * will help debug connectivity issues */
 int relay_client( const char *url,
-	const char *host, unsigned int port, iot_bool_t udp, iot_bool_t bind,
-	const char *config_file,
-iot_bool_t insecure, iot_bool_t verbose,
+	const char *host, os_uint16_t port, iot_bool_t udp, iot_bool_t bind,
+	const char *config_file, iot_bool_t insecure, iot_bool_t verbose,
 	const char *notification_file )
 {
 	os_socket_t *socket = NULL;
@@ -368,7 +369,7 @@ iot_bool_t insecure, iot_bool_t verbose,
 				   LLL_DEBUG | LLL_CLIENT, &relay_lws_log );
 	else
 		lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE, &relay_lws_log );
-	if ( os_socket_open( &socket, host, port, packet_type, 0, 0u )
+	if ( os_socket_open( &socket, host, (os_uint16_t)port, packet_type, 0, 0u )
 		== OS_STATUS_SUCCESS )
 	{
 		if ( verbose != IOT_FALSE )
@@ -393,12 +394,12 @@ iot_bool_t insecure, iot_bool_t verbose,
 				}
 				else
 					relay_log( IOT_LOG_FATAL,
-						"Failed to accept incoming connection.  Reason: %s\n",
-						iot_error(retval) );
+						"Failed to accept incoming connection.  Reason: %s",
+						iot_error(IOT_STATUS_FAILURE) );
 			}
 			else
-				relay_log( IOT_LOG_FATAL, "Failed to bind to socket; Error %s",
-					iot_error(retval) );
+				relay_log( IOT_LOG_FATAL, "Failed to bind to socket; Reason: %s",
+					iot_error(IOT_STATUS_FAILURE) );
 		}
 		else
 		{
@@ -417,7 +418,7 @@ iot_bool_t insecure, iot_bool_t verbose,
 	{
 		char cert_path[ PATH_MAX + 1u ];
 		/*struct app_config* conf;*/
-		struct lws_context *context;
+		struct lws_context *context = NULL;
 		struct lws_context_creation_info context_ci;
 		struct lws_protocols protocols[ 2u ];
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 3 )
@@ -757,6 +758,10 @@ int relay_service_callback( struct lws *wsi,
 #endif
 	if ( wsd )
 	{
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif /* ifdef __clang__ */
 		switch ( reason )
 		{
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
@@ -795,8 +800,8 @@ int relay_service_callback( struct lws *wsi,
 					else
 					{
 						relay_log( IOT_LOG_FATAL,
-							"Failed to connect to socket.  Reason:%s\n",
-							iot_error( retval ) );
+							"Failed to connect to socket.  Reason: %s",
+							iot_error( IOT_STATUS_FAILURE ) );
 						result = -1;
 						TO_QUIT = IOT_TRUE;
 					}
@@ -840,7 +845,7 @@ int relay_service_callback( struct lws *wsi,
 						os_memmove(
 							&wsd->tx_buffer[ LWS_SEND_BUFFER_PRE_PADDING ],
 							&wsd->tx_buffer[ LWS_SEND_BUFFER_PRE_PADDING + write_result ],
-							wsd->tx_buffer_len - write_result
+							wsd->tx_buffer_len - (size_t)write_result
 						);
 					wsd->tx_buffer_len -= (size_t)write_result;
 				}
@@ -853,6 +858,9 @@ int relay_service_callback( struct lws *wsi,
 			result = 0;
 			break;
 		}
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif /* ifdef __clang__ */
 	}
 	return result;
 }
@@ -998,14 +1006,14 @@ int relay_main( int argc, char *argv[] )
 			"remote relay address" );
 	else if ( result == EXIT_SUCCESS )
 	{
-		unsigned int port;
+		os_uint16_t port;
 		const char *const url = argv[url_pos];
 		char host_resolved[ RELAY_MAX_ADDRESS_LEN + 1u ];
 
 		if ( host == NULL || *host == '\0' )
 			host = RELAY_DEFAULT_HOST;
 
-		port = (unsigned int)os_atoi( port_str );
+		port = (os_uint16_t)os_atoi( port_str );
 
 		if( log_file_path )
 		{

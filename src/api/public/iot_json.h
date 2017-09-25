@@ -211,7 +211,7 @@ IOT_API IOT_SECTION size_t iot_json_decode_array_size(
  *
  * @param[in]      decoder             JSON decoder object
  * @param[in]      item                JSON boolean
- * @param[in,out]  out                 returned boolean value
+ * @param[in,out]  value               returned boolean value
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_BAD_REQUEST      @c item does not point to a JSON boolean
@@ -242,7 +242,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_bool(
  * @see iot_json_decode_terminate
  */
 IOT_API IOT_SECTION iot_json_decoder_t *iot_json_decode_initialize(
-	char *buf,
+	void *buf,
 	size_t len,
 	unsigned int flags );
 
@@ -423,7 +423,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_decode_object_iterator_value(
  * @brief Returns the number of elements in an object
  *
  * @param[in]      decoder             JSON decoder object
- * @param[in]      item                JSON object
+ * @param[in]      object              JSON object
  *
  * @return Returns the number of elements in an array, or 0 if object is NULL
  * or not a JSON object
@@ -645,7 +645,7 @@ IOT_API IOT_SECTION const char *iot_json_encode_dump(
  * @see iot_json_encode_terminate
  */
 IOT_API IOT_SECTION iot_json_encoder_t *iot_json_encode_initialize(
-	char *buf,
+	void *buf,
 	size_t len,
 	unsigned int flags );
 

@@ -32,13 +32,17 @@
 
 /* Note: for backwards compatibility, register under two services instead of one
  */
+#if 0
 /** @brief Name of the Restore Factory Images action */
 #define DEVICE_MANAGER_RESTORE_FACTORY_IMAGES  "Restore Factory Images"
+#endif
 /** @brief Name of the Dump Log Files action*/
 #define DEVICE_MANAGER_DUMP_LOG_FILES          "Dump Log Files"
 
+#if 0
 /** @brief Name of the decommission device action */
 #define DEVICE_MANAGER_DECOMMISSION_DEVICE     "decommission_device"
+#endif
 /** @brief Name of the device shutdown action*/
 #define DEVICE_MANAGER_DEVICE_SHUTDOWN         "device_shutdown"
 /** @brief Name of the device reboot action*/
@@ -74,9 +78,9 @@
 #	define COMMAND_PREFIX                      ""
 #endif
 
-/** @brief IoT device manager service ID */
-#define IOT_DEVICE_MANAGER_ID         IOT_DEVICE_MANAGER_TARGET
 #ifdef _WIN32
+	/** @brief IoT device manager service ID */
+#	define IOT_DEVICE_MANAGER_ID         IOT_DEVICE_MANAGER_TARGET
 	/** @brief Remote Desktop service ID on Windows */
 #	define IOT_REMOTE_DESKTOP_ID  "TermService"
 #endif
@@ -541,13 +545,16 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 			out_files[1] = os_file_open(log_file,OS_CREATE | OS_WRITE);
 		}
 
-		IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login params host=%s, protocol=%s, url=%s, debug-mode=%d\n",
+		IOT_LOG( iot_lib, IOT_LOG_TRACE,
+			"Remote login params host=%s, protocol=%s, url=%s, "
+			"debug-mode=%d\n",
 			host_in, protocol_in, url_in, debug_mode );
 
 		if ( host_in && *host_in != '\0'
 		     && protocol_in && *protocol_in != '\0'
 		     && url_in && *url_in != '\0' )
 		{
+			os_status_t run_status;
 
 			os_snprintf( &relay_cmd[ relay_cmd_len ],
 				PATH_MAX,
@@ -558,14 +565,18 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 			IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login cmd:\n%s\n",
 				relay_cmd );
 
-			result =  os_system_run( relay_cmd, NULL, out_files);
-			printf("os_system_run returned %d\n", result);
-			os_time_sleep(10, IOT_FALSE);
+			run_status = os_system_run( relay_cmd, NULL, out_files);
+			IOT_LOG( iot_lib, IOT_LOG_TRACE,
+				"System Run returned %d\n", result );
+			os_time_sleep( 10, IOT_FALSE );
 
 			/* remote login protocol requires us to return
-			 * success, or it will not open the cloud side relay connection.  So,
-			 * check for invoked here and return success */
-			if ( result == IOT_STATUS_INVOKED )
+			 * success, or it will not open the cloud side relay
+			 * connection.  So, check for invoked here and return
+			 * success */
+			result = IOT_STATUS_FAILURE;
+			if ( run_status == OS_STATUS_SUCCESS ||
+			     run_status == OS_STATUS_INVOKED )
 				result = IOT_STATUS_SUCCESS;
 
 		}
@@ -1034,16 +1045,7 @@ iot_status_t device_manager_initialize( const char *app_path,
 		iot_log_level_set_string( iot_lib, device_manager->log_level );
 		iot_log_callback_set( iot_lib, &app_log, NULL );
 
-		printf("Example Log Levels:\n");
-		IOT_LOG( iot_lib, IOT_LOG_FATAL, "%s", "  * Example of IOT_LOG_FATAL");
-		IOT_LOG( iot_lib, IOT_LOG_WARNING, "%s", "  * Example of IOT_LOG_WARNING");
-		IOT_LOG( iot_lib, IOT_LOG_TRACE, "%s", "  * Example of IOT_LOG_TRACE");
-		IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "  * Example of IOT_LOG_INFO");
-		IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s", "  * Example of IOT_LOG_ERROR");
-		printf("\n");
-
-
-			/* Find the absolute path to where the application resides */
+		/* Find the absolute path to where the application resides */
 		os_strncpy( device_manager->app_path, app_path, PATH_MAX );
 		p_path = os_strrchr( device_manager->app_path,
 			OS_DIR_SEP );
@@ -1143,7 +1145,7 @@ iot_status_t device_manager_action_enable(
 
 #ifndef _WRS_KERNEL
 
-const char *const action_cfg_names[] ={
+static const char *const action_cfg_names[] ={
 	"software_update",
 	"file_transfers",
 	"decommission_device",
@@ -1177,19 +1179,21 @@ static iot_status_t device_manager_check_service_listening( int port_number )
 	size_t out_len[2u] = { buf_sz, buf_sz };
 	int retval = -1;
 
-	printf("  * Checking for available remote login ports...\n");
+	IOT_LOG( NULL, IOT_LOG_INFO, "%s",
+		"  * Checking for available remote login ports..." );
 	os_snprintf( cmd, MAX_CMD_LEN, CMD_TEMPLATE, port_number);
 	if ( os_system_run_wait( cmd, &retval, out_buf,
 		out_len, 0u ) == OS_STATUS_SUCCESS &&
 			retval == 0 )
 	{
 		result = IOT_STATUS_SUCCESS;
-		printf("  * Protocol port %d is listening\n", port_number);
+		IOT_LOG( NULL, IOT_LOG_INFO,
+			"  * Protocol port %d is listening", port_number );
 	}
 	else
-		printf("Error: No service for port %d. "
-			"netstat: stdout %s "
-			"stderr %s retVal %d\n",
+		IOT_LOG( NULL, IOT_LOG_ERROR,
+			"No service for port %d. netstat: stdout: %s, "
+			"stderr: %s, return code: %d",
 			port_number, buf_std, buf_err, retval );
 	return result;
 }
@@ -1200,7 +1204,8 @@ iot_status_t device_manager_config_read(
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 
-	printf("  * Checking for configuration file %s ...\n",
+	IOT_LOG( NULL, IOT_LOG_INFO,
+		"  * Checking for configuration file %s ...",
 		IOT_DEFAULT_FILE_CONFIG );
 	if ( device_manager_info && app_path )
 	{
@@ -1227,8 +1232,9 @@ iot_status_t device_manager_config_read(
 			PATH_MAX );
 		os_env_expand( device_manager_info->runtime_dir, PATH_MAX );
 		device_manager_info->runtime_dir[PATH_MAX] = '\0';
-		printf("  * Setting default runtime dir to %s\n",
-			device_manager_info->runtime_dir);
+		IOT_LOG( NULL, IOT_LOG_INFO,
+			"  * Setting default runtime dir to %s",
+			device_manager_info->runtime_dir );
 
 		/* set the default value for remote login.  Can be
 		 * overriden in the iot.cfg file. */
@@ -1360,8 +1366,8 @@ iot_status_t device_manager_config_read(
 		if ( !config_file || config_file[0] == '\0' )
 			config_file = default_iot_cfg_path;
 
-		printf( "  * Reading config file %s\n", config_file );
-
+		IOT_LOG( NULL, IOT_LOG_INFO,
+			"  * Reading config file %s", config_file );
 		fd = os_file_open( config_file, OS_READ );
 		if ( fd != OS_FILE_INVALID )
 		{
@@ -1382,7 +1388,6 @@ iot_status_t device_manager_config_read(
 					json_string[ json_size ] = '\0';
 					if ( json_size > 0 )
 						result = IOT_STATUS_SUCCESS;
-					/*printf("  * Read %s = %s\n", config_file, json_string);*/
 				}
 			}
 			/* now parse the json string read above */
@@ -1407,7 +1412,8 @@ iot_status_t device_manager_config_read(
 							"actions_enabled" );
 
 					/* handle all the boolean default actions */
-					printf("\nDefault Configuration:\n");
+					IOT_LOG( NULL, IOT_LOG_INFO, "%s",
+						"Default Configuration:" );
 					for ( i = 0; j_actions_enabled && action_cfg_names[i];++i)
 					{
 						iot_bool_t enabled = IOT_FALSE;
@@ -1416,14 +1422,17 @@ iot_status_t device_manager_config_read(
 						iot_json_decode_bool(json, j_action, &enabled );
 						if ( enabled == IOT_TRUE )
 						{
-							printf("  * %s is enabled\n", action_cfg_names[i]);
+							IOT_LOG( NULL, IOT_LOG_INFO,
+								"  * %s is enabled", action_cfg_names[i] );
 							action_mask |= (1<<i);
 						}
 						else
-							printf("  * %s is disabled\n", action_cfg_names[i]);
+							IOT_LOG( NULL, IOT_LOG_INFO,
+								"  * %s is disabled", action_cfg_names[i] );
 					}
-					printf("  * actions enabled mask = 0x%x\n", action_mask);
-					device_manager_info->enabled_actions = action_mask;
+					IOT_LOG( NULL, IOT_LOG_INFO,
+						"  * actions enabled mask = 0x%x", action_mask );
+					device_manager_info->enabled_actions = (iot_uint16_t)action_mask;
 
 					/* get the runtime dir */
 					j_action_top = iot_json_decode_object_find(
@@ -1441,12 +1450,14 @@ iot_status_t device_manager_config_read(
 
 						os_env_expand( device_manager_info->runtime_dir, PATH_MAX );
 						device_manager_info->runtime_dir[ temp_len ] = '\0';
-						printf("  * runtime dir = %s\n",device_manager_info->runtime_dir );
+						IOT_LOG( NULL, IOT_LOG_INFO,
+							"  * runtime dir = %s", device_manager_info->runtime_dir );
 						if ( os_directory_create(
 							device_manager_info->runtime_dir,
 							DIRECTORY_CREATE_MAX_TIMEOUT )
 						!= OS_STATUS_SUCCESS )
-							printf( "Failed to create %s ", device_manager_info->runtime_dir );
+							IOT_LOG( NULL, IOT_LOG_INFO,
+								"Failed to create %s ", device_manager_info->runtime_dir );
 					}
 
 					/* get the log level */
@@ -1462,13 +1473,14 @@ iot_status_t device_manager_config_read(
 							temp_len = PATH_MAX;
 						os_strncpy( device_manager_info->log_level, temp, temp_len );
 						device_manager_info->log_level[ temp_len ] = '\0';
-						printf("  * log_level = %s\n\n", device_manager_info->log_level );
+						IOT_LOG( NULL, IOT_LOG_INFO,
+							"  * log_level = %s",
+							device_manager_info->log_level );
 					}
-
-
 				}
 				else
-					printf("error %s\n", err_msg);
+					IOT_LOG( NULL, IOT_LOG_ERROR,
+						"%s", err_msg );
 			}
 		}
 		os_file_close( fd );
@@ -1504,9 +1516,12 @@ static iot_status_t device_manager_make_control_command( char *full_path,
 			result = IOT_STATUS_FULL;
 #endif /* defined( _WIN32 ) */
 		if ( result == IOT_STATUS_SUCCESS )
-			result = os_make_path( ptr, max_len - offset,
+		{
+			if ( os_make_path( ptr, max_len - offset,
 				device_manager->app_path,
-				IOT_CONTROL_TARGET, NULL );
+				IOT_CONTROL_TARGET, NULL ) == OS_STATUS_SUCCESS )
+				result = IOT_STATUS_SUCCESS;
+		}
 		if ( result == IOT_STATUS_SUCCESS )
 		{
 			full_path[ max_len - 1u ] = '\0';
@@ -1591,7 +1606,7 @@ int device_manager_main( int argc, char *argv[] )
 		{ 0, NULL, 0, NULL, NULL, NULL, 0u }
 	};
 
-	printf("Starting Device Manager\n");
+	IOT_LOG( NULL, IOT_LOG_INFO, "%s", "Starting Device Manager" );
 	result = app_arg_parse(args, argc, argv, NULL);
 	if (result == EXIT_FAILURE || app_arg_count(args, 'h', NULL))
 		app_arg_usage(args, 36u, argv[0],

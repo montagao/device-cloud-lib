@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Wind River Systems, Inc. All Rights Reserved.
+# Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
 #
 # The right to copy, distribute or otherwise make use of this software may
 # be licensed only pursuant to the terms of an applicable Wind River license
@@ -11,10 +11,6 @@ set( TARGET "${IOT_DEVICE_MANAGER_TARGET}" )
 set( TARGET_DESCRIPTION "${IOT_DEVICE_MANAGER_DESCRIPTION}" )
 
 set( IOT_DEVICE_MANAGER_DEST_COMPONENT "core" )
-find_package( Osal REQUIRED )
-find_package( Jsmn REQUIRED )
-
-#add_subdirectory( "scripts" )
 
 #if ( WIN32 )
 	#set( PROJECT_ICON ${PROJECT_BUILD_WIN_PATH}/iot.ico )
@@ -26,6 +22,7 @@ find_package( Jsmn REQUIRED )
 	#list( APPEND IOT_VERSION_FILES ${CMAKE_CURRENT_BINARY_DIR}/version.rc )
 #endif()
 
+# Header files
 set( IOT_HDRS_C ${IOT_HDRS_C}
 	"device_manager_main.h"
 	"device_manager_file.h"
@@ -34,12 +31,25 @@ set( IOT_HDRS_C ${IOT_HDRS_C}
 	"device_manager_ota.h"
 )
 
+# Source files
 set( IOT_SRCS_C ${IOT_SRCS_C}
 	"device_manager.c"
 	"device_manager_main.c"
 	"device_manager_ota.c"
 )
 
+# System include directories
+include_directories( SYSTEM
+	${JSMN_INCLUDE_DIR}
+)
+
+# Local include directories
+include_directories(
+	"../src/api"
+	"../src/utilities"
+)
+
+# Executable files
 add_executable( ${TARGET}
 	${IOT_HDRS_C}
 	${IOT_HDRS_CXX}
@@ -47,35 +57,25 @@ add_executable( ${TARGET}
 	${IOT_SRCS_CXX}
 	${IOT_VERSION_FILES}
 )
-include_directories( SYSTEM
-        ${OSAL_INCLUDE_DIR}
-        "${CMAKE_SOURCE_DIR}/src/api"
-        "${CMAKE_SOURCE_DIR}/src/utilities"
-	${JSMN_INCLUDE_DIR}
 
-
-)
-
+# Required libraries
 target_link_libraries( ${TARGET}
-    	iotutils
+	iotutils
 	iot
-        ${OSAL_LIBRARIES}
 	${JSMN_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        dl
+	${OSAL_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT}
+	dl
 )
+
+# Installation instructions
 install( TARGETS ${TARGET}
 	RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
 		COMPONENT ${IOT_DEVICE_MANAGER_DEST_COMPONENT}
 )
 
 # create directories for file-io
-
 if ( NOT WIN32 )
-	# header file path for linux scripts name, aka .sh
-	#include_directories( SYSTEM
-		#"${CMAKE_SOURCE_DIR}/src/device-manager/scripts/linux"
-	#)
 	file( MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/upload" )
 	install( DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/upload"
 		DESTINATION "${INSTALL_VAR_DIR}"

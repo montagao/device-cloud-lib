@@ -15,17 +15,17 @@
 #include "shared/iot_types.h"     /* for struct iot_location */
 
 /** @brief Maximum value of location heading property */
-#define IOT_LOCATION_HEADING_MAX       360.0f
+#define IOT_LOCATION_HEADING_MAX       360.0
 /** @brief Minimum value of location heading property */
-#define IOT_LOCATION_HEADING_MIN       0.0f
+#define IOT_LOCATION_HEADING_MIN       0.0
 /** @brief Minimum value of location latitude property */
-#define IOT_LOCATION_LATITUDE_MAX      90.0f
+#define IOT_LOCATION_LATITUDE_MAX      90.0
 /** @brief Minimum value of location latitude property */
-#define IOT_LOCATION_LATITUDE_MIN      -90.0f
+#define IOT_LOCATION_LATITUDE_MIN      -90.0
 /** @brief Maximum value of location longitude property */
-#define IOT_LOCATION_LONGITUDE_MAX     180.0f
+#define IOT_LOCATION_LONGITUDE_MAX     180.0
 /** @brief Minimum value of location longitude property */
-#define IOT_LOCATION_LONGITUDE_MIN     -180.0f
+#define IOT_LOCATION_LONGITUDE_MIN     -180.0
 
 iot_status_t iot_location_accuracy_set(
 	iot_location_t *sample,
@@ -222,7 +222,7 @@ iot_status_t iot_location_tag_set(
 				os_free( sample->tag );
 #endif  /* ifndef IOT_STACK_ONLY */
 			sample->tag = NULL;
-			sample->flags &= ~IOT_FLAG_LOCATION_TAG;
+			sample->flags &= (unsigned int)~IOT_FLAG_LOCATION_TAG;
 			result = IOT_STATUS_SUCCESS;
 		}
 	}

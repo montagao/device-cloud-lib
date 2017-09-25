@@ -25,19 +25,8 @@
 
 /** @brief time in seconds to wait in main loop */
 #define POLL_INTERVAL_SEC 10u
-/** @brief Number of milliseconds in a second */
-#define MILLISECONDS_IN_SECOND     1000u
 /** @brief maximum number of telemetry samples to send */
 #define MAX_LOOP_ITERATIONS 360
-
-/** @brief name of integer parameter */
-#define PARAM_NAME_INT                 "param_int"
-/** @brief name of float parameter */
-#define PARAM_NAME_FLOAT               "param_float"
-/** @brief name of boolean parameter */
-#define PARAM_NAME_BOOL                "param_bool"
-/** @brief name of outbound parameter */
-#define PARAM_OUT_NAME_BOOL            "param_out"
 
 #ifdef _WRS_KERNEL
 	/**

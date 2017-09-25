@@ -135,21 +135,21 @@ static iot_status_t iot_update_mec_enable(enum iot_update_mec_enable enable );
 /**
  * @brief Check if it is IDP security system
  *
- * @retval a mec availability status   MEC available/unavailable
+ * @return a MEC available or MEC unavailable status
  */
 static enum iot_update_mec_available iot_update_mec_is_available( void );
 /**
  * @brief Check IDP mec security status
  *
- * @retval a mec status                MEC status
+ * @return a MEC status
  */
 static enum iot_update_mec_status iot_update_mec_status( void );
  /**
  * @brief Function to log iot update information
  *
- * @param[in, out] log_file     log file to write to
- * @param[in]      output       log to file/cloud
- * @param[in]      format       string format
+ * @param[in,out]  log_file            log file to write to
+ * @param[in]      output              log to file/cloud
+ * @param[in]      fmt                 string format
  */
 static void iot_update_log(os_file_t log_file,
 	enum iot_update_log_output output, const char *fmt,... )
@@ -158,7 +158,7 @@ static void iot_update_log(os_file_t log_file,
  * @brief Function to parse iot update json file
  *
  * @param[in]      json_file           json file to be parsed
- * @param[in, out] iot_update_install  install script
+ * @param[in,out]  iot_update_install  install script
  *
  * @retval IOT_STATUS_FAILURE          on failure
  * @retval IOT_STATUS_SUCCESS          on success
@@ -170,31 +170,23 @@ static iot_status_t iot_update_parse_json(
 /**
  * @brief Obtains the device id
  *
- * @param[in]      buf                           buffer to store the
- *                                               uuid
- * @param[in]      len                           number of bytes to
- *                                               read
+ * @param[in]      buf                 buffer to store the device id
+ * @param[in]      len                 number of bytes to read
  *
- * @retval IOT_STATUS_SUCCESS                    function completed
- *                                               successfully
- * @retval IOT_STATUS_FAILURE                    function encountered
- *                                               an error
- * @retval IOT_STATUS_BAD_PARAMETER              Incorrect parameter
- *                                               specified
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
+ * @retval IOT_STATUS_FAILURE          function encountered an error
+ * @retval IOT_STATUS_SUCCESS          function completed successfully
  */
-iot_status_t iot_update_get_device_id(
+static iot_status_t iot_update_get_device_id(
 	char *buf,
 	size_t len );
 
-
-/** @brief it should be implemented in osal. will be removed from here */
-#define LOOP_WAIT_TIME 100u
 
 iot_status_t iot_update_get_device_id(
 	char *buf,
 	size_t len )
 {
-	os_status_t result = IOT_STATUS_BAD_PARAMETER;
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( buf )
 	{
 		char filename[PATH_MAX + 1u];
@@ -236,9 +228,9 @@ iot_status_t iot_update(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( sw_update_path /*&& iot_os_directory_exists( sw_update_path )*/ )
 	{
-		char cwd[1024u];
+		char cwd[ PATH_MAX + 1u ];
 		os_file_t log_fd = NULL;
-		iot_t * iot_lib;
+		iot_t *iot_lib = NULL;
 		char device_id[IOT_ID_MAX_LEN + 1u];
 
 		result = iot_update_get_device_id( device_id, IOT_ID_MAX_LEN );
@@ -262,7 +254,7 @@ iot_status_t iot_update(
 			log_fd = os_file_open(
 				IOT_UPDATE_LOGFILE, OS_WRITE|OS_APPEND );
 			if ( log_fd == NULL)
-				result = OS_STATUS_FAILURE;
+				result = IOT_STATUS_FAILURE;
 			else
 				iot_update_log( log_fd,
 					IOT_UPDATE_LOG_CLOUD_ONLY, "%s: Started",
@@ -304,7 +296,7 @@ iot_status_t iot_update(
 				IOT_UPDATE_LOG_FILE_ONLY,
 				"Downloading and extracting the Update Package ... Successful! " );
 
-			result = OS_STATUS_FAILURE;
+			result = IOT_STATUS_FAILURE;
 			mec_available = iot_update_mec_is_available();
 			if ( mec_available == IOT_UPDATE_MEC_AVAILABLE )
 			{
@@ -391,10 +383,12 @@ iot_status_t iot_update(
 							iot_update_install[i].name,
 							iot_update_install[i].script );
 
-						result = os_system_run_wait(
+						result = IOT_STATUS_FAILURE;
+						if ( os_system_run_wait(
 							iot_update_install[i].script,
 							&exit_status,
-							out_buf, out_len, 0 );
+							out_buf, out_len, 0 ) == OS_STATUS_SUCCESS )
+							result = IOT_STATUS_SUCCESS;
 
 						for ( j = 0u; j < 2u; ++j )
 						{
@@ -415,6 +409,7 @@ iot_status_t iot_update(
 								"Error: Executing %s (%s) ... Failed! ",
 								iot_update_install[i].name, iot_update_install[i].script );
 
+							result = IOT_STATUS_FAILURE;
 							if ( iot_update_install[OTA_PHASE_ERROR].script[0] != '\0' &&
 								os_strcmp( iot_update_install[OTA_PHASE_ERROR].script, " " ) != 0)
 							{
@@ -424,10 +419,11 @@ iot_status_t iot_update(
 									iot_update_install[OTA_PHASE_ERROR].name,
 									iot_update_install[OTA_PHASE_ERROR].script);
 
-								result = os_system_run_wait(
+								if ( os_system_run_wait(
 									iot_update_install[OTA_PHASE_ERROR].script,
 									&exit_status,
-									out_buf, out_len, 0 );
+									out_buf, out_len, 0 ) == OS_STATUS_SUCCESS )
+									result = IOT_STATUS_SUCCESS;
 
 								if ( result == IOT_STATUS_SUCCESS )
 								{
@@ -454,7 +450,6 @@ iot_status_t iot_update(
 									"Info: No %s script provided ",
 									iot_update_install[OTA_PHASE_ERROR].name
 									);
-							result = OS_STATUS_FAILURE;
 						}
 						else
 						{
@@ -587,25 +582,24 @@ iot_status_t iot_update_mec_enable(
 			COMMAND_PREFIX" sadmin bu"
 			);
 
-	result = os_system_run_wait(
-		command,
-		&exit_status,
-		buf, buf_len, 0 );
+	if ( os_system_run_wait( command, &exit_status,
+		buf, buf_len, 0 ) == OS_STATUS_SUCCESS )
+		result = IOT_STATUS_SUCCESS;
 
 	if ( result == IOT_STATUS_SUCCESS && exit_status == 0 )
 	{
 		enum iot_update_mec_status mec_status;
-		result = OS_STATUS_FAILURE;
+		result = IOT_STATUS_FAILURE;
 		mec_status = iot_update_mec_status();
 		if( ( enable == IOT_UPDATE_MEC_ENABLE &&
 			mec_status == IOT_UPDATE_MEC_STATUS_ENABLED ) ||
 			( enable == IOT_UPDATE_MEC_DISABLE &&
 			mec_status == IOT_UPDATE_MEC_STATUS_NOT_ENABLED )
 			)
-			result = OS_STATUS_SUCCESS;
+			result = IOT_STATUS_SUCCESS;
 	}
 	else
-		result = OS_STATUS_FAILURE;
+		result = IOT_STATUS_FAILURE;
 	return result;
 }
 
@@ -661,7 +655,7 @@ iot_status_t iot_update_parse_json(
 	{
 		os_file_t fd;
 		char *json_string;
-		size_t size = 0;
+		long ssize = 0;
 		char cwd[PATH_MAX];
 
 		status = IOT_STATUS_FAILURE;
@@ -673,8 +667,8 @@ iot_status_t iot_update_parse_json(
 			long cur_pos = os_file_tell( fd );
 			if ( os_file_seek( fd, 0, SEEK_END ) == 0 )
 			{
-				size = os_file_tell( fd );
-				if ( cur_pos != (long)size )
+				ssize = os_file_tell( fd );
+				if ( cur_pos != ssize )
 					os_file_seek( fd, cur_pos, SEEK_SET );
 			}
 		}
@@ -682,8 +676,9 @@ iot_status_t iot_update_parse_json(
 			os_fprintf(OS_STDERR,
 				" failed to open json file!\n");
 
-		if ( size != 0 )
+		if ( ssize != 0 )
 		{
+			size_t size = (size_t)ssize;
 			json_string = (char *)os_malloc( size + 1 );
 			if ( json_string )
 			{
@@ -691,7 +686,7 @@ iot_status_t iot_update_parse_json(
 				iot_json_decoder_t *json;
 				const iot_json_item_t *root;
 
-				size = os_file_read( json_string, 1, size, fd );
+				size = os_file_read( json_string, 1, (size_t)size, fd );
 				json_string[size] = '\0';
 				json = iot_json_decode_initialize( buf, 1024u, 0u );
 				if ( json &&

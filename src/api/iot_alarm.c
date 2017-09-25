@@ -16,7 +16,7 @@
 
 iot_alarm_t *iot_alarm_register(
 	iot_t *lib,
-	const char *name)
+	const char *name )
 {
 	struct iot_alarm *alarm = NULL;
 	if( lib && name && *name != '\0' )
@@ -115,7 +115,7 @@ iot_alarm_t *iot_alarm_register(
 }
 
 iot_status_t iot_alarm_deregister(
-	iot_alarm_t *alarm)
+	iot_alarm_t *alarm )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 
@@ -183,7 +183,7 @@ iot_status_t iot_alarm_deregister(
 
 iot_status_t iot_alarm_publish(
 	const iot_alarm_t *alarm,
-	iot_severity_t severity)
+	iot_severity_t severity )
 {
 	return iot_alarm_publish_string( alarm, severity, NULL );
 }
@@ -191,9 +191,8 @@ iot_status_t iot_alarm_publish(
 iot_status_t iot_alarm_publish_string(
 	const iot_alarm_t *alarm,
 	iot_severity_t severity,
-	const char *message)
+	const char *message )
 {
-
 	iot_millisecond_t max_time_out = 0u;
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( alarm )
@@ -202,28 +201,30 @@ iot_status_t iot_alarm_publish_string(
 		if ( alarm->lib )
 		{
 			char *msg = NULL;
-			iot_alarm_data_t *payload = os_malloc( sizeof( iot_alarm_data_t ) );
+			size_t msg_len = 0u;
+			iot_alarm_data_t *payload =
+				os_malloc( sizeof( iot_alarm_data_t ) );
 			payload->severity = severity;
 			if ( message )
+				msg_len = os_strlen( message );
+
+			result = IOT_STATUS_NO_MEMORY;
+			msg = os_malloc( ( msg_len + 1u ) * sizeof( char ) );
+			if ( msg )
 			{
-				size_t msg_len = os_strlen( message );
-				msg = os_malloc( msg_len * sizeof( char ) + 1u );
+				if ( message )
 				os_strncpy( msg, message, msg_len );
+
 				msg[ msg_len ] = '\0';
 				payload->message = msg;
-			}
-			else
-			{
-				payload->message = os_malloc( 1u );
-				os_memzero( payload->message, 1u );
-			}
 
-			result = iot_plugin_perform(
-				alarm->lib, NULL, &max_time_out,
-				IOT_OPERATION_ALARM_PUBLISH,
-				alarm, payload );
-			os_free_null( (void**)&payload->message );
-			os_free_null( (void**)&payload );
+				result = iot_plugin_perform(
+					alarm->lib, NULL, &max_time_out,
+					IOT_OPERATION_ALARM_PUBLISH,
+					alarm, payload );
+				os_free_null( (void**)&payload->message );
+				os_free_null( (void**)&payload );
+			}
 		}
 	}
 	return result;

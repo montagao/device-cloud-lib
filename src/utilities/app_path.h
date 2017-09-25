@@ -19,17 +19,17 @@
 /**
  * @brief Iterates through a path and creates all directories if they do not exist
  *
- * @param[in]    path_in    path to create
- * @param[in]    path_max   maximum length of the path
- * @param[in]    timeout    timeout (in ms) before directory creation fails
+ * @param[in]    path_in               path to create
+ * @param[in]    timeout               timeout (in milliseconds) before
+ *                                     directory creation fails
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FAILURE          system error
  * @retval IOT_STATUS_SUCCESS          on success
  */
 
-IOT_SECTION iot_status_t app_path_create( 
-	const char *path_in,  
+IOT_SECTION iot_status_t app_path_create(
+	const char *path_in,
 	unsigned int timeout );
 
 /**
@@ -56,19 +56,6 @@ IOT_SECTION iot_status_t app_path_config_directory_get(
  * @retval IOT_STATUS_SUCCESS          on success
  */
 IOT_SECTION iot_status_t app_path_executable_directory_get(
-	char *path, const size_t size );
-
-/**
- * @brief Get the path to install directory
- *
- * @param[out]     path                buffer to put path to executable's directory
- * @param[in]      size                size of the buffer
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter
- * @retval IOT_STATUS_FAILURE          on failure
- * @retval IOT_STATUS_SUCCESS          on success
- */
-IOT_SECTION iot_status_t app_path_install_directory_get(
 	char *path, const size_t size );
 
 /**

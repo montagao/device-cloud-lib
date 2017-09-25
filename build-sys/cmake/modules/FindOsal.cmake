@@ -21,10 +21,11 @@
 
 include( FindPackageHandleStandardArgs )
 
-set( OSAL_LIB_NAME "osal" )
+set( _PROGRAMFILES     "ProgramFiles" )
+set( _PROGRAMFILES_X86 "ProgramFiles(x86)" )
 set( OSAL_LIBS
-	${CMAKE_SHARED_LIBRARY_PREFIX}${OSAL_LIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-	${CMAKE_STATIC_LIBRARY_PREFIX}${OSAL_LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+	${CMAKE_SHARED_LIBRARY_PREFIX}osal${CMAKE_SHARED_LIBRARY_SUFFIX}
+	${CMAKE_STATIC_LIBRARY_PREFIX}osal${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 
 if ( OSAL_PREFER_STATIC )
@@ -38,16 +39,25 @@ if( LIB64 )
 	set( LIB_SUFFIX 64 )
 endif()
 
+# Allow the ability to specify a global dependency root directory
+if ( NOT OSAL_ROOT_DIR )
+	set( OSAL_ROOT_DIR ${DEPENDS_ROOT_DIR} )
+endif()
+
 find_path( OSAL_INCLUDE_DIR
 	NAMES "os.h"
 	DOC "osal include directory"
 	PATHS "${OSAL_ROOT_DIR}/include"
+	      "$ENV{${_PROGRAMFILES}}/osal/include"
+	      "$ENV{${_PROGRAMFILES_X86}}/osal/include"
 )
 
 find_library( OSAL_LIBRARIES
 	NAMES ${OSAL_LIBS}
 	DOC "Required osal libraries"
 	PATHS "${OSAL_ROOT_DIR}/lib${LIB_SUFFIX}"
+	      "$ENV{${_PROGRAMFILES}}/osal/lib"
+	      "$ENV{${_PROGRAMFILES_X86}}/osal/lib"
 )
 
 # determine version
@@ -68,7 +78,7 @@ if ( OSAL_INCLUDE_DIR AND EXISTS "${OSAL_INCLUDE_DIR}/os.h" )
 	unset( _OSAL_VERSION_STRING )
 endif ( OSAL_INCLUDE_DIR AND EXISTS "${OSAL_INCLUDE_DIR}/os.h" )
 
-find_package_handle_standard_args( osal
+find_package_handle_standard_args( Osal
 	FOUND_VAR OSAL_FOUND
 	REQUIRED_VARS OSAL_LIBRARIES OSAL_INCLUDE_DIR
 	VERSION_VAR OSAL_VERSION

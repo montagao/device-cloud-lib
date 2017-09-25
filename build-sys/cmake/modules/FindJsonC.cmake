@@ -1,13 +1,15 @@
 #
 # json-c support
 #
-# If found the following will be defined:
-# JSONC_FOUND - System has json-c
-# JSONC_INCLUDE_DIRS/JSONC_INCLUDES - Include directories for json-c
-# JSONC_LIBRARIES/JSONC_LIBS - Libraries needed for json-c
-# JSONC_DEFINITIONS - Compiler switches required for json-c
-# JSONC_VERSION - Library version
+# The following variables can be set to add additional find support:
+# - JSONC_ROOT_DIR, specified an explicit root path to test
 #
+# If found the following will be defined:
+# - JSONC_FOUND - System has json-c
+# - JSONC_INCLUDE_DIRS/JSONC_INCLUDES - Include directories for json-c
+# - JSONC_LIBRARIES/JSONC_LIBS - Libraries needed for json-c
+# - JSONC_DEFINITIONS - Compiler switches required for json-c
+# - JSONC_VERSION - Library version
 #
 # Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -19,14 +21,28 @@
 
 include( FindPackageHandleStandardArgs )
 
+# Try and find paths
+set( LIB_SUFFIX "" )
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+endif()
+
+# Allow the ability to specify a global dependency root directory
+if ( NOT JSONC_ROOT_DIR )
+	set( JSONC_ROOT_DIR ${DEPENDS_ROOT_DIR} )
+endif()
+
 find_path( JSONC_INCLUDE_DIR
 	NAMES json-c/json.h
 	DOC "json-c include directory"
+	PATHS "${JSONC_ROOT_DIR}/include"
 )
 
 find_library( JSONC_LIBRARY
 	NAMES json-c
 	DOC "Required json-c libraries"
+	PATHS "${JSONC_ROOT_DIR}/lib${LIB_SUFFIX}"
 )
 
 # determine version
@@ -49,9 +65,9 @@ if ( JSONC_INCLUDE_DIR AND EXISTS "${JSONC_INCLUDE_DIR}/json-c/json_c_version.h"
 	unset( _JSONC_VERSION_STRING )
 endif ( JSONC_INCLUDE_DIR AND EXISTS "${JSONC_INCLUDE_DIR}/json-c/json_c_version.h" )
 
-find_package_handle_standard_args( jsonc
+find_package_handle_standard_args( JsonC
 	FOUND_VAR JSONC_FOUND
-	REQUIRED_VARS JSONC_LIBRARY JSONC_INCLUDE_DIR
+	REQUIRED_VARS JSONC_INCLUDE_DIR JSONC_LIBRARY
 	VERSION_VAR JSONC_VERSION
 	FAIL_MESSAGE DEFAULT_MSG
 )

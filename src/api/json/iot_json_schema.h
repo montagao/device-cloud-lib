@@ -164,7 +164,7 @@ IOT_API IOT_SECTION iot_status_t iot_json_schema_format(
  * @see iot_json_schema_terminate
  */
 IOT_API IOT_SECTION iot_json_schema_t *iot_json_schema_initialize(
-	char *buf,
+	void *buf,
 	size_t len,
 	unsigned int flags );
 

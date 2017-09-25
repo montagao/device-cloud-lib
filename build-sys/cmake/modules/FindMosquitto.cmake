@@ -1,13 +1,15 @@
 #
 # Mosquitto support
 #
-# If found the following will be defined:
-# MOSQUITTO_FOUND - System has mosquitto
-# MOSQUITTO_INCLUDE_DIRS/MOSQUITTO_INCLUDES - Include directories for mosquitto
-# MOSQUITTO_LIBRARIES/MOSQUITTO_LIBS - Libraries needed for mosquitto
-# MOSQUITTO_DEFINITIONS - Compiler switches required for mosquitto
-# MOSQUITTO_VERSION - Library version
+# The following variables can be set to add additional find support:
+# - MOSQUITTO_ROOT_DIR, specified an explicit root path to test
 #
+# If found the following will be defined:
+# - MOSQUITTO_FOUND - System has mosquitto
+# - MOSQUITTO_INCLUDE_DIRS/MOSQUITTO_INCLUDES - Include directories for mosquitto
+# - MOSQUITTO_LIBRARIES/MOSQUITTO_LIBS - Libraries needed for mosquitto
+# - MOSQUITTO_DEFINITIONS - Compiler switches required for mosquitto
+# - MOSQUITTO_VERSION - Library version
 #
 # Copyright (C) 2014-2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -20,14 +22,28 @@
 find_package( PkgConfig )
 include( FindPackageHandleStandardArgs )
 
+# Try and find paths
+set( LIB_SUFFIX "" )
+get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
+if( LIB64 )
+	set( LIB_SUFFIX 64 )
+endif()
+
+# Allow the ability to specify a global dependency root directory
+if ( NOT MOSQUITTO_ROOT_DIR )
+	set( MOSQUITTO_ROOT_DIR ${DEPENDS_ROOT_DIR} )
+endif()
+
 find_path( MOSQUITTO_INCLUDE_DIR
 	NAMES mosquitto.h
 	DOC "Mosquitto include directory"
+	PATHS "${MOSQUITTO_ROOT_DIR}/include"
 )
 
 find_library( MOSQUITTO_LIBRARY
 	NAMES mosquitto
 	DOC "Required mosquitto libraries"
+	PATHS "${MOSQUITTO_ROOT_DIR}/lib${LIB_SUFFIX}"
 )
 
 # determine version
@@ -53,7 +69,7 @@ endif ( MOSQUITTO_INCLUDE_DIR AND EXISTS "${MOSQUITTO_INCLUDE_DIR}/mosquitto.h" 
 
 find_package_handle_standard_args( Mosquitto
 	FOUND_VAR MOSQUITTO_FOUND
-	REQUIRED_VARS MOSQUITTO_LIBRARY MOSQUITTO_INCLUDE_DIR
+	REQUIRED_VARS MOSQUITTO_INCLUDE_DIR MOSQUITTO_LIBRARY
 	VERSION_VAR MOSQUITTO_VERSION
 	FAIL_MESSAGE DEFAULT_MSG
 )
