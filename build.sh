@@ -86,12 +86,18 @@ for i in ${OUT_FILES[@]}; do
 	# Replace matching variables from in-file
 	cp "${SRC_DIR}/${i}${IN_EXT}" "${DEST_DIR}/${i}"
 	set | awk -F "=" '{print $1}' | grep "${PREFIX}_" | while read -r var; do
-		awk -v value="${!var}" "{ sub(/@${var}@/, value); sub(/\${${var}}/, value); print; }" "${DEST_DIR}/${i}" > "${DEST_DIR}/${i}.tmp"
+		awk -v value="${!var}" "{if(value==\"n\"||value==\"N\"||value==\"no\"||value==\"No\"||value==\"NO\"||value==\"false\"||value==\"False\"||value==\"FALSE\"||value==\"off\"||value==\"Off\"||value==\"OFF\"){value=0}else if(value==\"y\"||value==\"Y\"||value==\"yes\"||value==\"Yes\"||value==\"YES\"||value==\"true\"||value==\"True\"||value==\"TRUE\"||value==\"on\"||value==\"On\"||value==\"ON\"){value=1}; sub(/@${var}@/, value); sub(/\${${var}}/, value); print; }" "${DEST_DIR}/${i}" > "${DEST_DIR}/${i}.tmp"
 		mv "${DEST_DIR}/${i}.tmp" "${DEST_DIR}/${i}"
 	done
+	# Replace common cmake variables
+	sed -e "s|@CMAKE_EXECUTABLE_SUFFIX@||g" -e "s|\${CMAKE_EXECUTABLE_SUFFIX}||g" -i "${DEST_DIR}/${i}"
+	sed -e "s|@CMAKE_SHARED_LIBRARY_PREFIX@|lib|g" -e "s|\${CMAKE_SHARED_LIBRARY_PREFIX}|lib|g" -i "${DEST_DIR}/${i}"
+	sed -e "s|@CMAKE_STATIC_LIBRARY_PREFIX@|lib|g" -e "s|\${CMAKE_STATIC_LIBRARY_PREFIX}|lib|g" -i "${DEST_DIR}/${i}"
+	sed -e "s|@CMAKE_SHARED_LIBRARY_SUFFIX@|.so|g" -e "s|\${CMAKE_SHARED_LIBRARY_SUFFIX}|.so|g" -i "${DEST_DIR}/${i}"
+	sed -e "s|@CMAKE_STATIC_LIBRARY_SUFFIX@|.a|g" -e "s|\${CMAKE_STATIC_LIBRARY_SUFFIX}|.a|g" -i "${DEST_DIR}/${i}"
+	sed -e "s|@CMAKE_SOURCE_DIR@|${SRC_DIR}|g" -e "s|\${CMAKE_SOURCE_DIR}|${SRC_DIR}|g" -i "${DEST_DIR}/${i}"
+	sed -e "s|@CMAKE_BINARY_DIR@|${DEST_DIR}|g" -e "s|\${CMAKE_BINARY_DIR}|${DEST_DIR}|g" -i "${DEST_DIR}/${i}"
 	# Replace any remaining variables with blanks
-	sed -e "s|@CMAKE_SOURCE_DIR@|${SRC_DIR}|g" -e "s|\${CMAKE_SOURCE_DIR}}|${SRC_DIR}|g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_BINARY_DIR@|${DEST_DIR}|g" -e "s|\${CMAKE_BINARY_DIR}}|${DEST_DIR}|g" -i "${DEST_DIR}/${i}"
 	sed -e "s|@[a-zA-Z0-9_]*@||g" -e "s|\${[a-zA-Z0-9_]*}||g" -i "${DEST_DIR}/${i}"
 done
 

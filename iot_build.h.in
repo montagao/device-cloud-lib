@@ -142,7 +142,7 @@
 /** @brief Default state of enable offline action - do not unregister actions */
 #define IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS             @IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS@
 
-/** @brief Default state of enable automation test on Android*/
+/** @brief Default state of enable automation test on Android */
 #define IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID     @IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID@
 
 /** @brief Default state of uploaded file removal upon success */
@@ -154,6 +154,9 @@
 /** @brief Default user running services */
 #define IOT_USER                       "@IOT_USER@"
 
-#define IOT_DEFAULT_CERT_PATH                             "@IOT_DEFAULT_CERT_PATH@"
-#define IOT_UPDATE_LOGFILE                                "@IOT_UPDATE_LOGFILE@"
+/** @brief Default certification path */
+#define IOT_DEFAULT_CERT_PATH          "@IOT_DEFAULT_CERT_PATH@"
+/** @brief Default log file name when installing updates */
+#define IOT_UPDATE_LOGFILE             "@IOT_UPDATE_LOGFILE@"
+
 #endif /* ifndef IOT_BUILD_H */
