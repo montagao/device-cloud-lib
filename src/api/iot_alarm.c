@@ -25,9 +25,9 @@ iot_alarm_t *iot_alarm_register(
 	struct iot_alarm *alarm = NULL;
 	if( lib && name && *name != '\0' )
 	{
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 		os_thread_mutex_lock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 		if ( lib->alarm_count < IOT_ALARM_MAX )
 		{
 			const unsigned int count = lib->alarm_count;
@@ -117,9 +117,9 @@ iot_alarm_t *iot_alarm_register(
 			IOT_LOG( lib, IOT_LOG_ERROR,
 				"no remaining space (max: %u) for alarm: %s",
 				IOT_ALARM_MAX, name );
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 		os_thread_mutex_unlock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 	}
 	return alarm;
 }
@@ -136,9 +136,9 @@ iot_status_t iot_alarm_deregister(
 		if ( lib )
 		{
 			unsigned int i, max;
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 			os_thread_mutex_lock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 			/* find alarm within the library */
 			max = lib->alarm_count;
 			for ( i = 0u; ( i < max ) &&
@@ -185,9 +185,9 @@ iot_status_t iot_alarm_deregister(
 #endif /* ifndef IOT_STACK_ONLY */
 				result = IOT_STATUS_SUCCESS;
 			}
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 			os_thread_mutex_unlock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 		}
 	}
 
