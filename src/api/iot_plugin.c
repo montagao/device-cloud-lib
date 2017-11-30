@@ -275,6 +275,7 @@ iot_status_t iot_plugin_perform(
 	return result;
 }
 
+#ifndef __vxworks
 iot_status_t iot_plugin_load(
 	iot_t *lib,
 	const char *file )
@@ -362,4 +363,4 @@ iot_status_t iot_plugin_unload( iot_t *lib, const char *name )
 	}
 	return result;
 }
-
+#endif

@@ -28,10 +28,8 @@
 #include "os.h"
 #include "api/shared/iot_types.h"      /* for iot_proxy structure */
 
-#ifndef _WRS_KERNEL
-#	include "device_manager_md5.h"
-#	include "device_manager_sha256.h"
-#endif /* ifndef _WRS_KERNEL */
+#include "device_manager_md5.h"
+#include "device_manager_sha256.h"
 #include "device_manager_ota.h"
 
 /** @brief Maximum length of a token from the web */

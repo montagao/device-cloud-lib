@@ -14,9 +14,13 @@
 #include <stdarg.h>
 #include "relay_main.h"
 
+#if defined(__vxworks) && defined(__DCC__)
+#include <libwebsockets.h>             /* for libwebsockets header files */
+#else
 #pragma warning(push, 0)
 #include <libwebsockets.h>             /* for libwebsockets header files */
 #pragma warning(pop)
+#endif
 
 #include "iot_build.h"                 /* for IOT_NAME_FULL */
 #include <os.h>                        /* for os_* functions */

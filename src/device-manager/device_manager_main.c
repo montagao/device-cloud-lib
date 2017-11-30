@@ -12,9 +12,7 @@
 
 #include "device_manager_main.h"
 
-#ifndef _WRS_KERNEL
-#	include "device_manager_file.h"
-#endif /* ifndef _WRS_KERNEL */
+#include "device_manager_file.h"
 
 #include "os.h"                       /* for os specific functions */
 #include "utilities/app_arg.h"        /* for struct app_arg & functions */
@@ -64,13 +62,8 @@
 /**
  * @brief Structure containing application specific data
  */
-#ifndef _WRS_KERNEL
 extern struct device_manager_info APP_DATA;
 struct device_manager_info APP_DATA;
-#else
-/** @todo fix after enabling read cofigure file in vxWorks*/
-static struct device_manager_info APP_DATA;
-#endif
 
 /**
  * @brief Structure defining information about remote login protocols
@@ -134,11 +127,9 @@ static iot_status_t device_manager_actions_register(
  *                                               file
  * @retval IOT_STATUS_*                          on failure
  */
-#ifndef _WRS_KERNEL
 static iot_status_t device_manager_config_read(
 	struct device_manager_info *device_manager_info,
 	const char *app_path, const char *config_file );
-#endif
 
 /**
  * @brief Callback function to download a file from the cloud
@@ -315,7 +306,6 @@ static iot_status_t on_action_device_shutdown(
 	void *user_data );
 #endif /* __ANDROID__ */
 
-#ifndef _WRS_KERNEL
 /**
  * @brief Callback function to return the remote login
  *
@@ -327,7 +317,6 @@ static iot_status_t on_action_device_shutdown(
 static iot_status_t on_action_remote_login(
 		iot_action_request_t* request,
 		void *user_data );
-#endif /* !_WRS_KERNEL */
 
 
 /* function implementations */
@@ -352,7 +341,6 @@ iot_status_t device_manager_actions_deregister(
 	if ( device_manager )
 	{
 
-#ifndef _WRS_KERNEL
 		iot_action_t *const dump_log_files = device_manager->dump_log_files;
 		iot_action_t *const agent_reset = device_manager->agent_reset;
 		iot_action_t *const decommission_device = device_manager->decommission_device;
@@ -360,10 +348,9 @@ iot_status_t device_manager_actions_deregister(
 		iot_action_t *const remote_login = device_manager->remote_login;
 		iot_action_t *file_upload = NULL;
 		iot_action_t *file_download = device_manager->file_download;
-#endif /* ifndef _WRS_KERNEL */
 		iot_action_t *const device_reboot = device_manager->device_reboot;
 
-#if !defined( WIN32 ) && !defined( _WRS_KERNEL )
+#if !defined( WIN32 ) && !defined( __vxworks )
 		iot_action_t *const restore_factory_images = device_manager->restore_factory_images;
 
 		/* restore_factory_images */
@@ -373,9 +360,8 @@ iot_status_t device_manager_actions_deregister(
 			iot_action_free( restore_factory_images, 0u );
 			device_manager->restore_factory_images = NULL;
 		}
-#endif /* if !defined( WIN32 ) && !defined( _WRS_KERNEL ) */
+#endif /* if !defined( WIN32 ) && !defined( __vxworks ) */
 
-#ifndef _WRS_KERNEL
 		/* device_shutdown */
 		if ( device_shutdown )
 		{
@@ -383,7 +369,6 @@ iot_status_t device_manager_actions_deregister(
 			iot_action_free( device_shutdown, 0u );
 			device_manager->device_shutdown = NULL;
 		}
-#endif /* ifndef _WRS_KERNEL */
 
 		/* device_reboot */
 		if ( device_reboot )
@@ -393,7 +378,6 @@ iot_status_t device_manager_actions_deregister(
 			device_manager->device_reboot = NULL;
 		}
 
-#ifndef _WRS_KERNEL
 		/* decommission_device */
 		if ( decommission_device )
 		{
@@ -444,7 +428,6 @@ iot_status_t device_manager_actions_deregister(
 			device_manager->file_upload = NULL;
 		}
 #endif /* ifndef NO_FILEIO_SUPPORT */
-#endif /* ifndef _WRS_KERNEL */
 
 		result = IOT_STATUS_SUCCESS;
 	}
@@ -462,7 +445,6 @@ iot_status_t device_manager_actions_register(
 		struct device_manager_action *action;
 		char command_path[ PATH_MAX + 1u ];
 		iot_t *const iot_lib = device_manager->iot_lib;
-#ifndef _WRS_KERNEL
 
 #ifndef NO_FILEIO_SUPPORT
 		/* file transfer */
@@ -726,7 +708,6 @@ iot_status_t device_manager_actions_register(
 				action->ptr = NULL;
 			}
 		}
-#endif
 
 		/* device reboot */
 		action = &device_manager->actions[DEVICE_MANAGER_IDX_DEVICE_REBOOT];
@@ -741,18 +722,13 @@ iot_status_t device_manager_actions_register(
 				action->ptr, &on_action_agent_reboot,
 				(void*)device_manager, NULL, 0u );
 #else
-#	ifndef _WRS_KERNEL
+#	ifndef __vxworks
 			result = device_manager_make_control_command( command_path,
 				PATH_MAX, device_manager, " --reboot" );
 			if ( result == IOT_STATUS_SUCCESS )
 				result = iot_action_register_command(
 					action->ptr, command_path, NULL, 0u );
 #	else
-			/**
-			 * @todo This part should be rewritten in the future when iot-control becomes
-			 * available on VxWorks.  Currently, we just call a "reboot" command to
-			 * stimulate a reboot
-			 */
 			result = iot_action_register_command( action->ptr,
 				"reboot", NULL, 0u );
 #	endif
@@ -771,7 +747,6 @@ iot_status_t device_manager_actions_register(
 	return result;
 }
 
-#ifndef _WRS_KERNEL
 iot_status_t device_manager_config_read(
 	struct device_manager_info *device_manager_info,
 	const char *app_path, const char *config_file )
@@ -943,7 +918,6 @@ iot_status_t device_manager_config_read(
 	}
 	return result;
 }
-#endif
 
 iot_status_t device_manager_file_download(
 	iot_action_request_t *request,
@@ -1257,10 +1231,7 @@ int device_manager_main( int argc, char *argv[] )
 			return EXIT_FAILURE;
 		}
 
-/** @todo vxWorks checking iot.cfg will be implemented later */
-#ifndef _WRS_KERNEL
 		device_manager_config_read( &APP_DATA, argv[0], config_file );
-#endif
 		if ( app_arg_count( args, 's', "service" ) > 0u )
 		{
 			const char *remove_args[] = { "-s", "--service" };
@@ -1655,7 +1626,6 @@ iot_status_t on_action_device_shutdown(
 }
 #endif /* __ANDROID__ */
 
-#ifndef _WRS_KERNEL
 iot_status_t on_action_remote_login( iot_action_request_t* request,
 	void *user_data )
 {
@@ -1743,5 +1713,4 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 	}
 	return result;
 }
-#endif /* !_WRS_KERNEL */
 

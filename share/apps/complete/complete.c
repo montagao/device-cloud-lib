@@ -26,6 +26,12 @@
 #	include <errno.h>    /* for errno */
 #endif
 
+#ifdef _WRS_KERNEL
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#endif
+
 /** @brief maximum value of json integer in range [-(2**53)+1, (2**53)-1] */
 #define MAX_JSON_INT 9007199254740991u
 /** @brief Default maximum number of iterations before stopping telemetry */
