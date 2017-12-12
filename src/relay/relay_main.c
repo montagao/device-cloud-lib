@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include "relay_main.h"
 
+#if defined(IOT_LIBWEBSOCKETS)
 #if defined(__vxworks) && defined(__DCC__)
 #include <libwebsockets.h>             /* for libwebsockets header files */
 #else
@@ -25,6 +26,72 @@
 #include <libwebsockets.h>             /* for libwebsockets header files */
 #pragma warning(pop)
 #endif
+#endif /* IOT_LIBWEBSOCKETS */
+
+#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+#define LWS_LIBRARY_VERSION_MAJOR 2
+
+#if defined(IOT_CIVETWEB)
+#include <civetweb.h>
+#endif
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+#include <libhttp.h>
+#endif
+
+#if !defined(LWS_SIZEOFPTR)
+#define LWS_SIZEOFPTR (sizeof (void *))
+#endif
+
+#if defined(__x86_64__)
+#define _LWS_PAD_SIZE 16        /* Intel recommended for best performance */
+#else
+#define _LWS_PAD_SIZE LWS_SIZEOFPTR   /* Size of a pointer on the target arch */
+#endif
+#define _LWS_PAD(n) (((n) % _LWS_PAD_SIZE) ? \
+                ((n) + (_LWS_PAD_SIZE - ((n) % _LWS_PAD_SIZE))) : (n))
+/* last 2 is for lws-meta */
+#define LWS_PRE _LWS_PAD(4 + 10 + 2)
+/* used prior to 1.7 and retained for backward compatibility */
+#define LWS_SEND_BUFFER_PRE_PADDING LWS_PRE
+#define LWS_SEND_BUFFER_POST_PADDING 0
+
+enum lws_callback_reasons {
+	LWS_CALLBACK_CLIENT_CONNECTION_ERROR                    =  1,
+	LWS_CALLBACK_CLIENT_ESTABLISHED                         =  3,
+	LWS_CALLBACK_CLOSED                                     =  4,
+	LWS_CALLBACK_CLIENT_RECEIVE                             =  8,
+	LWS_CALLBACK_CLIENT_WRITEABLE                           = 10,
+	LWS_CALLBACK_WSI_DESTROY                                = 30,
+};
+
+enum lws_write_protocol {
+	LWS_WRITE_BINARY = WEBSOCKET_OPCODE_BINARY,
+};
+
+struct lws_protocols {
+	const char *name;
+	size_t per_session_data_size;
+	size_t rx_buffer_size;
+	void *user;
+};
+
+struct lws {
+#if defined(IOT_CIVETWEB)
+	struct mg_connection *conn;
+#endif
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+	struct lh_ctx_t *ctx;
+	struct lh_con_t *conn;
+#endif
+	struct lws_protocols *protocol;
+};
+
+struct lws_context {
+	struct lws wsi;
+};
+#endif
+
+#include <sys/socket.h>
 
 #include "iot_build.h"                 /* for IOT_NAME_FULL */
 #include <os.h>                        /* for os_* functions */
@@ -76,7 +143,7 @@
 #	define lws                           libwebsocket
 /** @} */
 #endif /* libwebsockets  < 1.6.0 */
-#if LWS_LIBRARY_VERSION_MAJOR < 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR < 7 )
+#if LWS_LIBRARY_VERSION_MAJOR < 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR < 7 ) || defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
 /**
  * splits the portions of the uri passed in, into parts
  *
@@ -301,6 +368,7 @@ iot_bool_t TO_QUIT = IOT_FALSE;
 /** @brief File/stream to use for logging */
 static os_file_t LOG_FILE = NULL;
 
+#if defined(IOT_LIBWEBSOCKETS)
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 7 )
 /**
  * @brief Libwebsocket extensions, required for SSL connections to
@@ -320,6 +388,97 @@ static const struct lws_extension EXTS[] = {
 	{ NULL, NULL, NULL /* terminator */ }
 };
 #endif /* libwebsockets >= 1.7.0 */
+#endif /* IOT_LIBWEBSOCKETS */
+
+#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+static void lws_set_log_level(int level,
+				void (*func)(int level, const char *line))
+{
+}
+
+static struct lws_protocols * lws_get_protocol(struct lws *wsi)
+{
+	return wsi->protocol;
+}
+
+static void lws_service(struct lws_context *context, int timeout_ms)
+{
+	taskDelay(1);
+}
+
+static int lws_write(struct lws *wsi, unsigned char *buf, size_t len,
+			enum lws_write_protocol wp)
+{
+#if defined(IOT_CIVETWEB)
+	mg_websocket_client_write(wsi->conn, wp, buf, len);
+#endif
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+	httplib_websocket_client_write(wsi->ctx, wsi->conn, wp, buf, len);
+#endif
+	return len;
+}
+
+static int lws_callback_on_writable(struct lws *wsi)
+{
+	relay_service_callback(wsi,
+				LWS_CALLBACK_CLIENT_WRITEABLE,
+				NULL, NULL, 0);
+	return 1;
+}
+
+static void lws_context_destroy(struct lws_context *context)
+{
+}
+
+#if defined(IOT_CIVETWEB)
+static int lws_data_handler(struct mg_connection *conn,
+				int flags,
+				char *data,
+				size_t data_len,
+				void *user_data)
+{
+	struct mg_context *ctx = mg_get_context(conn);
+	struct lws_context *context =
+		(struct lws_context *)mg_get_user_data(ctx);
+#endif
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+static int lws_data_handler(struct lh_ctx_t *ctx,
+			struct mg_connection *conn,
+			int flags,
+			char *data,
+			size_t data_len,
+			void *user_data)
+{
+	struct lws_context *context =
+		(struct lws_context *)httplib_get_user_data(ctx);
+#endif
+	relay_service_callback(&context->wsi,
+				LWS_CALLBACK_CLIENT_RECEIVE,
+				NULL, data, data_len);
+	return 1;
+}
+
+#if defined(IOT_CIVETWEB)
+static void lws_close_handler(const struct mg_connection *conn,
+				void *user_data)
+{
+	struct mg_context *ctx = mg_get_context(conn);
+	struct lws_context *context =
+		(struct lws_context *)mg_get_user_data(ctx);
+#endif
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+static void lws_close_handler(struct lh_ctx_t *ctx,
+				const struct mg_connection *conn,
+				void *user_data)
+{
+	struct lws_context *context =
+		(struct lws_context *)httplib_get_user_data(ctx);
+#endif
+	relay_service_callback(&context->wsi,
+				LWS_CALLBACK_CLOSED,
+				NULL, NULL, 0);
+}
+#endif
 
 /* function implementations */
 /* Write a status file once the connectivity has been confirmed so
@@ -366,11 +525,13 @@ int relay_client( const char *url,
 	os_memzero( wsd, sizeof( struct relay_data ) );
 	wsd->udp = udp;
 	wsd->verbose = verbose;
+#if defined(IOT_LIBWEBSOCKETS)
 	if ( verbose != IOT_FALSE )
 		lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO |
 				   LLL_DEBUG | LLL_CLIENT, &relay_lws_log );
 	else
 		lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE, &relay_lws_log );
+#endif /* IOT_LIBWEBSOCKETS */
 	if ( os_socket_open( &socket, host, (os_uint16_t)port, packet_type, 0, 0u )
 		== OS_STATUS_SUCCESS )
 	{
@@ -418,11 +579,27 @@ int relay_client( const char *url,
 
 	if ( result == EXIT_SUCCESS )
 	{
+#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+		struct lws_context lws_context_data;
+		struct lws_context *context = &lws_context_data;
+		char ebuf[100] = {0};
+		struct lws *lws = &context->wsi;
+		struct lws_protocols protocols[ 2u ];
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+		struct lh_clb_t clb;
+		struct lh_ctx_t * ctx;
+		memset(&clb, 0, sizeof(clb));
+		ctx = httplib_create_client_context(&clb, NULL);
+		lws->ctx = ctx;
+#endif
+#endif
+#if defined(IOT_LIBWEBSOCKETS)
 		char cert_path[ PATH_MAX + 1u ];
 		/*struct app_config* conf;*/
 		struct lws_context *context = NULL;
 		struct lws_context_creation_info context_ci;
 		struct lws_protocols protocols[ 2u ];
+#endif /* IOT_LIBWEBSOCKETS */
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 3 )
 		/*struct iot_proxy proxy_info;*/
 #endif /* libwebsockets >= 1.3.0 */
@@ -451,6 +628,7 @@ int relay_client( const char *url,
 			protocols[0].name = "relay";
 			protocols[0].per_session_data_size = 0;
 			protocols[0].rx_buffer_size = RELAY_BUFFER_SIZE;
+#if defined(IOT_LIBWEBSOCKETS)
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 6 )
 			protocols[0].callback = relay_service_callback;
 #else /* libwebsockets < 1.6.0 */
@@ -560,6 +738,7 @@ int relay_client( const char *url,
 #endif /* libwebsockets >= 1.3.0 */
 
 			context = lws_create_context( &context_ci );
+#endif /* IOT_LIBWEBSOCKETS */
 			if ( context == NULL )
 			{
 				relay_log( IOT_LOG_FATAL, "Failed to create context" );
@@ -577,10 +756,12 @@ int relay_client( const char *url,
 
 		if ( context != NULL && result == EXIT_SUCCESS )
 		{
+#if defined(IOT_LIBWEBSOCKETS)
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 7 )
 			struct lws_client_connect_info client_ci;
 #endif /* libwebsockets >= 1.7.0 */
 			struct lws *lws;
+#endif /* IOT_LIBWEBSOCKETS */
 			int ssl_connection = 0;
 			char *web_path_heap = NULL;
 			const size_t web_path_len = os_strlen( web_path );
@@ -627,7 +808,37 @@ int relay_client( const char *url,
 					ssl_connection = 1;
 #endif
 			}
-
+#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+			protocols[0].user = wsd;
+			context->wsi.protocol = &protocols[0];
+#if defined(IOT_CIVETWEB)
+			context->wsi.conn = mg_connect_websocket_client(
+                                               web_address,
+                                               web_port,
+                                               1,
+                                               ebuf,
+                                               sizeof(ebuf),
+                                               web_path_heap,
+                                               NULL,
+                                               lws_data_handler,
+                                               lws_close_handler,
+                                               context);
+#endif
+#if defined(IOT_LIBHTTPWEBSOCKETS)
+                        context->wsi.conn = httplib_connect_websocket_client(
+                                               ctx,
+                                               web_address,
+                                               web_port,
+                                               1,
+                                               web_path_heap,
+                                               NULL,
+                                               lws_data_handler,
+                                               lws_close_handler,
+                                               context);
+#endif
+			if (context->wsi.conn)
+#endif
+#if defined(IOT_LIBWEBSOCKETS)
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 7 )
 			os_memzero( &client_ci,
 				sizeof( struct lws_client_connect_info ) );
@@ -657,6 +868,7 @@ int relay_client( const char *url,
 			);
 #endif
 			if ( lws )
+#endif /* IOT_LIBWEBSOCKETS */
 			{
 				/* wait here for the callback states to complete.
 				 * Both local socket and relay sides need to be
@@ -882,6 +1094,7 @@ void relay_signal_handler( int UNUSED(signum) )
 	TO_QUIT = IOT_TRUE;
 }
 
+#if defined(IOT_LIBWEBSOCKETS)
 void relay_lws_log( int level, const char* line )
 {
 	char line_out[RELAY_BUFFER_SIZE + 1u];
@@ -916,6 +1129,7 @@ void relay_lws_log( int level, const char* line )
 
 	relay_log( iot_level, "libwebsockets: %s", line );
 }
+#endif /* IOT_LIBWEBSOCKETS */
 
 void relay_log( iot_log_level_t level, const char *format, ... )
 {
