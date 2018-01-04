@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -12,106 +12,98 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 # OR CONDITIONS OF ANY KIND, either express or implied.
 #
+# --------------------------------------------------------------------
+# Description:
+# This script downloads, builds and installs project dependencies for the
+# device-cloud-lib into sub-directory called "deps".  Once the script completes,
+# there will be a directory called "build".  Setup cmake in that directory and
+# run "make" in the build directory.  For more information See README.md.
+#
+# Usage:
+#  $ ./build-deps.sh
+# --------------------------------------------------------------------
 
-CFG_FILE="build.yml"
-SRC_DIR=$(pwd)
-DEST_DIR="."
-PREFIX="IOT"
-IN_EXT=".in"
-OUT_FILES=("iot_build.h" "src/api/plugin/iot_plugin_builtin.c")
+# Required system dependencies:
+#    See README.md for list of dependencies from the build host
+#
+SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+export DEPS_DIR=`pwd`/deps
+mkdir -p "$DEPS_DIR"
 
-# Determine GIT SHA
-GIT_PATH=`which git`
-GIT_SHA_CMD="log -1 --format=%H"
-GIT_DATE_CMD="log -1 --format=%cd --date=short"
-if [ -n "${GIT_PATH}" ]; then
-	export ${PREFIX}_GIT_SHA=`${GIT_PATH} ${GIT_SHA_CMD} 2>/dev/null`
-	export ${PREFIX}_COMMIT_DATE=`${GIT_PATH} ${GIT_DATE_CMD} 2>/dev/null`
-fi
+# cmocka
+wget https://cmocka.org/files/1.1/cmocka-1.1.1.tar.xz
+tar -xvf cmocka-1.1.1.tar.xz
+cd cmocka-1.1.1
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH="$DEPS_DIR" ..
+make
+make install
+cd ../..
+rm -rf cmocka-1.1.1
 
-export IOT_VERSION=`echo ${IOT_COMMIT_DATE} | sed -e "s|20\([0-9][0-9]\)|\\1|g" -e "s|-|.|g"`
-export IOT_VERSION_MAJOR=`echo ${IOT_VERSION} | awk -F'.' '{print match($1, /[^ ]/) ? $1 : "0"}'`
-export IOT_VERSION_MINOR=`echo ${IOT_VERSION} | awk -F'.' '{print match($2, /[^ ]/) ? $2 : "0"}'`
-export IOT_VERSION_PATCH=`echo ${IOT_VERSION} | awk -F'.' '{print match($3, /[^ ]/) ? $3 : "0"}'`
-export IOT_VERSION_TWEAK=`echo ${IOT_VERSION} | awk -F'.' '{print match($4, /[^ ]/) ? $4 : "0"}'`
+# jsmn
+git clone https://github.com/zserge/jsmn.git jsmn
+cd jsmn
+make clean
+make "CFLAGS=-DJSMN_PARENT_LINKS=1 -DJSMN_STRICT=1 -fPIC"
+make test
+cmake -E copy "libjsmn.a" "$DEPS_DIR/lib"
+cmake -E copy "jsmn.h" "$DEPS_DIR/include"
+cd ..
+rm -rf jsmn
 
-# read yaml file
-# derived from https://gist.github.com/epiloque/8cf512c6d64641bde388
-# works for arrays of hashes, as long as the hashes do not have arrays
-parse_yaml() {
-	local prefix=$2
-	local s
-	local w
-	local fs
-	s='[[:space:]]*'
-	w='[a-zA-Z0-9_]*'
-	fs="$(echo @|tr @ '\034')"
-	sed -n -e "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
-		-e "s|^\($s\)\($w\)$s[:-]$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$1" |
-	awk -F"$fs" '{
-		indent = length($1)/2;
-		if (length($2) == 0) { conj[indent]="+";} else {conj[indent]="";}
-		vname[indent] = $2;
-		for (i in vname) {if (i > indent) {delete vname[i]}}
-		if (length($3) > 0) {
-			vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-			printf("%s%s%s%s=(\"%s\")\n", "'"$prefix"'",vn, $2, conj[indent-1],$3);
-		}
-	}' | sed 's/_=/+=/g'
-}
+# libwebsockets
+export LWS_GIT_TAG=v2.3.0
+git clone https://github.com/warmcat/libwebsockets.git libwebsockets
+cd libwebsockets
+git checkout tags/$LWS_GIT_TAG
+cmake -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH="$DEPS_DIR" .
+make
+make install
+cd ..
+rm -rf libwebsockets
 
-# parse config file and save into variables
-eval $(parse_yaml "${CFG_FILE}" "")
+# operating system abstraction layer
+git clone ssh://git@github.com/Wind-River/device-cloud-osal.git device-cloud-osal
+cd device-cloud-osal
+cmake -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH="$DEPS_DIR" -DOSAL_THREAD_SUPPORT:BOOL=ON -DOSAL_WRAP:BOOL=ON .
+make
+make install
+cd ..
+rm -rf device-cloud-osal
 
-# set variables for generating built-in plugin support
-for i in ${!IOT_PLUGIN_BUILTIN[@]}; do
-	PLUGIN_BUILTIN_NAME=$(echo "${IOT_PLUGIN_BUILTIN[${i}]}" | awk -F ":" '{print $1}' | tr -d '[:space:]')
-	PLUGIN_BUILTIN_ENABLE=$(echo "${IOT_PLUGIN_BUILTIN[${i}]}" | awk -F ":" '{print $2}' | tr -d '[:space:]')
-	case ${PLUGIN_BUILTIN_ENABLE} in
-		no | No | NO | false | False | FALSE | off | Off | OFF)
-			PLUGIN_BUILTIN_ENABLE=false;;
-		*)
-			PLUGIN_BUILTIN_ENABLE=true
-	esac
+# paho
+export PAHO_GIT_TAG=v1.2.0
+git clone https://github.com/eclipse/paho.mqtt.c.git paho
+cd paho
+git checkout tags/$PAHO_GIT_TAG
+cmake -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH="$DEPS_DIR" -DPAHO_WITH_SSL:BOOL=TRUE -DPAHO_BUILD_STATIC:BOOL=TRUE -DCMAKE_C_FLAGS:STRING=-fPIC .
+make
+make install
+cd ..
+rm -rf paho
 
-	IOT_PLUGIN_BUILTIN_INCS="${IOT_PLUGIN_BUILTIN_INCS}
-/**
- * @brief internal function to load the ${PLUGIN_BUILTIN_NAME} plug-in
- * @param[out]       p                   location to load plug-in to
- * @retval           IOT_TRUE            successfully loaded plug-in
- * @retval           IOT_FALSE           failed to load plug-in
- */
-iot_bool_t ${PLUGIN_BUILTIN_NAME}_load( iot_plugin_t *p );"
+# mosquitto
+export MOSQUITTO_GIT_TAG=v1.4.14
+git clone https://github.com/eclipse/mosquitto.git
+cd mosquitto
+git checkout tags/$MOSQUITTO_GIT_TAG
+find . -name CMakeLists.txt | xargs sed -i 's/ldconfig/ldconfig ARGS -N/'
+sed -i 's/add_subdirectory(man)//' CMakeLists.txt
+cmake -DWITH_SRV:BOOL=NO -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH="$DEPS_DIR" .
+make
+make install
+cd ..
+rm -fr mosquitto
 
-	IOT_PLUGIN_BUILTIN_IMPL="${IOT_PLUGIN_BUILTIN_IMPL}\n
-		/* ${PLUGIN_BUILTIN_NAME} */
-		if ( (lib->plugin_count + result < max) \\\\&\\\\& ${PLUGIN_BUILTIN_NAME}_load( lib->plugin_ptr[lib->plugin_count + result] ) ) { ++result; }"
+# build device-cloud lib, if you want to use mosquitto instead of paho
+# uncomment the following
+#USE_MOSQUITTO=-DIOT_MQTT_LIBRARY:STRING=mosquitto
 
-	if [ "${PLUGIN_BUILTIN_ENABLE}" = true ]; then
-		IOT_PLUGIN_BUILTIN_ENABLE="${IOT_PLUGIN_BUILTIN_ENABLE}
-		/* ${PLUGIN_BUILTIN_NAME} */
-		if ( iot_plugin_enable( lib, \"${PLUGIN_BUILTIN_NAME}\" ) != IOT_STATUS_SUCCESS ) result = IOT_FALSE;"
-	fi
-done
+cmake  $USE_MOSQUITTO -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DDEPENDS_ROOT_DIR:PATH="$DEPS_DIR" "$SCRIPT_PATH"
 
-# For each configuration file replace any matching variables
-for i in ${OUT_FILES[@]}; do
-	# Replace matching variables from in-file
-	cp "${SRC_DIR}/${i}${IN_EXT}" "${DEST_DIR}/${i}"
-	set | awk -F "=" '{print $1}' | grep "${PREFIX}_" | while read -r var; do
-		awk -v value="${!var}" "{if(value==\"n\"||value==\"N\"||value==\"no\"||value==\"No\"||value==\"NO\"||value==\"false\"||value==\"False\"||value==\"FALSE\"||value==\"off\"||value==\"Off\"||value==\"OFF\"){value=0}else if(value==\"y\"||value==\"Y\"||value==\"yes\"||value==\"Yes\"||value==\"YES\"||value==\"true\"||value==\"True\"||value==\"TRUE\"||value==\"on\"||value==\"On\"||value==\"ON\"){value=1}; sub(/@${var}@/, value); sub(/\${${var}}/, value); print; }" "${DEST_DIR}/${i}" > "${DEST_DIR}/${i}.tmp"
-		mv "${DEST_DIR}/${i}.tmp" "${DEST_DIR}/${i}"
-	done
-	# Replace common cmake variables
-	sed -e "s|@CMAKE_EXECUTABLE_SUFFIX@||g" -e "s|\${CMAKE_EXECUTABLE_SUFFIX}||g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_SHARED_LIBRARY_PREFIX@|lib|g" -e "s|\${CMAKE_SHARED_LIBRARY_PREFIX}|lib|g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_STATIC_LIBRARY_PREFIX@|lib|g" -e "s|\${CMAKE_STATIC_LIBRARY_PREFIX}|lib|g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_SHARED_LIBRARY_SUFFIX@|.so|g" -e "s|\${CMAKE_SHARED_LIBRARY_SUFFIX}|.so|g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_STATIC_LIBRARY_SUFFIX@|.a|g" -e "s|\${CMAKE_STATIC_LIBRARY_SUFFIX}|.a|g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_SOURCE_DIR@|${SRC_DIR}|g" -e "s|\${CMAKE_SOURCE_DIR}|${SRC_DIR}|g" -i "${DEST_DIR}/${i}"
-	sed -e "s|@CMAKE_BINARY_DIR@|${DEST_DIR}|g" -e "s|\${CMAKE_BINARY_DIR}|${DEST_DIR}|g" -i "${DEST_DIR}/${i}"
-	# Replace any remaining variables with blanks
-	sed -e "s|@[a-zA-Z0-9_]*@||g" -e "s|\${[a-zA-Z0-9_]*}||g" -i "${DEST_DIR}/${i}"
-done
-
-exit 0
+echo
+echo "device-cloud-lib is ready to build."
+echo "make"
+echo
