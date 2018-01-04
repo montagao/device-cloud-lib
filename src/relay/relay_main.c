@@ -18,6 +18,10 @@
 #include <stdarg.h>
 #include "relay_main.h"
 
+#ifndef IOT_CIVETWEB
+#define IOT_LIBWEBSOCKETS
+#endif
+
 #if defined(IOT_LIBWEBSOCKETS)
 #if defined(__vxworks) && defined(__DCC__)
 #include <libwebsockets.h>             /* for libwebsockets header files */
@@ -28,14 +32,11 @@
 #endif
 #endif /* IOT_LIBWEBSOCKETS */
 
-#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+#if defined(IOT_CIVETWEB)
 #define LWS_LIBRARY_VERSION_MAJOR 2
 
 #if defined(IOT_CIVETWEB)
 #include <civetweb.h>
-#endif
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-#include <libhttp.h>
 #endif
 
 #if !defined(LWS_SIZEOFPTR)
@@ -78,10 +79,6 @@ struct lws_protocols {
 struct lws {
 #if defined(IOT_CIVETWEB)
 	struct mg_connection *conn;
-#endif
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-	struct lh_ctx_t *ctx;
-	struct lh_con_t *conn;
 #endif
 	struct lws_protocols *protocol;
 };
@@ -137,7 +134,7 @@ struct lws_context {
 #	define lws                           libwebsocket
 /** @} */
 #endif /* libwebsockets  < 1.6.0 */
-#if LWS_LIBRARY_VERSION_MAJOR < 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR < 7 ) || defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+#if LWS_LIBRARY_VERSION_MAJOR < 1 || ( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR < 7 ) || defined(IOT_CIVETWEB)
 /**
  * splits the portions of the uri passed in, into parts
  *
@@ -384,7 +381,7 @@ static const struct lws_extension EXTS[] = {
 #endif /* libwebsockets >= 1.7.0 */
 #endif /* IOT_LIBWEBSOCKETS */
 
-#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+#if defined(IOT_CIVETWEB)
 static void lws_set_log_level(int level,
 				void (*func)(int level, const char *line))
 {
@@ -403,12 +400,7 @@ static void lws_service(struct lws_context *context, int timeout_ms)
 static int lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 			enum lws_write_protocol wp)
 {
-#if defined(IOT_CIVETWEB)
 	mg_websocket_client_write(wsi->conn, wp, buf, len);
-#endif
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-	httplib_websocket_client_write(wsi->ctx, wsi->conn, wp, buf, len);
-#endif
 	return len;
 }
 
@@ -424,7 +416,6 @@ static void lws_context_destroy(struct lws_context *context)
 {
 }
 
-#if defined(IOT_CIVETWEB)
 static int lws_data_handler(struct mg_connection *conn,
 				int flags,
 				char *data,
@@ -434,40 +425,18 @@ static int lws_data_handler(struct mg_connection *conn,
 	struct mg_context *ctx = mg_get_context(conn);
 	struct lws_context *context =
 		(struct lws_context *)mg_get_user_data(ctx);
-#endif
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-static int lws_data_handler(struct lh_ctx_t *ctx,
-			struct mg_connection *conn,
-			int flags,
-			char *data,
-			size_t data_len,
-			void *user_data)
-{
-	struct lws_context *context =
-		(struct lws_context *)httplib_get_user_data(ctx);
-#endif
 	relay_service_callback(&context->wsi,
 				LWS_CALLBACK_CLIENT_RECEIVE,
 				NULL, data, data_len);
 	return 1;
 }
 
-#if defined(IOT_CIVETWEB)
 static void lws_close_handler(const struct mg_connection *conn,
 				void *user_data)
 {
 	struct mg_context *ctx = mg_get_context(conn);
 	struct lws_context *context =
 		(struct lws_context *)mg_get_user_data(ctx);
-#endif
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-static void lws_close_handler(struct lh_ctx_t *ctx,
-				const struct mg_connection *conn,
-				void *user_data)
-{
-	struct lws_context *context =
-		(struct lws_context *)httplib_get_user_data(ctx);
-#endif
 	relay_service_callback(&context->wsi,
 				LWS_CALLBACK_CLOSED,
 				NULL, NULL, 0);
@@ -573,19 +542,12 @@ int relay_client( const char *url,
 
 	if ( result == EXIT_SUCCESS )
 	{
-#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+#if defined(IOT_CIVETWEB)
 		struct lws_context lws_context_data;
 		struct lws_context *context = &lws_context_data;
 		char ebuf[100] = {0};
 		struct lws *lws = &context->wsi;
 		struct lws_protocols protocols[ 2u ];
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-		struct lh_clb_t clb;
-		struct lh_ctx_t * ctx;
-		memset(&clb, 0, sizeof(clb));
-		ctx = httplib_create_client_context(&clb, NULL);
-		lws->ctx = ctx;
-#endif
 #endif
 #if defined(IOT_LIBWEBSOCKETS)
 		char cert_path[ PATH_MAX + 1u ];
@@ -802,10 +764,9 @@ int relay_client( const char *url,
 					ssl_connection = 1;
 #endif
 			}
-#if defined(IOT_CIVETWEB) || defined(IOT_LIBHTTPWEBSOCKETS)
+#if defined(IOT_CIVETWEB)
 			protocols[0].user = wsd;
 			context->wsi.protocol = &protocols[0];
-#if defined(IOT_CIVETWEB)
 			context->wsi.conn = mg_connect_websocket_client(
                                                web_address,
                                                web_port,
@@ -817,19 +778,6 @@ int relay_client( const char *url,
                                                lws_data_handler,
                                                lws_close_handler,
                                                context);
-#endif
-#if defined(IOT_LIBHTTPWEBSOCKETS)
-                        context->wsi.conn = httplib_connect_websocket_client(
-                                               ctx,
-                                               web_address,
-                                               web_port,
-                                               1,
-                                               web_path_heap,
-                                               NULL,
-                                               lws_data_handler,
-                                               lws_close_handler,
-                                               context);
-#endif
 			if (context->wsi.conn)
 #endif
 #if defined(IOT_LIBWEBSOCKETS)

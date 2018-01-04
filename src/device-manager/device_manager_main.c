@@ -1259,7 +1259,7 @@ int device_manager_main( int argc, char *argv[] )
 			return EXIT_FAILURE;
 		}
 
-#if !defined(_WRS_KERNEL)
+#if defined(__vxworks) && !defined(_WRS_KERNEL)
 		deviceCloudConfigDirSet(config_dir);
 		deviceCloudRuntimeDirSet(runtime_dir);
 		deviceCloudRtpDirSet(rtp_dir);
