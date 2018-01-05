@@ -29,9 +29,11 @@ extern int app_complete_main ( int argc, char *argv[] );
 * RETURNS: N/A
 */
 
-void deviceCloudCompleteStart (void)
+void deviceCloudCompleteSpawn (void)
     {
     static const char *argv[] = { "" };
+
+    (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
     if (taskSpawn (DEVICE_CLOUD_COMPLETE_TASK_NAME,
                    DEVICE_CLOUD_PRIORITY, 0,
@@ -39,6 +41,28 @@ void deviceCloudCompleteStart (void)
                    (FUNCPTR) app_complete_main,
                    (_Vx_usr_arg_t) 1, (_Vx_usr_arg_t) argv,
                    0, 0, 0, 0, 0, 0, 0, 0 ) == TASK_ID_ERROR)
+        {
+        (void)fprintf (stderr, "Task spawn error.\n");
+        }
+    }
+
+/******************************************************************************
+*
+* deviceCloudCompleteStart() - spawns a task
+*
+* This function spawns a task that will spawn the application after a delay.
+*
+* RETURNS: N/A
+*/
+
+void deviceCloudCompleteStart (void)
+    {
+    if (taskSpawn ("tDeviceCloud",
+                   DEVICE_CLOUD_PRIORITY,
+                   0,
+                   DEVICE_CLOUD_STACK_SIZE,
+                   (FUNCPTR) deviceCloudCompleteSpawn,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
         (void)fprintf (stderr, "Task spawn error.\n");
         }

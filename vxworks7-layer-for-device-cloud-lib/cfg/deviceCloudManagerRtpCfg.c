@@ -36,7 +36,7 @@ static void deviceCloudManagerRtpSpawn (void)
     char priorityStr[32];
     char stackSizeStr[32];
 
-    sleep (5);
+    (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
     if (chdir (DEVICE_CLOUD_RTP_DIR) != OK)
         {

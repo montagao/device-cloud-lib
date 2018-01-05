@@ -1,4 +1,4 @@
-# Makefile - Device Cloud actions Makefile
+# Makefile - Device Cloud action Makefile
 #
 # Copyright (c) 2017 Wind River Systems, Inc.
 #
@@ -14,7 +14,7 @@ ifeq ($(SPACE), user)
 EXE = iot-app-simple-actions
 ADDED_LIBS += -liot -losal -lnet -larchive -lHASH -lOPENSSL -lmosquitto -ljson -lzlib -lcurl -lunix
 else
-LIB_BASE_NAME = deviceCloudActions
+LIB_BASE_NAME = deviceCloudAction
 endif
 
 BUILD_ALL_OBJS = TRUE

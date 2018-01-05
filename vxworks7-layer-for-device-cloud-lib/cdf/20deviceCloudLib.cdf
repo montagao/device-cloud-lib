@@ -28,8 +28,9 @@ Component INCLUDE_DEVICE_CLOUD_LIBRARY {
     CFG_PARAMS      DEVICE_CLOUD_CONFIG_DIR \
                     DEVICE_CLOUD_RUNTIME_DIR \
                     DEVICE_CLOUD_RTP_DIR \
+                    DEVICE_CLOUD_PRIORITY \
                     DEVICE_CLOUD_STACK_SIZE \
-                    DEVICE_CLOUD_PRIORITY
+                    DEVICE_CLOUD_APP_DELAY
     CONFIGLETTES    deviceCloudCfg.c
     ARCHIVE         libiot.a
 }
@@ -73,6 +74,13 @@ Parameter DEVICE_CLOUD_STACK_SIZE {
     SYNOPSIS        This parameter specifies the task and thread stack size.
     TYPE            uint
     DEFAULT         0x10000
+}
+
+Parameter DEVICE_CLOUD_APP_DELAY {
+    NAME            Device Cloud application delay
+    SYNOPSIS        This parameter specifies the start up delay in seconds before launching the application.
+    TYPE            uint
+    DEFAULT         5
 }
 
 Selection SELECT_DEVICE_CLOUD_APP {

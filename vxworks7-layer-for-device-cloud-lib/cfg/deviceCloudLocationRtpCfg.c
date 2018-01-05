@@ -34,7 +34,7 @@ static void deviceCloudLocationRtpSpawn (void)
     int fd;
     const char *args[2];
 
-    sleep (5);
+    (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
     if (chdir (DEVICE_CLOUD_RTP_DIR) != OK)
         {
