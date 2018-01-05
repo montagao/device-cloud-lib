@@ -1,0 +1,30 @@
+/* layer.vsbl file for Device Cloud C library layer  */
+/*
+ * Copyright (c) 2017 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify, or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River license agreement.
+ */
+
+/*
+Modification history
+--------------------
+05oct17,yat  created
+*/
+
+Layer LIB
+    {
+    SYNOPSIS          Device Cloud C library layer
+    HELP              This provides the Device Cloud C library layer.
+    VERSION           2.4.0.0
+    VENDOR            Wind River
+    FEATURE           HDC
+    LAYER_REQUIRES    HDC_OSAL ARCHIVE OPENSSL JSON CIVETWEB
+    FEATURE_REQUIRES  {HDC HDC24} \
+                      {MOSQUITTO MOSQUITTO_USER_LIB} \
+                      {WEBCLI_CURL CURL_USER_LIB}
+    OPTIONAL          YES
+    DEFAULT           NO
+    DOC_BUILD         NO
+    }

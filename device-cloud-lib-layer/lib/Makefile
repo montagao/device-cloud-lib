@@ -1,0 +1,27 @@
+# Makefile - for Device Cloud C Library
+#
+# Copyright  2017 Wind River Systems, Inc.
+#
+# The right to copy, distribute, modify, or otherwise make use
+# of this software may be licensed only pursuant to the terms
+# of an applicable Wind River license agreement.
+#
+# Modification history
+# --------------------
+# 05oct17,yat  created
+
+include $(WIND_KRNL_MK)/defs.ver.mk
+
+COMMIT_ID=b358e046050ec3d3c4395b38f71e4477f1deef0d
+
+PKG_NAME := device_cloud_lib_repo
+PKG_URL= https://github.com/Wind-River/device-cloud-lib.git $(PKG_NAME); cd $(PKG_NAME) && git checkout -b vxworks $(COMMIT_ID) && git reset HEAD --hard
+PKG_FILE_TYPE = git
+
+PKG_BUILD_TARGETS := src
+PKG_BUILD_DIR := $(PKG_NAME)
+PKG_PATCH_DIR := $(PKG_NAME)
+
+PKG_EXTRA_SRC := iot_build.h iot_plugin_builtin.c iot-connect.schema.json.h iot-connect.schema.json.c
+
+include $(WIND_KRNL_MK)/rules.unix.ports.mk
