@@ -12,8 +12,6 @@
 
 PRE_BUILD_DIRS = lib
 
-SHARED_PUBLIC_H_DIRS = h
-
 BUILD_DIRS = lib device-manager actions complete location telemetry control relay software-update
 BUILD_USER_DIRS = lib
 POSTBUILD_RTP_DIRS = device-manager actions complete location telemetry control relay software-update
