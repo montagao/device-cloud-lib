@@ -22,7 +22,7 @@ extern int device_manager_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudManagerStart() - spawns the application task
+* deviceCloudManagerSpawn() - spawns the application task
 *
 * This function spawns the application task.
 *

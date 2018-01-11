@@ -22,7 +22,7 @@ extern int app_complete_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudCompleteStart() - spawns the application task
+* deviceCloudCompleteSpawn() - spawns the application task
 *
 * This function spawns the application task.
 *

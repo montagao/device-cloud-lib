@@ -22,7 +22,7 @@ extern int app_telemetry_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudTelemetryStart() - spawns the application task
+* deviceCloudTelemetrySpawn() - spawns the application task
 *
 * This function spawns the application task.
 *

@@ -22,7 +22,7 @@ extern int app_location_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudLocationStart() - spawns the application task
+* deviceCloudLocationSpawn() - spawns the application task
 *
 * This function spawns the application task.
 *

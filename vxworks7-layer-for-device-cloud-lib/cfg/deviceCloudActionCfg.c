@@ -22,7 +22,7 @@ extern int app_action_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudActionStart() - spawns the application task
+* deviceCloudActionSpawn() - spawns the application task
 *
 * This function spawns the application task.
 *
