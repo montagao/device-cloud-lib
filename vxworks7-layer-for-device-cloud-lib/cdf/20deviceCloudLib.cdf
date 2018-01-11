@@ -80,7 +80,7 @@ Parameter DEVICE_CLOUD_APP_DELAY {
     NAME            Device Cloud application delay
     SYNOPSIS        This parameter specifies the start up delay in seconds before launching the application.
     TYPE            uint
-    DEFAULT         5
+    DEFAULT         10
 }
 
 Selection SELECT_DEVICE_CLOUD_APP {
