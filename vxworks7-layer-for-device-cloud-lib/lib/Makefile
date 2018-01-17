@@ -12,10 +12,8 @@
 
 include $(WIND_KRNL_MK)/defs.ver.mk
 
-COMMIT_ID=b358e046050ec3d3c4395b38f71e4477f1deef0d
-
 PKG_NAME := device_cloud_lib_repo
-PKG_URL= https://github.com/Wind-River/device-cloud-lib.git $(PKG_NAME); cd $(PKG_NAME) && git checkout -b vxworks $(COMMIT_ID) && git reset HEAD --hard
+PKG_URL = https://github.com/Wind-River/device-cloud-lib.git $(PKG_NAME); cd $(PKG_NAME) && git checkout vxworks_fixes && git checkout -b vxworks && git reset HEAD --hard
 PKG_FILE_TYPE = git
 
 PKG_BUILD_TARGETS := src
