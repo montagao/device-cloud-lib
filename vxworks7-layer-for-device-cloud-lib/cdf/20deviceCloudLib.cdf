@@ -24,7 +24,9 @@ Component INCLUDE_DEVICE_CLOUD_LIBRARY {
                     INCLUDE_IPDNSC \
                     INCLUDE_IPSNTPC \
                     INCLUDE_IPTELNETS \
-                    INCLUDE_DOSFS
+                    INCLUDE_DOSFS \
+                    INCLUDE_ARCHIVE \
+                    INCLUDE_CIVETWEB
     CFG_PARAMS      DEVICE_CLOUD_CONFIG_DIR \
                     DEVICE_CLOUD_RUNTIME_DIR \
                     DEVICE_CLOUD_RTP_DIR \
