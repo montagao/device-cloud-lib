@@ -22,4 +22,7 @@ PKG_PATCH_DIR := $(PKG_NAME)
 
 PKG_EXTRA_SRC := iot_build.h iot_plugin_builtin.c iot-connect.schema.json.h iot-connect.schema.json.c
 
+KERNEL_PUBLIC_H_FILES = src/api/public/iot.h
+USER_PUBLIC_H_FILES = src/api/public/iot.h
+
 include $(WIND_KRNL_MK)/rules.unix.ports.mk
