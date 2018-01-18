@@ -15,7 +15,7 @@ LIB_FORMAT = both
 
 BUILD_ALL_OBJS = TRUE
 
-DEVICE_CLOUD_LIB_DIR = $(VSB_DIR)/3pp/HDC_LIB/device_cloud_lib_repo
+DEVICE_CLOUD_LIB_DIR = $(VSB_DIR)/3pp/DEVICE_CLOUD_LIB/device_cloud_lib_repo
 
 SRC_DIRS = \
         $(DEVICE_CLOUD_LIB_DIR) \

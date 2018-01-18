@@ -13,14 +13,14 @@ Modification history
 05oct17,yat  created
 */
 
-Layer LIB
+Layer DEVICE_CLOUD_LIB
     {
     SYNOPSIS          Device Cloud C library layer
     HELP              This provides the Device Cloud C library layer.
     VERSION           2.4.0.0
     VENDOR            Wind River
     FEATURE           HDC
-    LAYER_REQUIRES    HDC_OSAL ARCHIVE OPENSSL JSON CIVETWEB
+    LAYER_REQUIRES    DEVICE_CLOUD_OSAL ARCHIVE OPENSSL JSON CIVETWEB
     FEATURE_REQUIRES  {HDC HDC24} \
                       {MOSQUITTO MOSQUITTO_USER_LIB} \
                       {WEBCLI_CURL CURL_USER_LIB}
