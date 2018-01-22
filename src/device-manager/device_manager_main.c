@@ -354,7 +354,7 @@ iot_status_t device_manager_actions_deregister(
 		iot_action_t *file_download = device_manager->file_download;
 		iot_action_t *const device_reboot = device_manager->device_reboot;
 
-#if !defined( WIN32 ) && !defined( __vxworks )
+#if !defined( WIN32 ) && !defined( __VXWORKS__ )
 		iot_action_t *const restore_factory_images = device_manager->restore_factory_images;
 
 		/* restore_factory_images */
@@ -364,7 +364,7 @@ iot_status_t device_manager_actions_deregister(
 			iot_action_free( restore_factory_images, 0u );
 			device_manager->restore_factory_images = NULL;
 		}
-#endif /* if !defined( WIN32 ) && !defined( __vxworks ) */
+#endif /* if !defined( WIN32 ) && !defined( __VXWORKS__ ) */
 
 		/* device_shutdown */
 		if ( device_shutdown )
@@ -563,7 +563,7 @@ iot_status_t device_manager_actions_register(
 				action->ptr, &on_action_device_shutdown,
 				(void*)device_manager, NULL, 0u );
 #else
-#	if !defined(__vxworks)
+#	if !defined(__VXWORKS__)
 			result = device_manager_make_control_command( command_path,
 				PATH_MAX, device_manager, " --shutdown" );
 			if ( result == IOT_STATUS_SUCCESS )
@@ -572,7 +572,7 @@ iot_status_t device_manager_actions_register(
 #	else
 			result = iot_action_register_command( action->ptr,
 				"shutdown", NULL, 0u );
-#	endif
+#	endif /* __VXWORKS__ */
 #endif
 			if ( result != IOT_STATUS_SUCCESS )
 			{
@@ -599,7 +599,7 @@ iot_status_t device_manager_actions_register(
 					&on_action_agent_decommission,
 					(void*)device_manager, NULL, 0u );
 #else
-#	if !defined(__vxworks)
+#	if !defined(__VXWORKS__)
 			result = device_manager_make_control_command( command_path,
 					PATH_MAX, device_manager, " --decommission" );
 			if ( result == IOT_STATUS_SUCCESS )
@@ -608,7 +608,7 @@ iot_status_t device_manager_actions_register(
 #	else
 			result = iot_action_register_command( action->ptr,
 				"decommission", NULL, 0u );
-#	endif
+#	endif /* __VXWORKS__ */
 #endif
 			if ( result != IOT_STATUS_SUCCESS )
 			{
@@ -736,7 +736,7 @@ iot_status_t device_manager_actions_register(
 				action->ptr, &on_action_agent_reboot,
 				(void*)device_manager, NULL, 0u );
 #else
-#	if !defined(__vxworks)
+#	if !defined(__VXWORKS__)
 			result = device_manager_make_control_command( command_path,
 				PATH_MAX, device_manager, " --reboot" );
 			if ( result == IOT_STATUS_SUCCESS )
@@ -745,7 +745,7 @@ iot_status_t device_manager_actions_register(
 #	else
 			result = iot_action_register_command( action->ptr,
 				"reboot", NULL, 0u );
-#	endif /* __vxworks */
+#	endif /* __VXWORKS__ */
 #endif
 			if ( result != IOT_STATUS_SUCCESS )
 			{
@@ -1259,13 +1259,13 @@ int device_manager_main( int argc, char *argv[] )
 			return EXIT_FAILURE;
 		}
 
-#if defined(__vxworks) && !defined(_WRS_KERNEL)
+#if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
 		deviceCloudConfigDirSet(config_dir);
 		deviceCloudRuntimeDirSet(runtime_dir);
 		deviceCloudRtpDirSet(rtp_dir);
 		deviceCloudPrioritySet(priority);
 		deviceCloudStackSizeSet(stack_size);
-#endif /* _WRS_KERNEL */
+#endif /* __VXWORKS__ */
 
 		device_manager_config_read( &APP_DATA, argv[0], config_file );
 

@@ -272,7 +272,7 @@ iot_status_t app_path_executable_directory_get(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( path )
 	{
-#ifdef __vxworks
+#if defined(__VXWORKS__)
 		os_strncpy(path, deviceCloudRtpDirGet(), size);
 		result = IOT_STATUS_SUCCESS;
 #else
@@ -296,7 +296,7 @@ iot_status_t app_path_executable_directory_get(
 				}
 			}
 		}
-#endif
+#endif /* __VXWORKS__ */
 	}
 	return result;
 }

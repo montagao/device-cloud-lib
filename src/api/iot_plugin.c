@@ -279,7 +279,7 @@ iot_status_t iot_plugin_perform(
 	return result;
 }
 
-#ifndef __vxworks
+#if !defined(__VXWORKS__)
 iot_status_t iot_plugin_load(
 	iot_t *lib,
 	const char *file )
@@ -367,4 +367,4 @@ iot_status_t iot_plugin_unload( iot_t *lib, const char *name )
 	}
 	return result;
 }
-#endif
+#endif /* __VXWORKS__ */
