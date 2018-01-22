@@ -18,7 +18,7 @@
 #define IOT_BUILD_H
 
 /** @brief GIT sha of the project */
-#define IOT_GIT_SHA                    "528b2a87487b094192c46ef84c956fcd62103a1f"
+#define IOT_GIT_SHA                    ""
 
 /** @brief Name of the product */
 #define IOT_PRODUCT                    "Helix Device Cloud"
