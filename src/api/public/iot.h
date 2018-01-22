@@ -2,7 +2,7 @@
  * @file
  * @brief Header file for using the Internet of Things library
  *
- * @copyright Copyright (C) 2016-2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2016-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -412,8 +412,12 @@ typedef void (iot_log_callback_t)(
  * @param[in]      max_time_out        maximum time to wait in milliseconds
  *                                     (0 = wait indefinitely)
  *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
- * @retval IOT_STATUS_FAILURE          internal system failure
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_FAILURE          system error reading configuration file
+ * @retval IOT_STATUS_FILE_OPEN_FAILED failed to open file for reading
+ * @retval IOT_STATUS_NO_MEMORY        out of memory
+ * @retval IOT_STATUS_NOT_FOUND        file not found
+ * @retval IOT_STATUS_PARSE_ERROR      failed to parse configuration file
  * @retval IOT_STATUS_SUCCESS          on success
  * @retval IOT_STATUS_TIMED_OUT        timed out while waiting for connection
  *
@@ -586,6 +590,7 @@ IOT_API IOT_SECTION iot_action_t *iot_action_allocate(
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FULL             maximum number of options reached
+ * @retval IOT_STATUS_NO_MEMORY        no memory available to store option
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_option_set_raw
@@ -606,6 +611,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_option_set(
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FULL             maximum number of options reached
+ * @retval IOT_STATUS_NO_MEMORY        no memory available to store option
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_option_set
@@ -744,6 +750,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_parameter_get_raw(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  * @retval IOT_STATUS_FULL             no space to store new parameter
+ * @retval IOT_STATUS_NO_MEMORY        out of memory
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_parameter_get
@@ -766,6 +773,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_parameter_set(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  * @retval IOT_STATUS_FULL             no space to store new parameter
+ * @retval IOT_STATUS_NO_MEMORY        out of memory
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_parameter_get_raw
@@ -883,6 +891,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_option_get(
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FULL             maximum number of options reached
+ * @retval IOT_STATUS_NO_MEMORY        no memory available to store option
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_request_option_get
@@ -904,6 +913,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_option_set(
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_FULL             maximum number of options reached
+ * @retval IOT_STATUS_NO_MEMORY        no memory available to store option
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_request_option_get
@@ -925,6 +935,8 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_option_set_raw(
  * @param[in]      max_time_out        maximum time to wait (0=indefinite)
  *
  * @retval IOT_STATUS_BAD_PARAMETER    bad parameter passed to function
+ * @retval IOT_STATUS_FULL             the request queue is full
+ * @retval IOT_STATUS_NOT_INITIALIZED  the request was not correctly allocated
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_request_allocate
@@ -960,7 +972,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_free(
  * @param[in,out]  iter                pointer to the iterator to move ahead
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_NOT_FOUND        no more items available
+ * @retval IOT_STATUS_NOT_FOUND        no matching items found
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_request_parameter_iterator_next
@@ -1092,6 +1104,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_parameter_iterator_next(
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to function
  * @retval IOT_STATUS_BAD_REQUEST      type doesn't match parameter
  * @retval IOT_STATUS_FULL             no space to store new parameter
+ * @retval IOT_STATUS_NO_MEMORY        out of memory
  * @retval IOT_STATUS_SUCCESS          on success
  *
  * @see iot_action_request_allocate
@@ -1119,10 +1132,13 @@ IOT_API IOT_SECTION const char *iot_action_request_source(
  * @brief returns the current result of an action request
  *
  * @param[in]      request             request to retrieve result from
- * @param[out]     message             (optional) current status message, may
- *                                     return NULL on success
+ * @param[out]     message             (optional) current status message,
+ *                                     returns NULL on success
  *
- * @return         any return status result
+ * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
+ * @retval IOT_STATUS_SUCCESS          request is currently in a success state
+ * @retval IOT_STATUS_*                any other status value is the current
+ *                                     internal status of the request
  *
  * @see iot_action_request_allocate
  * @see iot_action_request_execute
@@ -1177,7 +1193,6 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_status(
  *                                     (0 indicates no limit)
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
- * @retval IOT_STATUS_FAILURE          internal system failure
  * @retval IOT_STATUS_SUCCESS          pointer was successfully set
  */
 IOT_API IOT_SECTION iot_status_t iot_action_time_limit_set(

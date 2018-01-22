@@ -2,7 +2,7 @@
  * @file
  * @brief source file for the tr50 (telit) plugin
  *
- * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@
 #include <os.h>
 #include <curl/curl.h>
 
+#ifdef IOT_STACK_ONLY
+#define TR50_IN_BUFFER_SIZE                 1024u
+#endif /* ifdef IOT_STACK_ONLY */
+
 /** @brief Maximum length for a "thingkey" */
 #define TR50_THING_KEY_MAX_LEN               ( IOT_ID_MAX_LEN * 2 ) + 1u
 /** @brief number of seconds to show "Connection loss message" */
@@ -34,14 +38,6 @@
 #define TR50_MQTT_QOS                        1
 /** @brief Maximum concurrent file transfers */
 #define TR50_FILE_TRANSFER_MAX               10u
-/** @brief Default value for ssl verify host */
-#define TR50_DEFAULT_SSL_VERIFY_HOST         2u
-/** @brief Default value for ssl verify peer */
-#define TR50_DEFAULT_SSL_VERIFY_PEER         1u
-/** @brief File transfer progress interval in seconds */
-#define TR50_FILE_TRANSFER_PROGRESS_INTERVAL 5.0
-/** @brief Extension for temporary downloaded file */
-#define TR50_DOWNLOAD_EXTENSION              ".part"
 /** @brief Time interval in seconds to check file
  *         transfer queue */
 #define TR50_FILE_QUEUE_CHECK_INTERVAL       30 * IOT_MILLISECONDS_IN_SECOND /* 30 seconds */
@@ -50,6 +46,17 @@
 #define TR50_FILE_TRANSFER_EXPIRY_TIME       1 * IOT_MINUTES_IN_HOUR * \
                                              IOT_SECONDS_IN_MINUTE * \
                                              IOT_MILLISECONDS_IN_SECOND /* 1 hour */
+
+#ifdef IOT_THREAD_SUPPORT
+/** @brief File transfer progress interval in seconds */
+#define TR50_FILE_TRANSFER_PROGRESS_INTERVAL 5.0
+/** @brief Default value for ssl verify host */
+#define TR50_DEFAULT_SSL_VERIFY_HOST         2u
+/** @brief Default value for ssl verify peer */
+#define TR50_DEFAULT_SSL_VERIFY_PEER         1u
+/** @brief Extension for temporary downloaded file */
+#define TR50_DOWNLOAD_EXTENSION              ".part"
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 /** @brief structure containing informaiton about a file transfer */
 struct tr50_file_transfer
@@ -454,6 +461,7 @@ static IOT_SECTION iot_status_t tr50_file_request_send(
 	const iot_file_transfer_t* file_transfer,
 	const iot_options_t *options );
 
+#ifdef IOT_THREAD_SUPPORT
 /**
  * @brief a thread to perform file transfer
  *
@@ -499,6 +507,7 @@ static IOT_SECTION int tr50_file_progress_old(
 	void *user_data,
 	double down_total, double down_now,
 	double up_total, double up_now );
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 /**
  * @brief checks file transfer queue and execute those which need retrying
@@ -520,7 +529,7 @@ iot_status_t tr50_action_complete(
 		const char *source = iot_action_request_source( request );
 
 		result = IOT_STATUS_SUCCESS;
-		if ( os_strncmp( source, "tr50", 4 ) == 0 )
+		if ( source && os_strncmp( source, "tr50", 4 ) == 0 )
 		{
 			const char *req_id;
 			result = iot_action_request_option_get(
@@ -852,6 +861,7 @@ iot_status_t tr50_check_mailbox(
 		iot_json_encode_object_start( req_json, "cmd" );
 		iot_json_encode_string( req_json, "command", "mailbox.check" );
 		iot_json_encode_object_start( req_json, "params" );
+		iot_json_encode_integer( req_json, "limit", IOT_ACTION_QUEUE_MAX );
 		iot_json_encode_bool( req_json, "autoComplete", IOT_FALSE );
 		iot_json_encode_object_end( req_json );
 		iot_json_encode_object_end( req_json );
@@ -1348,6 +1358,7 @@ iot_status_t tr50_file_request_send(
 	return result;
 }
 
+#ifdef IOT_THREAD_SUPPORT
 OS_THREAD_DECL tr50_file_transfer(
 	void* arg )
 {
@@ -1763,6 +1774,7 @@ int tr50_file_progress_old(
 		(curl_off_t)down_total, (curl_off_t)down_now,
 		(curl_off_t)up_total, (curl_off_t)up_now );
 }
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 void tr50_file_queue_check(
 	struct tr50_data *data )
@@ -1774,6 +1786,7 @@ void tr50_file_queue_check(
 			now - data->file_queue_last_checked >=
 			TR50_FILE_QUEUE_CHECK_INTERVAL )
 		{
+#ifdef IOT_THREAD_SUPPORT
 			iot_uint8_t i = 0u;
 			for ( i= 0u;
 				i < data->file_transfer_count;
@@ -1792,6 +1805,7 @@ void tr50_file_queue_check(
 						transfer->retry_time = 0u;
 				}
 			}
+#endif /* ifdef IOT_THREAD_SUPPORT */
 			data->file_queue_last_checked = now;
 		}
 	}
@@ -1824,7 +1838,9 @@ void tr50_on_message(
 	int UNUSED(qos),
 	iot_bool_t UNUSED(retain) )
 {
-	char buf[1024u];
+#ifdef IOT_STACK_ONLY
+	char buf[TR50_IN_BUFFER_SIZE];
+#endif
 	struct tr50_data *const data = (struct tr50_data *)(user_data);
 	iot_json_decoder_t *json;
 	const iot_json_item_t *root;
@@ -1838,7 +1854,11 @@ void tr50_on_message(
 	IOT_LOG( data->lib, IOT_LOG_TRACE,
 		"-->received: %.*s", (int)payload_len, (const char *)payload );
 
-	json = iot_json_decode_initialize( buf, 1024u, 0u );
+#ifdef IOT_STACK_ONLY
+	json = iot_json_decode_initialize( buf, TR50_IN_BUFFER_SIZE, 0u );
+#else
+	json = iot_json_decode_initialize( NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+#endif
 	if ( data && json &&
 		iot_json_decode_parse( json, payload, payload_len, &root,
 			NULL, 0u ) == IOT_STATUS_SUCCESS )
@@ -1906,7 +1926,7 @@ void tr50_on_message(
 							j_messages = iot_json_decode_object_find( json,
 								j_params, "messages" );
 
-							/* actions/methods parsing */
+							/* actions (aka methods) parsing */
 							if ( j_messages && iot_json_decode_type( json, j_messages )
 								== IOT_JSON_TYPE_ARRAY )
 							{
@@ -1953,7 +1973,34 @@ void tr50_on_message(
 												os_snprintf( name, IOT_NAME_MAX_LEN, "%.*s", (int)v_len, v );
 												name[ IOT_NAME_MAX_LEN ] = '\0';
 												req = iot_action_request_allocate( data->lib, name, "tr50" );
-												iot_action_request_option_set( req, "id", IOT_TYPE_STRING, id );
+												if ( req )
+													iot_action_request_option_set( req, "id", IOT_TYPE_STRING, id );
+												else
+												{
+													/* send response that message can't be handled */
+													const char *out_msg;
+													char out_msg_id[6u];
+													char out_msg_buf[ 512u ];
+													iot_json_encoder_t *out_json;
+													out_json = iot_json_encode_initialize( out_msg_buf, 512u, 0 );
+													os_snprintf( out_msg_id, 5u, "%d", data->msg_id );
+													out_msg_id[5u] = '\0';
+													iot_json_encode_object_start( out_json, out_msg_id );
+													iot_json_encode_string( out_json, "command", "mailbox.ack" );
+													iot_json_encode_object_start( out_json, "params" );
+													iot_json_encode_string( out_json, "id", id );
+													iot_json_encode_integer( out_json, "errorCode", (int)IOT_STATUS_FULL );
+													iot_json_encode_string( out_json, "errorMessage", "maximum inbound requests reached" );
+													iot_json_encode_object_end( out_json );
+													iot_json_encode_object_end( out_json );
+
+													out_msg = iot_json_encode_dump( out_json );
+													IOT_LOG( data->lib, IOT_LOG_TRACE, "-->%s", out_msg );
+													iot_mqtt_publish( data->mqtt, "api",
+														out_msg, os_strlen( out_msg ),
+														TR50_MQTT_QOS, IOT_FALSE, NULL );
+													++data->msg_id;
+												}
 											}
 
 											/* for each parameter */
@@ -2092,6 +2139,7 @@ void tr50_on_message(
 										}
 									}
 
+#ifdef IOT_THREAD_SUPPORT
 									if ( found_transfer )
 									{
 										os_thread_t thread;
@@ -2102,6 +2150,7 @@ void tr50_on_message(
 												"Failed to create a thread to transfer "
 												"file for message #%u", msg_id );
 									}
+#endif /* ifdef IOT_THREAD_SUPPORT */
 								}
 							}
 						}

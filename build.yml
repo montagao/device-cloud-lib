@@ -58,6 +58,7 @@ IOT_PLUGIN_BUILTIN:
 
 # User for running service
 IOT_USER: "iot"
+IOT_GROUP: "iot"
 
 # default actions for device manager
 IOT_DEFAULT_ENABLE_AGENT_RESET: true
@@ -73,7 +74,6 @@ IOT_DEFAULT_ENABLE_SOFTWARE_UPDATE: true
 
 # default settings for device manager
 IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS: true
-IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID: false
 IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS: true
 
 # default ssl CA bundle

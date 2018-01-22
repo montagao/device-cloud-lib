@@ -1,7 +1,7 @@
 /**
  * @brief Source file for the device-manager app.
  *
- * @copyright Copyright (C) 2016-2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2016-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -957,7 +957,7 @@ iot_status_t device_manager_file_download(
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME,
 			IOT_FALSE, IOT_TYPE_STRING, &file_name );
 		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
-			"param %s = %s result=%d\n",
+			"param %s = %s result=%d",
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME, file_name,
 			(int)result);
 
@@ -966,7 +966,7 @@ iot_status_t device_manager_file_download(
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH,
 			IOT_FALSE, IOT_TYPE_STRING, &file_path );
 		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
-			"param %s = %s result=%d\n",
+			"param %s = %s result=%d",
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH, file_path,
 			(int)result);
 
@@ -975,7 +975,7 @@ iot_status_t device_manager_file_download(
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
 			IOT_FALSE, IOT_TYPE_BOOL, &use_global_store);
 		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
-			"param %s = %d result=%d\n",
+			"param %s = %d result=%d",
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
 			(int)use_global_store, (int)result);
 
@@ -1032,7 +1032,7 @@ iot_status_t device_manager_file_upload(
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME,
 			IOT_FALSE, IOT_TYPE_STRING, &file_name );
 		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
-			"param %s = %s result=%d\n",
+			"param %s = %s result=%d",
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_NAME, file_name,
 			(int)result);
 
@@ -1041,7 +1041,7 @@ iot_status_t device_manager_file_upload(
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH,
 			IOT_FALSE, IOT_TYPE_STRING, &file_path );
 		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
-			"param %s = %s result=%d\n",
+			"param %s = %s result=%d",
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_FILE_PATH, file_path,
 			(int)result);
 
@@ -1050,7 +1050,7 @@ iot_status_t device_manager_file_upload(
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
 			IOT_FALSE, IOT_TYPE_BOOL, &use_global_store);
 		IOT_LOG( dm->iot_lib, IOT_LOG_TRACE,
-			"param %s = %d result=%d\n",
+			"param %s = %d result=%d",
 			DEVICE_MANAGER_FILE_CLOUD_PARAMETER_USE_GLOBAL_STORE,
 			(int)use_global_store, (int)result);
 
@@ -1089,7 +1089,7 @@ void device_manager_file_progress(
 
 	iot_file_progress_get( progress, &status, &percent, &complete );
 	IOT_LOG( (iot_t*)user_data, IOT_LOG_TRACE,
-		"File Download Status: %s (completed: %s [%f %%])\n",
+		"File Download Status: %s (completed: %s [%f %%])",
 		iot_error( status ),
 		( complete == IOT_FALSE ? "no" : "yes" ),
 		(double)percent );
@@ -1103,10 +1103,10 @@ iot_status_t device_manager_initialize( const char *app_path,
 	{
 		iot_t *iot_lib = NULL;
 		char *p_path = NULL;
-#ifndef NO_FILEIO_SUPPORT
+#if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
 		struct device_manager_file_io_info *file_io = &device_manager->file_io_info;
 		os_thread_mutex_t *file_transfer_lock = &file_io->file_transfer_mutex;
-#endif /* ifndef NO_FILEIO_SUPPORT */
+#endif /* defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
 
 		iot_lib = iot_initialize( "device-manager", NULL, 0u );
 		if ( iot_lib == NULL )
@@ -1145,7 +1145,7 @@ iot_status_t device_manager_initialize( const char *app_path,
 			IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "Connected" );
 		else
 		{
-			IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "Failed to connect\n" );
+			IOT_LOG( iot_lib, IOT_LOG_INFO, "%s", "Failed to connect" );
 			result = IOT_STATUS_FAILURE;
 		}
 
@@ -1153,10 +1153,10 @@ iot_status_t device_manager_initialize( const char *app_path,
 		{
 			device_manager->iot_lib = iot_lib;
 
-#if !defined( NO_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
+#if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
 			if ( os_thread_mutex_create( file_transfer_lock ) != OS_STATUS_SUCCESS )
-				IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s", "Failed to create file_transfer_mutex" );
-#endif /* if !defined( NO_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
+				IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s", "Failed to create lock for file transfer" );
+#endif /* if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
 			if ( device_manager_actions_register( device_manager ) != IOT_STATUS_SUCCESS )
 				IOT_LOG( iot_lib, IOT_LOG_ERROR, "%s",	"Failed to register device-manager actions" );
 #ifndef NO_FILEIO_SUPPORT
@@ -1542,17 +1542,17 @@ iot_status_t device_manager_terminate(
 	if ( device_manager )
 	{
 		iot_t *iot_lib = device_manager->iot_lib;
-#if !defined( NO_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
+#if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
 		os_thread_mutex_t *file_transfer_lock = &device_manager->file_io_info.file_transfer_mutex;
-#endif /* if !defined( NO_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
+#endif /* if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
 
 #if ( IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS == 0 )
 		device_manager_actions_deregister( device_manager );
 #endif
 
-#if !defined( NO_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
+#if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT )
 		os_thread_mutex_destroy( file_transfer_lock );
-#endif /* if !defined( NO_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
+#endif /* if defined( IOT_THREAD_SUPPORT ) && !defined( NO_FILEIO_SUPPORT ) */
 
 		iot_disconnect( iot_lib, 0u );
 		iot_terminate( iot_lib, 0u );
@@ -1714,7 +1714,7 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 
 		IOT_LOG( iot_lib, IOT_LOG_TRACE,
 			"Remote login params host=%s, protocol=%s, url=%s, "
-			"debug-mode=%d\n",
+			"debug-mode=%d",
 			host_in, protocol_in, url_in, debug_mode );
 
 		if ( host_in && *host_in != '\0'
@@ -1729,12 +1729,12 @@ iot_status_t on_action_remote_login( iot_action_request_t* request,
 				IOT_TARGET_RELAY,
 				host_in, os_atoi(protocol_in), url_in );
 
-			IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login cmd:\n%s\n",
+			IOT_LOG( iot_lib, IOT_LOG_TRACE, "Remote login cmd: %s",
 				relay_cmd );
 
 			run_status = os_system_run( relay_cmd, NULL, out_files);
 			IOT_LOG( iot_lib, IOT_LOG_TRACE,
-				"System Run returned %d\n", result );
+				"System Run returned %d", result );
 			os_time_sleep( 10, IOT_FALSE );
 
 			/* remote login protocol requires us to return

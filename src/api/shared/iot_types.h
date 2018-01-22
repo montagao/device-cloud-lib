@@ -2,7 +2,7 @@
  * @file
  * @brief declares common internal types within the api
  *
- * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,7 +298,7 @@ typedef struct iot_alarm_data
 	/** @brief alarm severity */
 	iot_severity_t severity;
 	/** @brief alarm message */
-	char *message;
+	const char *message;
 } iot_alarm_data_t;
 
 /**
@@ -395,16 +395,16 @@ struct iot_file_progress
 	iot_status_t status;
 };
 
-#if 0
 /**
  * @brief information about a transaction status for later querying
  */
 struct iot_transaction
 {
 	/** @brief indicates status */
-	iot_status_t status[IOT_PROTOCOL_STACKS];
+	iot_status_t status;
 };
 
+#if 0
 /**
  * @brief information for passing data between two (or more) clients
  */
@@ -522,7 +522,7 @@ struct iot
 	/** @brief user data to pass to log callback */
 	void                        *logger_user_data;
 
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 	/** @brief handle to a mutex to allow log correctly with multiple
 	 * threads */
 	os_thread_mutex_t           log_mutex;
@@ -542,7 +542,7 @@ struct iot
 	os_thread_condition_t       worker_signal;
 	/** @brief Lock for commands which cannot run concurrently */
 	os_thread_rwlock_t          worker_thread_exclusive_lock;
-#endif /* ifndef IOT_NO_THREAD_SUPPORT */
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 #ifdef IOT_STACK_ONLY
 	/** @brief storage of connect configuration filename
@@ -758,26 +758,6 @@ IOT_API IOT_SECTION iot_status_t iot_action_process( iot_t *lib,
 	iot_millisecond_t max_time_out );
 
 /**
- * @brief Internal function to handle action registration
- *
- * @param[in,out]  action              action to register
- * @param[out]     txn                 transaction status (optional)
- * @param[in]      max_time_out        maximum time to wait in milliseconds
- *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed
- * @retval IOT_STATUS_FAILURE          on failure
- * @retval IOT_STATUS_SUCCESS          pointer was successfully set
- * @retval IOT_STATUS_TIMED_OUT        timed out while waiting for registration
- *
- * @see iot_action_register_callback
- * @see iot_action_register_command
- */
-IOT_API IOT_SECTION iot_status_t iot_action_register(
-	iot_action_t *action,
-	iot_transaction_t *txn,
-	iot_millisecond_t max_time_out );
-
-/**
  * @brief Returns the value of a telemetry option
  *
  * @param[in,out]  telemetry           telemetry object to set
@@ -947,7 +927,7 @@ IOT_API IOT_SECTION iot_status_t iot_action_request_copy(
  *
  * @see iot_action_request_copy
  */
-size_t iot_action_request_copy_size(
+IOT_API IOT_SECTION size_t iot_action_request_copy_size(
 	const iot_action_request_t *request );
 
 #if 0
@@ -1033,6 +1013,7 @@ IOT_SECTION iot_status_t iot_state_callback_set(
 	iot_t *lib,
 	iot_state_callback_t *state_callback,
 	void *user_data );
+#endif
 
 /* transaction */
 /**
@@ -1048,7 +1029,6 @@ IOT_SECTION iot_status_t iot_state_callback_set(
 IOT_SECTION iot_bool_t iot_transaction_status(
 	const iot_transaction_t *txn,
 	iot_millisecond_t max_time_out );
-#endif
 
 /* loop */
 /**
@@ -1363,7 +1343,6 @@ IOT_SECTION iot_status_t iot_plugin_unload(
  * @param[in]      file_path           connect configuration file path
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
- * @retval IOT_STATUS_NO_MEMORY        failure due to out of memory
  * @retval IOT_STATUS_NO_MEMORY        no memory to store configration filename
  * @retval IOT_STATUS_SUCCESS          on success
  */
