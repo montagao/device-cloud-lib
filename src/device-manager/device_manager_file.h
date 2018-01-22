@@ -2,7 +2,7 @@
  * @file
  * @brief Header file for handling file operations
  *
- * @copyright Copyright (C) 2016-2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2016-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,8 @@
 #include "os.h"
 #include "api/shared/iot_types.h"      /* for iot_proxy structure */
 
-#ifndef _WRS_KERNEL
-#	include "device_manager_md5.h"
-#	include "device_manager_sha256.h"
-#endif /* ifndef _WRS_KERNEL */
+#include "device_manager_md5.h"
+#include "device_manager_sha256.h"
 #include "device_manager_ota.h"
 
 /** @brief Maximum length of a token from the web */
@@ -121,15 +119,19 @@ struct device_manager_file_transfer
 	iot_timestamp_t expiry_time;
 	/** @brief Time when a paused transfer session is resumed */
 	iot_timestamp_t resume_time;
+#ifdef IOT_THREAD_SUPPORT
 	/** @brief Mutex protecting file transer data */
 	os_thread_mutex_t *file_transfer_mutex;
+#endif /* ifdef IOT_THREAD_SUPPORT */
 };
 
 /** @brief Structure containing information for file io */
 struct device_manager_file_io_info
 {
+#ifdef IOT_THREAD_SUPPORT
 	/** @brief Mutex protecting file transer data */
 	os_thread_mutex_t file_transfer_mutex;
+#endif /* ifdef IOT_THREAD_SUPPORT */
 	/** @brief Number of file transfers in progress */
 	size_t file_transfer_count;
 	/** @brief Structure holding proxy server information */

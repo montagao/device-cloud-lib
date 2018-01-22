@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
 #
@@ -9,7 +8,14 @@
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software  distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+# OR CONDITIONS OF ANY KIND, either express or implied.
+#
 
-echo "command executed: $0 $@"
-echo "result: $?" >&2
-exit 0
+# Removes a group and user from the system
+IOT_USER=@IOT_USER@
+IOT_GROUP=@IOT_GROUP@
+
+userdel "$IOT_USER"
+groupdel "$IOT_GROUP"
+

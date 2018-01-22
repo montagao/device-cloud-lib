@@ -55,12 +55,6 @@ if( JSON_DEFINES )
 	add_definitions( ${JSON_DEFINES_} )
 endif( JSON_DEFINES )
 
-set( LIB_OPTIONS "IOT_NO_THREAD_SUPPORT" "IOT_STACK_ONLY" )
-foreach( LIB_OPTION ${LIB_OPTIONS} )
-	if ( ${LIB_OPTION} )
-		add_definitions( "-D${LIB_OPTION}" )
-	endif( ${LIB_OPTION} )
-endforeach( LIB_OPTION )
 add_subdirectory( "checksum" )
 add_subdirectory( "json" )
 add_subdirectory( "plugin" )
@@ -106,5 +100,11 @@ install( TARGETS ${IOT_LIBRARY_NAME}
 	ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT libs
 	LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT ${LIB_COMPONENT}
 	PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}" COMPONENT headers
+)
+
+# Create directories for configuration and run-time files
+install( DIRECTORY
+	DESTINATION "${INSTALL_VAR_DIR}"
+	COMPONENT api
 )
 

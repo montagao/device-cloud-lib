@@ -17,9 +17,13 @@
 
 #ifndef DEVICE_MANAGER_OTA_H
 #define DEVICE_MANAGER_OTA_H
+#if defined(__VXWORKS__) && defined(__DCC__)
+#include <curl/curl.h>             /* for performing REST requests */
+#else
 #pragma warning( push, 1 )
 #include <curl/curl.h>             /* for performing REST requests */
 #pragma warning( pop )
+#endif /* __VXWORKS__ */
 
 #include "os.h"
 #include "iot.h"

@@ -387,7 +387,7 @@ iot_status_t device_manager_ota_install_execute(
 		file_name && file_name[0] != '\0')
 	{
 		char iot_update_dup_path[PATH_MAX + 1u] = "";
-		char command_with_params[PATH_MAX + 1u];
+		char command_with_params[PATH_MAX + 1u] = "";
 		iot_t *const iot_lib = device_manager_info->iot_lib;
 
 		result = device_manager_ota_extract_package(iot_lib, package_path, file_name);
@@ -432,19 +432,28 @@ iot_status_t device_manager_ota_install_execute(
 					IOT_TARGET_UPDATE"-copy"IOT_EXE_SUFFIX,
 					NULL ) )
 				{
+#if defined(__VXWORKS__)
+					osal_status = OS_STATUS_SUCCESS;
+#else
 					osal_status = os_file_copy(
 						iot_update_path,
 						iot_update_dup_path );
 					os_file_sync( iot_update_dup_path );
 					printf("file copy status %d\n", (int)osal_status);
+#endif /* __VXWORKS__ */
 				}
 
 				if (osal_status == OS_STATUS_SUCCESS )
 				{
 					if ( os_file_exists( iot_update_dup_path ) )
+
 						os_snprintf( command_with_params,
 							PATH_MAX,
+#if defined(__VXWORKS__)
+							"%s --path %s",
+#else
 							"\"%s\" --path \"%s\"",
+#endif /* __VXWORKS__ */
 							iot_update_dup_path,
 							package_path );
 				}
@@ -452,7 +461,11 @@ iot_status_t device_manager_ota_install_execute(
 				{
 					os_snprintf( command_with_params,
 						PATH_MAX,
+#if defined(__VXWORKS__)
+						"%s --path %s",
+#else
 						"\"%s\" --path \"%s\"",
+#endif /* __VXWORKS__ */
 						iot_update_path,
 						package_path );
 				}

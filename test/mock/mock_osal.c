@@ -1,8 +1,8 @@
 /**
  * @file
- * @brief Source code for mocking the IoT client library
+ * @brief Source code for mocking the operating system abstraction layer
  *
- * @copyright Copyright (C) 2016-2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2016-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ os_status_t __wrap_os_system_run_wait(
 	size_t out_len[2u],
 	os_millisecond_t max_time_out );
 os_bool_t __wrap_os_terminal_vt100_support( os_file_t stream );
+#ifdef IOT_THREAD_SUPPORT
 os_status_t __wrap_os_thread_condition_broadcast( os_thread_condition_t *cond );
 os_status_t __wrap_os_thread_condition_create( os_thread_condition_t *cond );
 os_status_t __wrap_os_thread_condition_destroy( os_thread_condition_t *cond );
@@ -112,6 +113,7 @@ os_status_t __wrap_os_thread_rwlock_read_unlock( os_thread_rwlock_t *lock );
 os_status_t __wrap_os_thread_rwlock_write_lock( os_thread_rwlock_t *lock );
 os_status_t __wrap_os_thread_rwlock_write_unlock( os_thread_rwlock_t *lock );
 os_status_t __wrap_os_thread_wait( os_thread_t *thread );
+#endif /* ifdef IOT_THREAD_SUPPORT */
 os_status_t __wrap_os_time( os_timestamp_t *time_stamp, os_bool_t *up_time );
 int __wrap_os_vfprintf( os_file_t stream, const char *format, va_list args )
 	__attribute__((format(printf,2,0)));
@@ -205,7 +207,10 @@ os_file_t __wrap_os_file_open( const char *file_path, int flags )
 
 size_t __wrap_os_file_read( void *ptr, size_t size, size_t nmemb, os_file_t stream )
 {
-	return size * nmemb;
+	size_t result = mock_type( size_t );
+	if ( result != 0 )
+		result = size * nmemb;
+	return result;
 }
 
 size_t __wrap_os_file_write( const void *ptr, size_t size, size_t nmemb, os_file_t stream )
@@ -710,6 +715,7 @@ os_bool_t __wrap_os_terminal_vt100_support( os_file_t stream )
 	return mock_type( os_bool_t );
 }
 
+#ifdef IOT_THREAD_SUPPORT
 os_status_t __wrap_os_thread_condition_broadcast( os_thread_condition_t *cond )
 {
 	/* ensure this function is called meeting pre-requirements */
@@ -852,6 +858,7 @@ os_status_t __wrap_os_thread_wait( os_thread_t *thread )
 	assert_non_null( thread );
 	return OS_STATUS_FAILURE;
 }
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 int __wrap_os_printf( const char *format, ... )
 {

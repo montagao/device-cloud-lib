@@ -25,9 +25,9 @@ iot_alarm_t *iot_alarm_register(
 	struct iot_alarm *alarm = NULL;
 	if( lib && name && *name != '\0' )
 	{
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 		os_thread_mutex_lock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 		if ( lib->alarm_count < IOT_ALARM_MAX )
 		{
 			const unsigned int count = lib->alarm_count;
@@ -38,15 +38,15 @@ iot_alarm_t *iot_alarm_register(
 			/* look for free alarm in stack */
 			alarm = lib->alarm_ptr[count];
 
+#ifndef IOT_STACK_ONLY
 			/* allocate alarm in heap if none is available in stack */
 			if ( !alarm )
 			{
 				alarm = (struct iot_alarm *)
 					os_malloc(sizeof( struct iot_alarm ));
-#ifndef IOT_STACK_ONLY
 				is_in_heap = IOT_TRUE;
-#endif
 			}
+#endif
 
 			if( alarm )
 			{
@@ -100,10 +100,16 @@ iot_alarm_t *iot_alarm_register(
 					++lib->alarm_count;
 				}
 #ifndef IOT_STACK_ONLY
-				else if ( is_in_heap )
-					os_free_null( (void**)&alarm );
+				else
+				{
+					if ( is_in_heap )
+						os_free( alarm );
+					alarm = NULL;
+				}
 #endif /* ifndef IOT_STACK_ONLY */
-			}else
+			}
+
+			if ( !alarm )
 				IOT_LOG( lib, IOT_LOG_ERROR,
 					"failed to allocate memory for alarm: %s",
 					name );
@@ -111,9 +117,9 @@ iot_alarm_t *iot_alarm_register(
 			IOT_LOG( lib, IOT_LOG_ERROR,
 				"no remaining space (max: %u) for alarm: %s",
 				IOT_ALARM_MAX, name );
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 		os_thread_mutex_unlock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 	}
 	return alarm;
 }
@@ -130,9 +136,9 @@ iot_status_t iot_alarm_deregister(
 		if ( lib )
 		{
 			unsigned int i, max;
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 			os_thread_mutex_lock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 			/* find alarm within the library */
 			max = lib->alarm_count;
 			for ( i = 0u; ( i < max ) &&
@@ -144,8 +150,10 @@ iot_status_t iot_alarm_deregister(
 #ifndef IOT_STACK_ONLY
 				const iot_bool_t is_in_heap =
 					alarm->is_in_heap;
+
+				if ( alarm->name )
+					os_free( alarm->name );
 #endif /* ifndef IOT_STACK_ONLY */
-				os_free_null((void **)&alarm->name);
 
 				/* remove from library */
 				os_memmove(
@@ -168,7 +176,8 @@ iot_status_t iot_alarm_deregister(
 				{
 					lib->alarm_ptr[
 						lib->alarm_count] = NULL;
-					os_free_null( (void**)&alarm );
+					os_free( alarm );
+					alarm = NULL;
 				}
 #else
 				lib->alarm_ptr[
@@ -176,9 +185,9 @@ iot_status_t iot_alarm_deregister(
 #endif /* ifndef IOT_STACK_ONLY */
 				result = IOT_STATUS_SUCCESS;
 			}
-#ifndef IOT_NO_THREAD_SUPPORT
+#ifdef IOT_THREAD_SUPPORT
 			os_thread_mutex_unlock( &lib->alarm_mutex );
-#endif
+#endif /* ifdef IOT_THREAD_SUPPORT */
 		}
 	}
 
@@ -207,31 +216,18 @@ iot_status_t iot_alarm_publish_string(
 		result = IOT_STATUS_NOT_INITIALIZED;
 		if ( alarm->lib )
 		{
-			char *msg = NULL;
-			size_t msg_len = 0u;
-			iot_alarm_data_t *payload =
-				os_malloc( sizeof( iot_alarm_data_t ) );
-			payload->severity = severity;
+			iot_alarm_data_t payload;
+
+			payload.severity = severity;
 			if ( message )
-				msg_len = os_strlen( message );
+				payload.message = message;
+			else
+				payload.message = NULL;
 
-			result = IOT_STATUS_NO_MEMORY;
-			msg = os_malloc( ( msg_len + 1u ) * sizeof( char ) );
-			if ( msg )
-			{
-				if ( message )
-				os_strncpy( msg, message, msg_len );
-
-				msg[ msg_len ] = '\0';
-				payload->message = msg;
-
-				result = iot_plugin_perform(
-					alarm->lib, txn, NULL,
-					IOT_OPERATION_ALARM_PUBLISH,
-					alarm, payload, options );
-				os_free_null( (void**)&payload->message );
-				os_free_null( (void**)&payload );
-			}
+			result = iot_plugin_perform(
+				alarm->lib, txn, NULL,
+				IOT_OPERATION_ALARM_PUBLISH,
+				alarm, &payload, options );
 		}
 	}
 	return result;
