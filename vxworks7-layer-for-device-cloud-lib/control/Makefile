@@ -31,9 +31,8 @@ SRC_FILES = \
 
 OBJS = $(addsuffix .o, $(notdir $(basename $(SRC_FILES))))
 
-EXTRA_INCLUDE += -I$(DEVICE_CLOUD_LIB_DIR) \
-                 -I$(DEVICE_CLOUD_LIB_DIR)/src \
-                 -I$(DEVICE_CLOUD_LIB_DIR)/src/api/public \
+EXTRA_INCLUDE += -I$(DEVICE_CLOUD_LIB_DIR)/src \
+                 -I$(DEVICE_CLOUD_LIB_DIR)/src/api \
                  -I$(DEVICE_CLOUD_LIB_DIR)/src/control
 
 ADDED_CFLAGS += $(C_COMPILER_FLAGS_C99)

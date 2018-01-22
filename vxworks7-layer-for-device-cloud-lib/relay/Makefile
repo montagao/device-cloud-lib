@@ -30,10 +30,8 @@ SRC_FILES = \
 
 OBJS = $(addsuffix .o, $(notdir $(basename $(SRC_FILES))))
 
-EXTRA_INCLUDE += -I$(DEVICE_CLOUD_LIB_DIR) \
-                 -I$(DEVICE_CLOUD_LIB_DIR)/src \
+EXTRA_INCLUDE += -I$(DEVICE_CLOUD_LIB_DIR)/src \
                  -I$(DEVICE_CLOUD_LIB_DIR)/src/api \
-                 -I$(DEVICE_CLOUD_LIB_DIR)/src/api/public \
                  -I$(DEVICE_CLOUD_LIB_DIR)/src/utilities \
                  -I$(DEVICE_CLOUD_LIB_DIR)/src/relay
 
