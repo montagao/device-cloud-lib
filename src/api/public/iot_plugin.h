@@ -117,7 +117,7 @@ typedef iot_bool_t (*iot_plugin_info_fptr)(
 	iot_version_t *min,
 	iot_version_t *max );
 /** @brief defines the signature for the function to load the plugin */
-typedef void (*iot_plugin_load_fptr)(
+typedef iot_bool_t (*iot_plugin_load_fptr)(
 	iot_plugin_t *p );
 /**
  * @brief internal structure used to point to various functions within the plug-in
@@ -168,7 +168,8 @@ struct iot_plugin
 		iot_version_t *ver, iot_version_t *min, iot_version_t *max ) {\
 		if (name) *name = (#x2); if (order) *order = (o);\
 		if (ver) *ver = (v); if (min) *min = (y); if (max) *max = (z);\
-		return IOT_TRUE; }\
+		return IOT_TRUE;\
+	}\
 	iot_bool_t x ## _load( iot_plugin_t *p ) {\
 		p->disable = &( x2 ## _disable );\
 		p->enable = &( x2 ## _enable );\
@@ -178,7 +179,8 @@ struct iot_plugin
 		p->info = &( x ##_info );\
 		p->data = NULL;\
 		p->name = #x2;\
-		p->handle = NULL; return IOT_TRUE;\
+		p->handle = NULL;\
+		return IOT_TRUE;\
 	}
 
 /**
