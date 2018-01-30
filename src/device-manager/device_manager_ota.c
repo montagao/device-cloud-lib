@@ -398,9 +398,13 @@ iot_status_t device_manager_ota_install_execute(
 				file_name);
 		if ( result ==IOT_STATUS_SUCCESS )
 		{
+#if defined(__VXWORKS__)
+			char iot_update_path[PATH_MAX + 1u] = IOT_TARGET_UPDATE;
+			result = IOT_STATUS_EXECUTION_ERROR;
+			{
+#else
 			char iot_update_path[PATH_MAX + 1u];
 			char exec_dir[PATH_MAX + 1u];
-
 			result = IOT_STATUS_EXECUTION_ERROR;
 			app_path_executable_directory_get(exec_dir, PATH_MAX);
 			if ( app_path_which( iot_update_path, PATH_MAX, exec_dir, IOT_TARGET_UPDATE) )
@@ -425,19 +429,6 @@ iot_status_t device_manager_ota_install_execute(
 #else
 				iot_update_dup_dir = exec_dir;
 #endif /* #ifdef __ANDROID__*/
-#if defined(__VXWORKS__)
-				/* Do not copy for VxWorks */
-
-				if ( OS_STATUS_SUCCESS == os_make_path(
-					iot_update_dup_path,
-					PATH_MAX,
-					iot_update_dup_dir,
-					IOT_TARGET_UPDATE""IOT_EXE_SUFFIX,
-					NULL ) )
-				{
-					osal_status = OS_STATUS_SUCCESS;
-				}
-#else
 				if ( OS_STATUS_SUCCESS == os_make_path(
 					iot_update_dup_path,
 					PATH_MAX,
@@ -451,7 +442,6 @@ iot_status_t device_manager_ota_install_execute(
 					os_file_sync( iot_update_dup_path );
 					printf("file copy status %d\n", (int)osal_status);
 				}
-#endif /* __VXWORKS__ */
 
 				if (osal_status == OS_STATUS_SUCCESS )
 				{
@@ -459,15 +449,12 @@ iot_status_t device_manager_ota_install_execute(
 
 						os_snprintf( command_with_params,
 							PATH_MAX,
-#if defined(__VXWORKS__)
-							"%s --path %s",
-#else
 							"\"%s\" --path \"%s\"",
-#endif /* __VXWORKS__ */
 							iot_update_dup_path,
 							package_path );
 				}
 				else
+#endif /* __VXWORKS__ */
 				{
 					os_snprintf( command_with_params,
 						PATH_MAX,

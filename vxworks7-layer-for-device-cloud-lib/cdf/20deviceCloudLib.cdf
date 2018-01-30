@@ -43,8 +43,8 @@ Component INCLUDE_DEVICE_CLOUD_LIBRARY {
                     DEVICE_CLOUD_STACK_SIZE \
                     DEVICE_CLOUD_APP_DELAY
     CONFIGLETTES    deviceCloudCfg.c
-    ARCHIVE         libiot.a
-    LINK_SYMS       iot_initialize iot_terminate
+    ARCHIVE         libiot.a libosal.a
+    LINK_SYMS       iot_initialize iot_terminate os_system_run
 }
 
 Parameter DEVICE_CLOUD_CONFIG_DIR {

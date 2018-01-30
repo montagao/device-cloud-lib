@@ -29,7 +29,7 @@ SRC_DIRS = \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/checksum \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/plugin/tr50 \
         $(DEVICE_CLOUD_LIB_DIR)/src/utilities \
-        $(DEVICE_CLOUD_LIB_DIR)/src/relay
+        $(DEVICE_CLOUD_LIB_DIR)/src/software-update
 
 SRC_FILES = \
         $(DEVICE_CLOUD_LIB_DIR)/iot_plugin_builtin.c \
@@ -56,7 +56,8 @@ SRC_FILES = \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/plugin/tr50/tr50.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_arg.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_path.c \
-        $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_log.c
+        $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_log.c \
+        $(DEVICE_CLOUD_LIB_DIR)/src/software-update/iot_update.c
 
 OBJS = $(addsuffix .o, $(notdir $(basename $(SRC_FILES))))
 
