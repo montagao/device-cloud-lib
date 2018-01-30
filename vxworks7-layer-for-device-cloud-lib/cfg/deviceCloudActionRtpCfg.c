@@ -29,14 +29,14 @@ modification history
 
 /******************************************************************************
 * 
-* deviceCloudActionRtpSpawn() - spawns the RTP.
+* deviceCloudActionRtpDelay() - spawns the RTP.
 *
 * This function spawns the RTP after a delay.
 *
 * RETURNS: N/A
 */
 
-static void deviceCloudActionRtpSpawn (void)
+static void deviceCloudActionRtpDelay (void)
     {
     int fd;
     const char *args[2];
@@ -79,11 +79,11 @@ static void deviceCloudActionRtpSpawn (void)
 
 void deviceCloudActionRtp (void)
     {
-    if (taskSpawn ("tDeviceCloud",
+    if (taskSpawn ("tActionRtpDelay",
                    DEVICE_CLOUD_PRIORITY,
                    0,
                    DEVICE_CLOUD_STACK_SIZE,
-                   (FUNCPTR) deviceCloudActionRtpSpawn,
+                   (FUNCPTR) deviceCloudActionRtpDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
         (void)fprintf (stderr, "Task spawn error.\n");

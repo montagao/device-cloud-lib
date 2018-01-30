@@ -100,5 +100,5 @@ Selection SELECT_DEVICE_CLOUD_APP {
         SYNOPSIS        This selection selects a choice of application.
         _CHILDREN       FOLDER_HDC
         _DEFAULTS       FOLDER_HDC
-        COUNT           1-1
+        COUNT           1-
 }

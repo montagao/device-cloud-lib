@@ -23,26 +23,24 @@ modification history
 
 #include <taskLib.h>
 
-#define DEVICE_CLOUD_COMPLETE_TASK_NAME  "tDeviceCloudComplete"
-
 extern int app_complete_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudCompleteSpawn() - spawns the application task
+* deviceCloudCompleteDelay() - spawns the application task
 *
 * This function spawns the application task.
 *
 * RETURNS: N/A
 */
 
-void deviceCloudCompleteSpawn (void)
+void deviceCloudCompleteDelay (void)
     {
     static const char *argv[] = { "" };
 
     (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
-    if (taskSpawn (DEVICE_CLOUD_COMPLETE_TASK_NAME,
+    if (taskSpawn ("tComplete",
                    DEVICE_CLOUD_PRIORITY, 0,
                    DEVICE_CLOUD_STACK_SIZE,
                    (FUNCPTR) app_complete_main,
@@ -64,11 +62,11 @@ void deviceCloudCompleteSpawn (void)
 
 void deviceCloudCompleteStart (void)
     {
-    if (taskSpawn ("tDeviceCloud",
+    if (taskSpawn ("tCompleteDelay",
                    DEVICE_CLOUD_PRIORITY,
                    0,
                    DEVICE_CLOUD_STACK_SIZE,
-                   (FUNCPTR) deviceCloudCompleteSpawn,
+                   (FUNCPTR) deviceCloudCompleteDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
         (void)fprintf (stderr, "Task spawn error.\n");

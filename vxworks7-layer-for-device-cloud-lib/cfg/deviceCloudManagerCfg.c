@@ -23,26 +23,24 @@ modification history
 
 #include <taskLib.h>
 
-#define DEVICE_CLOUD_MANAGER_TASK_NAME  "tDeviceCloudManager"
-
 extern int device_manager_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudManagerSpawn() - spawns the application task
+* deviceCloudManagerDelay() - spawns the application task
 *
 * This function spawns the application task.
 *
 * RETURNS: N/A
 */
 
-void deviceCloudManagerSpawn (void)
+void deviceCloudManagerDelay (void)
     {
     static const char *argv[] = { "" };
 
     (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
-    if (taskSpawn (DEVICE_CLOUD_MANAGER_TASK_NAME,
+    if (taskSpawn ("tManager",
                    DEVICE_CLOUD_PRIORITY, 0,
                    DEVICE_CLOUD_STACK_SIZE,
                    (FUNCPTR) device_manager_main,
@@ -64,11 +62,11 @@ void deviceCloudManagerSpawn (void)
 
 void deviceCloudManagerStart (void)
     {
-    if (taskSpawn ("tDeviceCloud",
+    if (taskSpawn ("tManagerDelay",
                    DEVICE_CLOUD_PRIORITY,
                    0,
                    DEVICE_CLOUD_STACK_SIZE,
-                   (FUNCPTR) deviceCloudManagerSpawn,
+                   (FUNCPTR) deviceCloudManagerDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
         (void)fprintf (stderr, "Task spawn error.\n");

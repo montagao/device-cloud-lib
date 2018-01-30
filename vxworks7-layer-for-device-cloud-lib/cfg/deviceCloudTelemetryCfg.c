@@ -23,26 +23,24 @@ modification history
 
 #include <taskLib.h>
 
-#define DEVICE_CLOUD_TELEMETRY_TASK_NAME  "tDeviceCloudTelemetry"
-
 extern int app_telemetry_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudTelemetrySpawn() - spawns the application task
+* deviceCloudTelemetryDelay() - spawns the application task
 *
 * This function spawns the application task.
 *
 * RETURNS: N/A
 */
 
-void deviceCloudTelemetrySpawn (void)
+void deviceCloudTelemetryDelay (void)
     {
     static const char *argv[] = { "" };
 
     (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
-    if (taskSpawn (DEVICE_CLOUD_TELEMETRY_TASK_NAME,
+    if (taskSpawn ("tTelemetry",
                    DEVICE_CLOUD_PRIORITY, 0,
                    DEVICE_CLOUD_STACK_SIZE,
                    (FUNCPTR) app_telemetry_main,
@@ -64,11 +62,11 @@ void deviceCloudTelemetrySpawn (void)
 
 void deviceCloudTelemetryStart (void)
     {
-    if (taskSpawn ("tDeviceCloud",
+    if (taskSpawn ("tTelemetryDelay",
                    DEVICE_CLOUD_PRIORITY,
                    0,
                    DEVICE_CLOUD_STACK_SIZE,
-                   (FUNCPTR) deviceCloudTelemetrySpawn,
+                   (FUNCPTR) deviceCloudTelemetryDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
         (void)fprintf (stderr, "Task spawn error.\n");

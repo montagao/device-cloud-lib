@@ -23,26 +23,24 @@ modification history
 
 #include <taskLib.h>
 
-#define DEVICE_CLOUD_LOCATION_TASK_NAME  "tDeviceCloudLocation"
-
 extern int app_location_main ( int argc, char *argv[] );
 
 /******************************************************************************
 *
-* deviceCloudLocationSpawn() - spawns the application task
+* deviceCloudLocationDelay() - spawns the application task
 *
 * This function spawns the application task.
 *
 * RETURNS: N/A
 */
 
-void deviceCloudLocationSpawn (void)
+void deviceCloudLocationDelay (void)
     {
     static const char *argv[] = { "" };
 
     (void)sleep (DEVICE_CLOUD_APP_DELAY);
 
-    if (taskSpawn (DEVICE_CLOUD_LOCATION_TASK_NAME,
+    if (taskSpawn ("tLocation",
                    DEVICE_CLOUD_PRIORITY, 0,
                    DEVICE_CLOUD_STACK_SIZE,
                    (FUNCPTR) app_location_main,
@@ -64,11 +62,11 @@ void deviceCloudLocationSpawn (void)
 
 void deviceCloudLocationStart (void)
     {
-    if (taskSpawn ("tDeviceCloud",
+    if (taskSpawn ("tLocationDelay",
                    DEVICE_CLOUD_PRIORITY,
                    0,
                    DEVICE_CLOUD_STACK_SIZE,
-                   (FUNCPTR) deviceCloudLocationSpawn,
+                   (FUNCPTR) deviceCloudLocationDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
         (void)fprintf (stderr, "Task spawn error.\n");
