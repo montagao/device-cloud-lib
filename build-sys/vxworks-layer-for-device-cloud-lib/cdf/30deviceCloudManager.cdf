@@ -25,7 +25,6 @@ Component INCLUDE_DEVICE_CLOUD_MANAGER_KERNEL {
         NAME            Device Cloud manager kernel task
         SYNOPSIS        This component invokes the manager application as kernel task
         _CHILDREN       SELECT_DEVICE_CLOUD_APP
-        _DEFAULTS       SELECT_DEVICE_CLOUD_APP
         ARCHIVE         libdeviceCloudManager.a
         CONFIGLETTES    deviceCloudManagerCfg.c
         PROTOTYPE       void deviceCloudManagerStart(void);
