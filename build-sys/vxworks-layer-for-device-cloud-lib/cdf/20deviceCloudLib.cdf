@@ -30,7 +30,6 @@ Component INCLUDE_DEVICE_CLOUD_LIBRARY {
                     INCLUDE_IPSSL \
                     INCLUDE_IPDNSC \
                     INCLUDE_IPSNTPC \
-                    INCLUDE_IPTELNETS \
                     INCLUDE_DOSFS \
                     INCLUDE_UNIX \
                     INCLUDE_ARCHIVE \
