@@ -21,9 +21,9 @@ modification history
 05oct17,yat  created
 */
 
-Component INCLUDE_DEVICE_CLOUD_LIBRARY {
-    NAME            Device Cloud library
-    SYNOPSIS        Device Cloud library
+Component INCLUDE_DEVICE_CLOUD {
+    NAME            Device Cloud
+    SYNOPSIS        Device Cloud
     _CHILDREN       FOLDER_HDC
     REQUIRES        INCLUDE_POSIX_PTHREAD_SCHEDULER \
                     INCLUDE_POSIX_PIPES \
@@ -47,57 +47,54 @@ Component INCLUDE_DEVICE_CLOUD_LIBRARY {
 }
 
 Parameter DEVICE_CLOUD_CONFIG_DIR {
-    NAME            Device Cloud configuration directory
-    SYNOPSIS        This value points to the configuration directory where \
-                    the Device Cloud library will look for \
-                    the configuration files.
+    NAME            Device Cloud application connection configuration directory
+    SYNOPSIS        The directory for the Device Cloud application connection \
+                    configuration files.
     TYPE            string
     DEFAULT         "/bd0:1/etc/iot"
 }
 
 Parameter DEVICE_CLOUD_RUNTIME_DIR {
     NAME            Device Cloud runtime directory
-    SYNOPSIS        This value points to the runtime directory where \
-                    the Device Cloud library will look for \
-                    the runtime files.
+    SYNOPSIS        The directory for the run-time files and the base path of \
+                    the upload and download directories used for file transfer.
     TYPE            string
     DEFAULT         "/bd0:1/var/lib/iot"
 }
 
 Parameter DEVICE_CLOUD_RTP_DIR {
     NAME            Device Cloud RTP directory
-    SYNOPSIS        This value points to the RTP directory where \
-                    the Device Cloud library will look for \
-                    the RTP binary.
+    SYNOPSIS        The directory for the Device Cloud RTP applications.
     TYPE            string
     DEFAULT         "/bd0:1/bin"
 }
 
 Parameter DEVICE_CLOUD_PRIORITY {
     NAME            Device Cloud task and thread priority
-    SYNOPSIS        This parameter specifies the task and thread priority.
+    SYNOPSIS        The task and thread priority of the application.
     TYPE            uint
     DEFAULT         100
 }
 
 Parameter DEVICE_CLOUD_STACK_SIZE {
     NAME            Device Cloud task and thread stack size
-    SYNOPSIS        This parameter specifies the task and thread stack size.
+    SYNOPSIS        The task and thread stack size of the application.
     TYPE            uint
     DEFAULT         0x10000
 }
 
 Parameter DEVICE_CLOUD_APP_DELAY {
     NAME            Device Cloud application delay
-    SYNOPSIS        This parameter specifies the start up delay in seconds before launching the application.
+    SYNOPSIS        The start up delay in seconds before launching \
+                    the application.
     TYPE            uint
     DEFAULT         10
 }
 
 Selection SELECT_DEVICE_CLOUD_APP {
-        NAME            Select Device Cloud application
-        SYNOPSIS        This selection selects a choice of application.
-        _CHILDREN       FOLDER_HDC
-        _DEFAULTS       FOLDER_HDC
-        COUNT           1-
+    NAME            Select Device Cloud application
+    SYNOPSIS        The selection of the application.
+    _CHILDREN       FOLDER_HDC
+    _DEFAULTS       FOLDER_HDC
+    COUNT           1-
 }

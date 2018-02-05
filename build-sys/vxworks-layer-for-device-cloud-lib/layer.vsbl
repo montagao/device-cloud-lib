@@ -24,7 +24,7 @@ Modification history
 Layer DEVICE_CLOUD_LIB
     {
     SYNOPSIS          Device Cloud C library layer
-    HELP              This provides the Device Cloud C library layer.
+    HELP              This layer provides the Device Cloud C library layer.
     VERSION           3.0.0.0
     VENDOR            Wind River
     FEATURE           HDC
