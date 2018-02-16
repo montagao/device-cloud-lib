@@ -1,3 +1,5 @@
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/15034/badge.svg)](https://scan.coverity.com/projects/15034)
+
 Wind River's Internet of Things Solution
 ========================================
 
