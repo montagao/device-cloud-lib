@@ -2,7 +2,7 @@
  * @file
  * @brief source file defining common mqtt function implementations
  *
- * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,21 @@
 #include "shared/iot_types.h"
 
 #ifdef IOT_MQTT_MOSQUITTO
-#include <mosquitto.h>
-#else
-#include <MQTTClient.h>
-#endif
+#	include <mosquitto.h>
+#else /* ifdef IOT_MQTT_MOSQUITTO */
+#	ifdef IOT_THREAD_SUPPORT
+#		include <MQTTAsync.h>
+#	else /* ifdef IOT_THREAD_SUPPORT */
+#		include <MQTTClient.h>
+#	endif /* else ifdef IOT_THREAD_SUPPORT */
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
 
 /** @brief Defualt MQTT port for non-SSL connections */
 #define IOT_MQTT_PORT                  1883
 /** @brief Default MQTT port for SSL connections */
 #define IOT_MQTT_PORT_SSL              8883
 
-/** @brief number of time MQTT initalize has been called */
+/** @brief count of the number of times that MQTT initalize has been called */
 static unsigned int MQTT_INIT_COUNT = 0u;
 
 #ifdef IOT_MQTT_MOSQUITTO
@@ -112,7 +116,67 @@ void iot_mqtt_on_log(
 	void *obj,
 	int level,
 	const char *str );
-#else
+#else /* ifdef IOT_MQTT_MOSQUITTO */
+/**
+ * @def PAHO_OBJ
+ * @brief Macro to replace the paho functions & objects with the correct prefix
+ *
+ * This macro allows for easily changing between PAHO's Asynchronous &
+ * Synchronous C libraries with calling functions or using object types.
+ * This macro allows for a quick replace of the prefix for the return type in
+ * the library (either MQTTAsync or MQTTClient).  Using a macro allows for less
+ * copying for similar code, when switching between the two library types.
+ *
+ * @param x        name of the function to call
+ *
+ * @see PAHO_RES
+ */
+/**
+ * @def PAHO_OBJ
+ * @brief Macro to replace the paho return codes with the correct prefix
+ *
+ * This macro allows for easily changing between PAHO's Asynchronous &
+ * Synchronous C libraries with determining return codes from the library.
+ * This macro allows for a quick replace of the prefix for the return type in
+ * the library (either MQTTAsync or MQTTClient).  Using a macro allows for less
+ * copying for similar code, when switching between the two library types.
+ *
+ * @param x        name of the function to call
+ *
+ * @see PAHO_OBJ
+ */
+#ifdef IOT_THREAD_SUPPORT
+#define PAHO_OBJ(x)        MQTTAsync ## x
+#define PAHO_RES(x)        MQTTASYNC ## x
+
+/**
+ * @brief callback called on failure of a subscribe, unsubscribe or
+ * sending of a message
+ *
+ * @param[in]      user_data           context user data
+ * @param[in]      response            response data
+ */
+static IOT_SECTION void iot_mqtt_on_failure(
+	void *user_data,
+	MQTTAsync_failureData *response
+);
+
+/**
+ * @brief callback called on success of a subscribe, unsubscribe or
+ * sending of a message
+ *
+ * @param[in]      user_data           context user data
+ * @param[in]      response            response data
+ */
+static IOT_SECTION void iot_mqtt_on_success(
+	void *user_data,
+	MQTTAsync_successData *response
+);
+#else /* ifdef IOT_THREAD_SUPPORT */
+#define PAHO_OBJ(x)        MQTTClient ## x
+#define PAHO_RES(x)        MQTTCLIENT ## x
+#endif /* else ifdef IOT_THREAD_SUPPORT */
+
 /**
  * @brief callback called when a connection is terminated
  *
@@ -122,12 +186,14 @@ void iot_mqtt_on_log(
 static IOT_SECTION void iot_mqtt_on_disconnect(
 	void *user_data,
 	char *cause );
+
 /**
  * @brief callback called when a message is delivered
  *
  * @param[in]      user_data           context user data
  * @param[in]      dt                  delievery token for the message
  */
+
 static IOT_SECTION void iot_mqtt_on_delivery(
 	void *user_data,
 	MQTTClient_deliveryToken dt );
@@ -392,6 +458,29 @@ iot_status_t iot_mqtt_initialize( void )
 	}
 	++MQTT_INIT_COUNT;
 	return IOT_STATUS_SUCCESS;
+}
+
+iot_status_t iot_mqtt_loop( iot_mqtt_t *mqtt,
+	iot_millisecond_t max_time_out )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( mqtt )
+	{
+#ifdef IOT_MQTT_MOSQUITTO
+#ifdef IOT_THREAD_SUPPORT
+		(void)max_time_out;
+		result = IOT_STATUS_SUCCESS;
+#else /* ifdef IOT_THREAD_SUPPORT */
+		if ( mosquitto_loop( mqtt->mosq, max_time_out, 1 )
+			== MOSQ_ERR_SUCCESS )
+			result = IOT_STATUS_SUCCESS;
+#endif /* else ifdef IOT_THREAD_SUPPORT */
+#else /* ifdef IOT_MQTT_MOSQUITTO */
+		(void)max_time_out;
+		result = IOT_STATUS_SUCCESS;
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
+	}
+	return result;
 }
 
 #ifdef IOT_MQTT_MOSQUITTO
