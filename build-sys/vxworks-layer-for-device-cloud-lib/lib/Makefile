@@ -26,7 +26,7 @@ PKG_BUILD_TARGETS := src
 PKG_BUILD_DIR := $(PKG_NAME)/src
 PKG_PATCH_DIR := $(PKG_NAME)
 
-PKG_EXTRA_SRC := iot_build.h iot_plugin_builtin.c iot-connect.schema.json.h iot-connect.schema.json.c
+PKG_EXTRA_SRC := iot_build.h iot_plugin_builtin.c
 
 KERNEL_PUBLIC_H_FILES = api/public/iot.h \
                         api/public/iot_checksum.h \
