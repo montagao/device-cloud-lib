@@ -191,12 +191,16 @@ static IOT_SECTION void iot_mqtt_on_disconnect(
  * @brief callback called when a message is delivered
  *
  * @param[in]      user_data           context user data
- * @param[in]      dt                  delievery token for the message
+ * @param[in]      token               delievery token for the message
  */
-
 static IOT_SECTION void iot_mqtt_on_delivery(
 	void *user_data,
-	MQTTClient_deliveryToken dt );
+#ifdef IOT_THREAD_SUPPORT
+	MQTTAsync_token token
+#else
+	MQTTClient_deliveryToken token
+#endif
+	);
 /**
  * @brief callback called when a message is received
  *
@@ -209,8 +213,9 @@ static IOT_SECTION int iot_mqtt_on_message(
 	void *user_data,
 	char *topic,
 	int topic_len,
-	MQTTClient_message *message );
-#endif
+	PAHO_OBJ( _message ) *message );
+
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
 
 /** @brief number of seconds before sending a keep alive message */
 #define IOT_MQTT_KEEP_ALIVE            60u
@@ -220,13 +225,27 @@ static IOT_SECTION int iot_mqtt_on_message(
 /** @brief internal object containing information for managing the connection */
 struct iot_mqtt
 {
+#ifdef IOT_THREAD_SUPPORT
+	/** @brief Mutex to protect signal condition variable */
+	os_thread_mutex_t           notification_mutex;
+	/** @brief Signal for waking another thread waiting for notification */
+	os_thread_condition_t       notification_signal;
+#endif /* ifdef IOT_THREAD_SUPPORT */
+
 #ifdef IOT_MQTT_MOSQUITTO
 	/** @brief pointer to the mosquitto client instance */
 	struct mosquitto *mosq;
-#else
-	/** @brief paho client instance */
+#else /* ifdef IOT_MQTT_MOSQUITTO */
+#ifdef IOT_THREAD_SUPPORT
+	/** @brief paho asynchronous client instance */
+	MQTTAsync client;
+	/** @brief Current message identifier, increments each message */
+	MQTTAsync_token msg_id;
+#else /* ifdef IOT_THREAD_SUPPORT */
+	/** @brief paho synchronous client instance */
 	MQTTClient client;
-#endif
+#endif /* else ifdef IOT_THREAD_SUPPORT */
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
 	/** @brief whether the client is expected to be connected */
 	iot_bool_t connected;
 	/** @brief whether the client cloud connection is changed */
@@ -417,11 +436,25 @@ iot_status_t iot_mqtt_disconnect(
 		mqtt->mosq = NULL;
 #else /* ifdef IOT_MQTT_MOSQUITTO */
 		mqtt->connected = IOT_FALSE;
-		if ( MQTTClient_disconnect( mqtt->client, IOT_MQTT_KEEP_ALIVE )  == MQTTCLIENT_SUCCESS )
+#ifdef IOT_THREAD_SUPPORT
+		{
+			MQTTAsync_disconnectOptions opts =
+				MQTTAsync_disconnectOptions_initializer;
+			opts.timeout = IOT_MQTT_KEEP_ALIVE;
+			if ( MQTTAsync_disconnect( mqtt->client, &opts )
+				== MQTTASYNC_SUCCESS )
+				result = IOT_STATUS_SUCCESS;
+			MQTTAsync_destroy( &mqtt->client );
+		}
+		os_thread_condition_destroy( &mqtt->notification_signal );
+		os_thread_mutex_destroy( &mqtt->notification_mutex );
+#else /* ifdef IOT_THREAD_SUPPORT */
+		if ( MQTTClient_disconnect( mqtt->client, IOT_MQTT_KEEP_ALIVE )
+			== MQTTCLIENT_SUCCESS )
 			result = IOT_STATUS_SUCCESS;
-
 		MQTTClient_destroy( &mqtt->client );
-#endif /* else IOT_MQTT_MOSQUITTO */
+#endif /* else ifdef IOT_THREAD_SUPPORT */
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
 		os_free( mqtt );
 	}
 	return result;
@@ -487,15 +520,20 @@ iot_status_t iot_mqtt_loop( iot_mqtt_t *mqtt,
 void iot_mqtt_on_connect(
 	struct mosquitto *UNUSED(mosq),
 	void *user_data,
-	int rc )
+	int UNUSED(rc) )
 {
 	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
-	(void)rc;
-	if ( mqtt )
+	if ( mqtt && mqtt->connected == IOT_FALSE )
 	{
 		mqtt->connected = IOT_TRUE;
 		mqtt->connection_changed = IOT_TRUE;
 		mqtt->time_stamp_connection_changed = iot_timestamp_now();
+
+#ifdef IOT_THREAD_SUPPORT
+		/* notify iot_mqtt_connect, that we've estalished a connection */
+		os_thread_condition_signal( &mqtt->notification_signal,
+			&mqtt->notification_mutex );
+#endif /* ifdef IOT_THREAD_SUPPORT */
 	}
 }
 
@@ -576,18 +614,38 @@ void iot_mqtt_on_disconnect(
 
 void iot_mqtt_on_delivery(
 	void *user_data,
-	MQTTClient_deliveryToken dt )
+#ifdef IOT_THREAD_SUPPORT
+	MQTTAsync_token token
+#else /* ifdef IOT_THREAD_SUPPORT */
+	MQTTClient_deliveryToken token
+#endif /* else ifdef IOT_THREAD_SUPPORT */
+	)
 {
 	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
 	if ( mqtt && mqtt->on_delivery )
-		mqtt->on_delivery( mqtt->user_data, (int)dt );
+		mqtt->on_delivery( mqtt->user_data, (int)token );
 }
+
+#ifdef IOT_THREAD_SUPPORT
+void iot_mqtt_on_failure(
+	void *user_data,
+	MQTTAsync_failureData *response )
+{
+	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
+	if ( mqtt && response && response->token == 0u )
+	{
+		mqtt->connected = IOT_FALSE;
+		os_thread_condition_signal( &mqtt->notification_signal,
+			&mqtt->notification_mutex );
+	}
+}
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 int iot_mqtt_on_message(
 	void *user_data,
 	char *topic,
 	int UNUSED(topic_len),
-	MQTTClient_message *message )
+	PAHO_OBJ( _message ) *message )
 {
 	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
 	if ( mqtt && mqtt->on_message )
@@ -595,11 +653,26 @@ int iot_mqtt_on_message(
 		(size_t)message->payloadlen, message->qos, message->retained );
 
 	/* message succesfully handled */
-	MQTTClient_freeMessage( &message );
-	MQTTClient_free( topic );
-	return (int)IOT_TRUE;
+	PAHO_OBJ(_freeMessage) ( &message );
+	PAHO_OBJ(_free)( topic );
+	return 1; /* true */
 }
-#endif /* else IOT_MQTT_MOSQUITTO */
+
+#ifdef IOT_THREAD_SUPPORT
+void iot_mqtt_on_success(
+	void *user_data,
+	MQTTAsync_successData *response )
+{
+	iot_mqtt_t *const mqtt = (iot_mqtt_t *)user_data;
+	if ( mqtt && response && response->token == 0u )
+	{
+		mqtt->connected = IOT_TRUE;
+		os_thread_condition_signal( &mqtt->notification_signal,
+			&mqtt->notification_mutex );
+	}
+}
+#endif /* ifdef IOT_THREAD_SUPPORT */
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
 
 iot_status_t iot_mqtt_publish(
 	iot_mqtt_t *mqtt,
@@ -620,27 +693,45 @@ iot_status_t iot_mqtt_publish(
 		if ( mosquitto_publish( mqtt->mosq, &mid, topic, payload_len,
 			payload, qos, retain ) == MOSQ_ERR_SUCCESS )
 			result = IOT_STATUS_SUCCESS;
-	
 #else /* ifdef IOT_MQTT_MOSQUITTO */
-		MQTTClient_deliveryToken dt;
 		void *pl = os_malloc( payload_len );
 		result = IOT_STATUS_NO_MEMORY;
 		if ( pl )
 		{
+#ifdef IOT_THREAD_SUPPORT
+			int rs;
+			const MQTTAsync_token token = mqtt->msg_id++;
+			MQTTAsync_responseOptions opts =
+				MQTTAsync_responseOptions_initializer;
+			opts.context = mqtt;
+			opts.token = token;
+			opts.onFailure = iot_mqtt_on_failure;
+			opts.onSuccess = iot_mqtt_on_success;
+
+			os_memcpy( pl, payload, payload_len );
+			result = IOT_STATUS_FAILURE;
+			rs = MQTTAsync_send( mqtt->client, topic,
+				(int)payload_len, pl, qos, retain, &opts );
+			if ( rs == MQTTASYNC_SUCCESS )
+#else /* ifdef IOT_THREAD_SUPPORT */
+			MQTTClient_deliveryToken token;
 			os_memcpy( pl, payload, payload_len );
 			result = IOT_STATUS_FAILURE;
 			if ( MQTTClient_publish( mqtt->client, topic,
-				(int)payload_len, pl, qos, retain, &dt )
+				(int)payload_len, pl, qos, retain, &token )
 				== MQTTCLIENT_SUCCESS )
+#endif /* ifdef IOT_THREAD_SUPPORT */
 			{
-				mid = (int)dt;
+				mid = (int)token;
 				result = IOT_STATUS_SUCCESS;
 			}
 			os_free( pl );
 		}
 #endif /* else IOT_MQTT_MOSQUITTO */
 	}
-	if ( msg_id ) *msg_id = mid;
+
+	if ( msg_id )
+		*msg_id = mid;
 	return result;
 }
 
@@ -660,9 +751,9 @@ iot_status_t iot_mqtt_reconnect(
 	(void)password;
 	(void)max_time_out;
 	if ( host && client_id && mqtt )
-#else
+#else /* ifdef IOT_MQTT_MOSQUITTO */
 	if ( host && client_id && mqtt && mqtt->client)
-#endif
+#endif /* else ifdef IOT_MQTT_MOSQUITTO */
 	{
 		result = IOT_STATUS_FAILURE;
 		if ( port == 0u )
@@ -694,11 +785,11 @@ iot_status_t iot_mqtt_reconnect(
 				IOT_MILLISECONDS_IN_SECOND )
 			{ /* attempt to re-connect */
 				char url[IOT_MQTT_URL_MAX + 1u];
-				MQTTClient_connectOptions conn_opts =
-					MQTTClient_connectOptions_initializer;
+				PAHO_OBJ( _connectOptions ) conn_opts =
+					PAHO_OBJ( _connectOptions_initializer );
 				/* ssl */
-				MQTTClient_SSLOptions ssl_opts =
-					MQTTClient_SSLOptions_initializer;
+				PAHO_OBJ( _SSLOptions ) ssl_opts =
+					PAHO_OBJ( _SSLOptions_initializer );
 
 				if ( ssl_conf && port != 1883u )
 					os_snprintf( url, IOT_MQTT_URL_MAX,
@@ -732,8 +823,8 @@ iot_status_t iot_mqtt_reconnect(
 						(max_time_out /
 						IOT_MILLISECONDS_IN_SECOND) + 1u;
 
-				if ( MQTTClient_connect( mqtt->client, &conn_opts )
-					== MQTTCLIENT_SUCCESS )
+				if ( PAHO_OBJ( _connect )( mqtt->client, &conn_opts )
+					== PAHO_RES( _SUCCESS ) )
 				{
 					mqtt->connected = IOT_TRUE;
 					mqtt->connection_changed = IOT_FALSE;
@@ -810,13 +901,30 @@ iot_status_t iot_mqtt_subscribe( iot_mqtt_t *mqtt, const char *topic, int qos )
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( mqtt )
 	{
-		result = IOT_STATUS_FAILURE;
 #ifdef IOT_MQTT_MOSQUITTO
-		if ( mosquitto_subscribe( mqtt->mosq, NULL, topic, qos ) == MOSQ_ERR_SUCCESS )
+		result = IOT_STATUS_FAILURE;
+		if ( mosquitto_subscribe( mqtt->mosq, NULL, topic, qos )
+			== MOSQ_ERR_SUCCESS )
 			result = IOT_STATUS_SUCCESS;
 #else /* ifdef IOT_MQTT_MOSQUITTO */
-		if ( MQTTClient_subscribe( mqtt->client, topic, qos ) == MQTTCLIENT_SUCCESS )
+#ifdef IOT_THREAD_SUPPORT
+		MQTTAsync_responseOptions opts =
+			MQTTAsync_responseOptions_initializer;
+		opts.context = mqtt;
+		opts.token = mqtt->msg_id++;
+		opts.onFailure = iot_mqtt_on_failure;
+		opts.onSuccess = iot_mqtt_on_success;
+
+		result = IOT_STATUS_FAILURE;
+		if ( MQTTAsync_subscribe( mqtt->client, topic, qos, &opts )
+			== MQTTASYNC_SUCCESS )
 			result = IOT_STATUS_SUCCESS;
+#else /* ifdef IOT_THREAD_SUPPORT */
+		result = IOT_STATUS_FAILURE;
+		if ( MQTTClient_subscribe( mqtt->client, topic, qos )
+			== MQTTCLIENT_SUCCESS )
+			result = IOT_STATUS_SUCCESS;
+#endif /* else ifdef IOT_THREAD_SUPPORT */
 #endif /* else IOT_MQTT_MOSQUITTO */
 	}
 	return result;
@@ -839,14 +947,32 @@ iot_status_t iot_mqtt_unsubscribe( iot_mqtt_t *mqtt, const char *topic )
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( mqtt )
 	{
-		result = IOT_STATUS_FAILURE;
 #ifdef IOT_MQTT_MOSQUITTO
-		if ( mosquitto_unsubscribe( mqtt->mosq, NULL, topic ) == MOSQ_ERR_SUCCESS )
+		result = IOT_STATUS_FAILURE;
+		if ( mosquitto_unsubscribe( mqtt->mosq, NULL, topic )
+			== MOSQ_ERR_SUCCESS )
 			result = IOT_STATUS_SUCCESS;
 #else /* ifdef IOT_MQTT_MOSQUITTO */
-		if ( MQTTClient_unsubscribe( mqtt->client, topic ) == MQTTCLIENT_SUCCESS )
+#ifdef IOT_THREAD_SUPPORT
+		MQTTAsync_responseOptions opts =
+			MQTTAsync_responseOptions_initializer;
+		opts.context = mqtt;
+		opts.token = mqtt->msg_id++;
+		opts.onFailure = iot_mqtt_on_failure;
+		opts.onSuccess = iot_mqtt_on_success;
+
+		result = IOT_STATUS_FAILURE;
+		if ( MQTTAsync_unsubscribe( mqtt->client, topic, &opts )
+			== MQTTASYNC_SUCCESS )
 			result = IOT_STATUS_SUCCESS;
+#else /* ifdef IOT_THREAD_SUPPORT */
+		result = IOT_STATUS_FAILURE;
+		if ( MQTTClient_unsubscribe ( mqtt->client, topic )
+			== MQTTCLIENT_SUCCESS )
+			result = IOT_STATUS_SUCCESS;
+#endif /* else ifdef IOT_THREAD_SUPPORT */
 #endif /* else IOT_MQTT_MOSQUITTO */
 	}
 	return result;
 }
+
