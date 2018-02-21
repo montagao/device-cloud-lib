@@ -21,18 +21,18 @@
 #define IOT_GIT_SHA                    ""
 
 /** @brief Name of the product */
-#define IOT_PRODUCT                    "Helix Device Cloud"
+#define IOT_PRODUCT                    "Device Cloud"
 /** @brief Short name of the product */
-#define IOT_PRODUCT_SHORT              "hdc"
+#define IOT_PRODUCT_SHORT              "device-cloud"
 
 /** @brief project version as string */
-#define IOT_VERSION                    "17.12.01"
+#define IOT_VERSION                    "18.02.16"
 /** @brief project major version number */
-#define IOT_VERSION_MAJOR              17
+#define IOT_VERSION_MAJOR              18
 /** @brief project minor version number */
-#define IOT_VERSION_MINOR              12
+#define IOT_VERSION_MINOR              2
 /** @brief project patch version number */
-#define IOT_VERSION_PATCH              01
+#define IOT_VERSION_PATCH              16
 /** @brief project tweak version number */
 #define IOT_VERSION_TWEAK              0
 
@@ -95,9 +95,9 @@ extern const char *deviceCloudRuntimeDirGet ( void );
 /** @brief Device manager target name (executable name) */
 #define IOT_DEVICE_MANAGER_TARGET      "iot-device-manager"
 /** @brief Device manager name (short description) */
-#define IOT_DEVICE_MANAGER_NAME        "Helix Device Cloud Device Manager"
+#define IOT_DEVICE_MANAGER_NAME        "Device Cloud Device Manager"
 /** @brief Device manager long description */
-#define IOT_DEVICE_MANAGER_DESCRIPTION "Registers and handles device level requests for Helix Device Cloud devices. Client that registers with iot-service to handle over-the-air updates, device reboot/shutdown, agent reset etc."
+#define IOT_DEVICE_MANAGER_DESCRIPTION "Registers and handles device level requests for Device Cloud devices. Client that registers with the cloud to handle over-the-air updates, device reboot/shutdown, agent reset etc."
 
 /** @brief Control application target name (executable name) */
 #define IOT_CONTROL_TARGET             "iot-control"
@@ -143,6 +143,9 @@ extern const char *deviceCloudRuntimeDirGet ( void );
 /** @brief Default state of file transfer related actions */
 #define IOT_DEFAULT_ENABLE_FILE_TRANSFERS                 1
 
+/** @brief Default state of action ping*/
+#define IOT_DEFAULT_ENABLE_PING                           1
+
 /** @brief Default state of remote login related action */
 #define IOT_DEFAULT_ENABLE_REMOTE_LOGIN                   1
 
@@ -154,9 +157,6 @@ extern const char *deviceCloudRuntimeDirGet ( void );
 
 /** @brief Default state of enable offline action - do not unregister actions */
 #define IOT_DEFAULT_ENABLE_PERSISTENT_ACTIONS             1
-
-/** @brief Default state of enable automation test on Android */
-#define IOT_DEFAULT_ENABLE_AUTOMATION_TEST_ON_ANDROID     0
 
 /** @brief Default state of uploaded file removal upon success */
 #define IOT_DEFAULT_UPLOAD_REMOVE_ON_SUCCESS              1

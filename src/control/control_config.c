@@ -2,7 +2,7 @@
  * @file
  * @brief Main source file for the Wind River IoT control configuration files
  *
- * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  */
 #include "control_config.h"
 
+#include "api/shared/iot_types.h"   /* for iot_directory_name_get */
 #include "iot-connect.schema.json.h"
 #include "iot_build.h"
 #include "os.h"
@@ -211,17 +212,18 @@ iot_status_t control_config_generate( void )
 		if ( result == IOT_STATUS_SUCCESS && value_set == IOT_TRUE )
 		{
 			char config_file[ PATH_MAX + 1u ];
+			size_t config_file_len = 0u;
 			os_file_t connection_file;
 
 			/* generate connection configuration file */
-			/** @todo fix this to use API for configuration directory */
-			os_snprintf( config_file,
-				PATH_MAX, "%s%c%s%s",
-				IOT_DEFAULT_DIR_CONFIG, OS_DIR_SEP,
-				IOT_DEFAULT_FILE_CONFIG,
+			config_file_len = iot_directory_name_get(
+				IOT_DIR_CONFIG, config_file, PATH_MAX );
+			os_snprintf( &config_file[config_file_len],
+				PATH_MAX - config_file_len, "%c%s%s",
+				OS_DIR_SEP, IOT_DEFAULT_FILE_CONFIG,
 				IOT_DEFAULT_FILE_CONFIG_EXT );
 
-			if ( os_file_exists( config_file ) )
+			if ( os_file_exists( config_file ) != IOT_FALSE )
 				os_file_delete( config_file );
 
 			connection_file = os_file_open( config_file,
@@ -680,17 +682,17 @@ void control_config_user_prompt(
 			va_start( args, prompt );
 			os_vfprintf( OS_STDOUT, prompt, args );
 			va_end( args );
-			os_flush( OS_STDIN );
+			os_flush( OS_STDOUT );
 		}
 		if ( show_user_input == IOT_FALSE )
-			os_stream_echo_set( OS_STDIN, IOT_FALSE );
+			os_stream_echo_set( OS_STDIN, OS_FALSE );
 
 		os_file_gets( temp, PATH_MAX, OS_STDIN );
 
 		if ( show_user_input == IOT_FALSE )
 		{
 			os_fprintf( OS_STDOUT, "\n" );
-			os_stream_echo_set( OS_STDIN, IOT_TRUE );
+			os_stream_echo_set( OS_STDIN, OS_TRUE );
 		}
 
 		while ( temp[i] != '\n' && temp[i] != '\r' &&
