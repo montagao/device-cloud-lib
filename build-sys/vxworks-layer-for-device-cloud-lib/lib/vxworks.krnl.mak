@@ -24,6 +24,7 @@ DEVICE_CLOUD_LIB_DIR = $(VSB_DIR)/3pp/HDC_DEVICE_CLOUD_LIB/device_cloud_lib_repo
 
 SRC_DIRS = \
         $(DEVICE_CLOUD_LIB_DIR) \
+        $(DEVICE_CLOUD_LIB_DIR)/src/vxworks \
         $(DEVICE_CLOUD_LIB_DIR)/src/api \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/json \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/checksum \
