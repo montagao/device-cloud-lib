@@ -33,6 +33,7 @@ SRC_DIRS = \
 SRC_FILES = \
         $(DEVICE_CLOUD_LIB_DIR)/src/control/control.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/control/control_config.c \
+        $(DEVICE_CLOUD_LIB_DIR)/src/control/iot-connect.schema.json.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/control/control_main.c
 
 OBJS = $(addsuffix .o, $(notdir $(basename $(SRC_FILES))))

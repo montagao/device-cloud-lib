@@ -25,6 +25,7 @@ DEVICE_CLOUD_LIB_DIR = $(VSB_DIR)/3pp/HDC_DEVICE_CLOUD_LIB/device_cloud_lib_repo
 
 SRC_DIRS = \
         $(DEVICE_CLOUD_LIB_DIR) \
+        $(DEVICE_CLOUD_LIB_DIR)/src/vxworks \
         $(DEVICE_CLOUD_LIB_DIR)/src/api \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/json \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/checksum \
@@ -33,8 +34,7 @@ SRC_DIRS = \
         $(DEVICE_CLOUD_LIB_DIR)/src/software-update
 
 SRC_FILES = \
-        $(DEVICE_CLOUD_LIB_DIR)/iot_plugin_builtin.c \
-        $(DEVICE_CLOUD_LIB_DIR)/iot-connect.schema.json.c \
+        $(DEVICE_CLOUD_LIB_DIR)/src/vxworks/iot_plugin_builtin.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/iot_action.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/iot_alarm.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/iot_attribute.c \
