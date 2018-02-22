@@ -288,10 +288,22 @@ iot_mqtt_t* iot_mqtt_connect(
 		result = (iot_mqtt_t*)os_malloc( sizeof( struct iot_mqtt ) );
 		if ( result )
 		{
-#ifdef IOT_MQTT_MOSQUITTO
-			(void)max_time_out;
+#ifndef IOT_MQTT_MOSQUITTO
+			char url[IOT_MQTT_URL_MAX + 1u];
+#endif /* ifndef IOT_MQTT_MOSQUITTO */
+
+#ifdef IOT_THREAD_SUPPORT
+			os_thread_mutex_create(
+				&result->notification_mutex );
+			os_thread_condition_create(
+				&result->notification_signal );
+#endif /* ifdef IOT_THREAD_SUPPORT */
+
 			os_memzero( result, sizeof( struct iot_mqtt ) );
+
+#ifdef IOT_MQTT_MOSQUITTO
 			result->mosq = mosquitto_new( client_id, true, result );
+			result->connected = IOT_FALSE;
 			if ( result->mosq )
 			{
 				mosquitto_connect_callback_set( result->mosq,
@@ -341,17 +353,52 @@ iot_mqtt_t* iot_mqtt_connect(
 				if ( mosquitto_connect( result->mosq,
 					host, port, IOT_MQTT_KEEP_ALIVE ) == MOSQ_ERR_SUCCESS )
 				{
+#ifdef IOT_THREAD_SUPPORT
 					mosquitto_loop_start( result->mosq );
+
+#if !defined(__VXWORKS__)
+					/* wait here until connected or timed out! */
+					if ( max_time_out > 0u )
+						os_thread_condition_timed_wait(
+							&result->notification_signal,
+							&result->notification_mutex,
+							max_time_out );
+					else
+						os_thread_condition_wait(
+							&result->notification_signal,
+							&result->notification_mutex );
+#else
 					result->connected = IOT_TRUE;
 					result->connection_changed = IOT_FALSE;
+#endif /* __VXWORKS__ */
+#else /* ifdef IOT_THREAD_SUPPORT */
+					int rs = MOSQ_ERR_SUCCESS;
+					os_timestamp_t ts = 0u;
+					/* default is to wait for 1 day */
+					iot_millisecond_t wait_time = 1000u * 86400u;
+
+					if ( max_time_out > 0u )
+						wait_time = max_time_out;
+
+					/* loop until connected or time out */
+					os_time( &ts, NULL );
+					while ( rs == MOSQ_ERR_SUCCESS &&
+						result->connected == IOT_FALSE &&
+						wait_time > 0u )
+					{
+						rs = mosquitto_loop(
+							result->mosq,
+							wait_time, 1 );
+
+						if ( max_time_out > 0u )
+							os_time_remaining( &ts,
+								max_time_out,
+								&wait_time );
+					}
+#endif /* ifdef IOT_THREAD_SUPPORT */
 				}
-				else
-					os_free_null( (void**)&result );
 			}
-			else
-				os_free_null( (void**)&result );
 #else /* ifdef IOT_MQTT_MOSQUITTO */
-			char url[IOT_MQTT_URL_MAX + 1u];
 			if ( ssl_conf && port != 1883u )
 				os_snprintf( url, IOT_MQTT_URL_MAX,
 					"ssl://%s:%d", host, port );
@@ -359,7 +406,6 @@ iot_mqtt_t* iot_mqtt_connect(
 				os_snprintf( url, IOT_MQTT_URL_MAX,
 					"tcp://%s:%d", host, port );
 			url[ IOT_MQTT_URL_MAX ] = '\0';
-			os_memzero( result, sizeof( struct iot_mqtt ) );
 
 			if ( proxy_conf )
 				os_fprintf(OS_STDERR,
@@ -368,24 +414,34 @@ iot_mqtt_t* iot_mqtt_connect(
 					(int)port,
 					(int)proxy_conf->type );
 
-			if ( MQTTClient_create( &result->client, url,
+			result->connected = IOT_FALSE;
+			if ( PAHO_OBJ( _create )( &result->client, url,
 				client_id, MQTTCLIENT_PERSISTENCE_NONE,
-				NULL ) == MQTTCLIENT_SUCCESS )
+				NULL ) == PAHO_RES( _SUCCESS ) )
 			{
-				MQTTClient_connectOptions conn_opts =
-					MQTTClient_connectOptions_initializer;
+				PAHO_OBJ( _connectOptions ) conn_opts =
+					PAHO_OBJ( _connectOptions_initializer );
 
 				/* ssl */
-				MQTTClient_SSLOptions ssl_opts =
-					MQTTClient_SSLOptions_initializer;
+				PAHO_OBJ( _SSLOptions ) ssl_opts =
+					PAHO_OBJ( _SSLOptions_initializer );
 
-				MQTTClient_setCallbacks( result->client, result,
-					iot_mqtt_on_disconnect, iot_mqtt_on_message,
+				/* this uses PAHO in asynchronous mode, this
+				 * mode is only safe in single-thread mode */
+				PAHO_OBJ( _setCallbacks )( result->client,
+					result,
+					iot_mqtt_on_disconnect,
+					iot_mqtt_on_message,
 					iot_mqtt_on_delivery );
 				conn_opts.keepAliveInterval = IOT_MQTT_KEEP_ALIVE;
 				conn_opts.cleansession = 1;
 				conn_opts.username = username;
 				conn_opts.password = password;
+#ifdef IOT_THREAD_SUPPORT
+ 				conn_opts.onSuccess = iot_mqtt_on_success;
+				conn_opts.onFailure = iot_mqtt_on_failure;
+				conn_opts.context = result;
+#endif /* ifdef IOT_THREAD_SUPPORT */
 
 				if ( ssl_conf && port != 1883u )
 				{ /* ssl */
@@ -404,18 +460,42 @@ iot_mqtt_t* iot_mqtt_connect(
 					conn_opts.connectTimeout =
 						(max_time_out /
 						IOT_MILLISECONDS_IN_SECOND) + 1u;
-				if ( MQTTClient_connect( result->client,
-						&conn_opts ) == MQTTCLIENT_SUCCESS )
-					result->connected = IOT_TRUE;
-				else
+
+				if ( PAHO_OBJ( _connect )( result->client,
+						&conn_opts ) == PAHO_RES( _SUCCESS ) )
 				{
-					MQTTClient_destroy( &result->client );
-					os_free_null( (void**)&result );
+#ifdef IOT_THREAD_SUPPORT
+					/* wait here until connected or timed out! */
+					if ( max_time_out > 0u )
+						os_thread_condition_timed_wait(
+							&result->notification_signal,
+							&result->notification_mutex,
+							max_time_out );
+					else
+						os_thread_condition_wait(
+							&result->notification_signal,
+							&result->notification_mutex );
+#else /* ifdef IOT_THREAD_SUPPORT */
+					result->connected = IOT_TRUE;
+#endif /* else ifdef IOT_THREAD_SUPPORT */
 				}
+
+				/* failed to connect, so let's clean up */
+				if ( result && result->connected == IOT_FALSE )
+					PAHO_OBJ( _destroy )( &result->client );
 			}
-			else
-				os_free_null( (void**)&result );
 #endif /* else IOT_MQTT_MOSQUITTO */
+			if ( result && result->connected == IOT_FALSE )
+			{
+#ifdef IOT_THREAD_SUPPORT
+				os_thread_condition_destroy(
+					&result->notification_signal );
+				os_thread_mutex_destroy(
+					&result->notification_mutex );
+#endif /* ifdef IOT_THREAD_SUPPORT */
+				os_free( result );
+				result = NULL;
+			}
 		}
 	}
 	return result;
