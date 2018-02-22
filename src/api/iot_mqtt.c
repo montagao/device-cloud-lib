@@ -356,7 +356,6 @@ iot_mqtt_t* iot_mqtt_connect(
 #ifdef IOT_THREAD_SUPPORT
 					mosquitto_loop_start( result->mosq );
 
-#if !defined(__VXWORKS__)
 					/* wait here until connected or timed out! */
 					if ( max_time_out > 0u )
 						os_thread_condition_timed_wait(
@@ -367,7 +366,7 @@ iot_mqtt_t* iot_mqtt_connect(
 						os_thread_condition_wait(
 							&result->notification_signal,
 							&result->notification_mutex );
-#else
+#if defined(__VXWORKS__)
 					result->connected = IOT_TRUE;
 					result->connection_changed = IOT_FALSE;
 #endif /* __VXWORKS__ */
