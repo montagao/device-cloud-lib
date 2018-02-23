@@ -16,7 +16,7 @@ modification history
 
 Component INCLUDE_DEVICE_CLOUD_LOCATION_KERNEL {
         NAME            Device Cloud location kernel task
-        SYNOPSIS        This component invokes the location application as kernel task
+        SYNOPSIS        This component invokes the Device Cloud location application as a kernel task
         _CHILDREN       SELECT_DEVICE_CLOUD_APP
         ARCHIVE         libdeviceCloudLocation.a
         CONFIGLETTES    deviceCloudLocationCfg.c
@@ -30,7 +30,7 @@ Component INCLUDE_DEVICE_CLOUD_LOCATION_KERNEL {
 
 Component INCLUDE_DEVICE_CLOUD_LOCATION_RTP {
         NAME            Device Cloud location RTP
-        SYNOPSIS        This component invokes the location application as RTP
+        SYNOPSIS        This component invokes the Device Cloud location application as an RTP
         _CHILDREN       SELECT_DEVICE_CLOUD_APP
         CONFIGLETTES    deviceCloudLocationRtpCfg.c
         PROTOTYPE       void deviceCloudLocationRtp(void);

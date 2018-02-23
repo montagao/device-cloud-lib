@@ -16,7 +16,7 @@ modification history
 
 Component INCLUDE_DEVICE_CLOUD_TELEMETRY_KERNEL {
         NAME            Device Cloud telemetry kernel task
-        SYNOPSIS        This component invokes the telemetry application as kernel task
+        SYNOPSIS        This component invokes the Device Cloud telemetry application as a kernel task
         _CHILDREN       SELECT_DEVICE_CLOUD_APP
         ARCHIVE         libdeviceCloudTelemetry.a
         CONFIGLETTES    deviceCloudTelemetryCfg.c
@@ -30,7 +30,7 @@ Component INCLUDE_DEVICE_CLOUD_TELEMETRY_KERNEL {
 
 Component INCLUDE_DEVICE_CLOUD_TELEMETRY_RTP {
         NAME            Device Cloud telemetry RTP
-        SYNOPSIS        This component invokes the telemetry application as RTP
+        SYNOPSIS        This component invokes the Device Cloud telemetry application as an RTP
         _CHILDREN       SELECT_DEVICE_CLOUD_APP
         CONFIGLETTES    deviceCloudTelemetryRtpCfg.c
         PROTOTYPE       void deviceCloudTelemetryRtp(void);
