@@ -366,6 +366,10 @@ iot_mqtt_t* iot_mqtt_connect(
 						os_thread_condition_wait(
 							&result->notification_signal,
 							&result->notification_mutex );
+#if defined(__VXWORKS__)
+					result->connected = IOT_TRUE;
+					result->connection_changed = IOT_FALSE;
+#endif /* __VXWORKS__ */
 #else /* ifdef IOT_THREAD_SUPPORT */
 					int rs = MOSQ_ERR_SUCCESS;
 					os_timestamp_t ts = 0u;
