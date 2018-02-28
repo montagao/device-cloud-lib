@@ -36,7 +36,7 @@ static void deviceCloudManagerRtpDelay (void)
     char priorityStr[32];
     char stackSizeStr[32];
 
-    (void)sleep (DEVICE_CLOUD_APP_DELAY);
+    (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
     if (chdir (DEVICE_CLOUD_RTP_DIR) != OK)
         {

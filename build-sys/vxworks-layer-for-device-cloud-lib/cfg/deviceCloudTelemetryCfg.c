@@ -31,7 +31,7 @@ void deviceCloudTelemetryDelay (void)
     {
     static const char *argv[] = { "" };
 
-    (void)sleep (DEVICE_CLOUD_APP_DELAY);
+    (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
     if (taskSpawn ("tTelemetry",
                    DEVICE_CLOUD_PRIORITY, 0,
