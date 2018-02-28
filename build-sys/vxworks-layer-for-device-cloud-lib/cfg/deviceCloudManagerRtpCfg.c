@@ -38,9 +38,9 @@ static void deviceCloudManagerRtpDelay (void)
 
     (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
-    if (chdir (DEVICE_CLOUD_RTP_DIR) != OK)
+    if (chdir (DEVICE_CLOUD_AGENT_RTP_DIR) != OK)
         {
-        (void)fprintf (stderr, "RTP directory %s chdir failed.\n", DEVICE_CLOUD_RTP_DIR);
+        (void)fprintf (stderr, "RTP directory %s chdir failed.\n", DEVICE_CLOUD_AGENT_RTP_DIR);
         return;
         }
 
@@ -51,16 +51,16 @@ static void deviceCloudManagerRtpDelay (void)
         }
     (void)close (fd);
 
-    (void)snprintf (priorityStr, 32, "%d", DEVICE_CLOUD_PRIORITY);
-    (void)snprintf (stackSizeStr, 32, "%d", DEVICE_CLOUD_STACK_SIZE);
+    (void)snprintf (priorityStr, 32, "%d", DEVICE_CLOUD_AGENT_PRIORITY);
+    (void)snprintf (stackSizeStr, 32, "%d", DEVICE_CLOUD_AGENT_STACK_SIZE);
 
     args[0] = "";
     args[1] = "-d";
-    args[2] = DEVICE_CLOUD_CONFIG_DIR;
+    args[2] = DEVICE_CLOUD_AGENT_CONFIG_DIR;
     args[3] = "-u";
-    args[4] = DEVICE_CLOUD_RUNTIME_DIR;
+    args[4] = DEVICE_CLOUD_AGENT_RUNTIME_DIR;
     args[5] = "-r";
-    args[6] = DEVICE_CLOUD_RTP_DIR;
+    args[6] = DEVICE_CLOUD_AGENT_RTP_DIR;
     args[7] = "-p";
     args[8] = priorityStr;
     args[9] = "-t";
@@ -68,8 +68,8 @@ static void deviceCloudManagerRtpDelay (void)
     args[11] = NULL;
 
     if (rtpSpawn (DEVICE_CLOUD_MANAGER_RTP_NAME, args, NULL,
-                  DEVICE_CLOUD_PRIORITY,
-                  DEVICE_CLOUD_STACK_SIZE,
+                  DEVICE_CLOUD_AGENT_PRIORITY,
+                  DEVICE_CLOUD_AGENT_STACK_SIZE,
                   RTP_LOADED_WAIT, VX_FP_TASK) == RTP_ID_ERROR)
         {
         (void)fprintf (stderr, "RTP spawn %s error.\n", DEVICE_CLOUD_MANAGER_RTP_NAME);
@@ -88,9 +88,9 @@ static void deviceCloudManagerRtpDelay (void)
 void deviceCloudManagerRtp (void)
     {
     if (taskSpawn ("tManagerRtpDelay",
-                   DEVICE_CLOUD_PRIORITY,
+                   DEVICE_CLOUD_AGENT_PRIORITY,
                    0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) deviceCloudManagerRtpDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {

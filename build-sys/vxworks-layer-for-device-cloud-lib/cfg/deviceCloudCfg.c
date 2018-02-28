@@ -16,25 +16,25 @@ modification history
 
 const char *deviceCloudConfigDirGet (void)
     {
-    return DEVICE_CLOUD_CONFIG_DIR;
+    return DEVICE_CLOUD_AGENT_CONFIG_DIR;
     }
 
 const char *deviceCloudRuntimeDirGet (void)
     {
-    return DEVICE_CLOUD_RUNTIME_DIR;
+    return DEVICE_CLOUD_AGENT_RUNTIME_DIR;
     }
 
 const char *deviceCloudRtpDirGet (void)
     {
-    return DEVICE_CLOUD_RTP_DIR;
+    return DEVICE_CLOUD_AGENT_RTP_DIR;
     }
 
 unsigned int deviceCloudPriorityGet (void)
     {
-    return DEVICE_CLOUD_PRIORITY;
+    return DEVICE_CLOUD_AGENT_PRIORITY;
     }
 
 unsigned int deviceCloudStackSizeGet (void)
     {
-    return DEVICE_CLOUD_STACK_SIZE;
+    return DEVICE_CLOUD_AGENT_STACK_SIZE;
     }

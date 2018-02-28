@@ -34,8 +34,8 @@ void deviceCloudTelemetryDelay (void)
     (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
     if (taskSpawn ("tTelemetry",
-                   DEVICE_CLOUD_PRIORITY, 0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_PRIORITY, 0,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) app_telemetry_main,
                    (_Vx_usr_arg_t) 1, (_Vx_usr_arg_t) argv,
                    0, 0, 0, 0, 0, 0, 0, 0 ) == TASK_ID_ERROR)
@@ -56,9 +56,9 @@ void deviceCloudTelemetryDelay (void)
 void deviceCloudTelemetryStart (void)
     {
     if (taskSpawn ("tTelemetryDelay",
-                   DEVICE_CLOUD_PRIORITY,
+                   DEVICE_CLOUD_AGENT_PRIORITY,
                    0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) deviceCloudTelemetryDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {

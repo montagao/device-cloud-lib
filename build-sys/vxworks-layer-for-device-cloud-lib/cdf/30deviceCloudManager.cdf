@@ -17,7 +17,7 @@ modification history
 Component INCLUDE_DEVICE_CLOUD_MANAGER_KERNEL {
         NAME            Device Cloud manager kernel task
         SYNOPSIS        This component invokes the Device Cloud manager application as a kernel task
-        _CHILDREN       SELECT_DEVICE_CLOUD_APP
+        _CHILDREN       SELECT_DEVICE_CLOUD_AGENT_APP
         ARCHIVE         libdeviceCloudManager.a
         CONFIGLETTES    deviceCloudManagerCfg.c
         PROTOTYPE       void deviceCloudManagerStart(void);
@@ -30,7 +30,7 @@ Component INCLUDE_DEVICE_CLOUD_MANAGER_KERNEL {
 Component INCLUDE_DEVICE_CLOUD_MANAGER_RTP {
         NAME            Device Cloud manager RTP
         SYNOPSIS        This component invokes the Device Cloud manager application as an RTP
-        _CHILDREN       SELECT_DEVICE_CLOUD_APP
+        _CHILDREN       SELECT_DEVICE_CLOUD_AGENT_APP
         CONFIGLETTES    deviceCloudManagerRtpCfg.c
         PROTOTYPE       void deviceCloudManagerRtp(void);
         INIT_RTN        deviceCloudManagerRtp();
