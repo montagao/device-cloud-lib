@@ -34,7 +34,7 @@ static void deviceCloudCompleteRtpDelay (void)
     int fd;
     const char *args[2];
 
-    (void)sleep (DEVICE_CLOUD_APP_DELAY);
+    (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
     if (chdir (DEVICE_CLOUD_RTP_DIR) != OK)
         {
