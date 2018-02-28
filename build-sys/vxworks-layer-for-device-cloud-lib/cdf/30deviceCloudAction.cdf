@@ -17,7 +17,7 @@ modification history
 Component INCLUDE_DEVICE_CLOUD_ACTION_KERNEL {
         NAME            Device Cloud actions kernel task
         SYNOPSIS        This component invokes the Device Cloud actions application as a kernel task
-        _CHILDREN       SELECT_DEVICE_CLOUD_APP
+        _CHILDREN       SELECT_DEVICE_CLOUD_AGENT_APP
         ARCHIVE         libdeviceCloudAction.a
         CONFIGLETTES    deviceCloudActionCfg.c
         PROTOTYPE       void deviceCloudActionStart(void);
@@ -31,7 +31,7 @@ Component INCLUDE_DEVICE_CLOUD_ACTION_KERNEL {
 Component INCLUDE_DEVICE_CLOUD_ACTION_RTP {
         NAME            Device Cloud actions RTP
         SYNOPSIS        This component invokes the Device Cloud actions application as an RTP
-        _CHILDREN       SELECT_DEVICE_CLOUD_APP
+        _CHILDREN       SELECT_DEVICE_CLOUD_AGENT_APP
         CONFIGLETTES    deviceCloudActionRtpCfg.c
         PROTOTYPE       void deviceCloudActionRtp(void);
         INIT_RTN        deviceCloudActionRtp();

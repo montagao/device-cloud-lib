@@ -36,9 +36,9 @@ static void deviceCloudLocationRtpDelay (void)
 
     (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
-    if (chdir (DEVICE_CLOUD_RTP_DIR) != OK)
+    if (chdir (DEVICE_CLOUD_AGENT_RTP_DIR) != OK)
         {
-        (void)fprintf (stderr, "RTP directory %s chdir failed.\n", DEVICE_CLOUD_RTP_DIR);
+        (void)fprintf (stderr, "RTP directory %s chdir failed.\n", DEVICE_CLOUD_AGENT_RTP_DIR);
         return;
         }
 
@@ -53,8 +53,8 @@ static void deviceCloudLocationRtpDelay (void)
     args[1] = NULL;
 
     if (rtpSpawn (DEVICE_CLOUD_LOCATION_RTP_NAME, args, NULL,
-                  DEVICE_CLOUD_PRIORITY,
-                  DEVICE_CLOUD_STACK_SIZE,
+                  DEVICE_CLOUD_AGENT_PRIORITY,
+                  DEVICE_CLOUD_AGENT_STACK_SIZE,
                   RTP_LOADED_WAIT, VX_FP_TASK) == RTP_ID_ERROR)
         {
         (void)fprintf (stderr, "RTP spawn %s error.\n", DEVICE_CLOUD_LOCATION_RTP_NAME);
@@ -73,9 +73,9 @@ static void deviceCloudLocationRtpDelay (void)
 void deviceCloudLocationRtp (void)
     {
     if (taskSpawn ("tLocationRtpDelay",
-                   DEVICE_CLOUD_PRIORITY,
+                   DEVICE_CLOUD_AGENT_PRIORITY,
                    0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) deviceCloudLocationRtpDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {

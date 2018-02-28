@@ -34,8 +34,8 @@ void deviceCloudManagerDelay (void)
     (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
     if (taskSpawn ("tManager",
-                   DEVICE_CLOUD_PRIORITY, 0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_PRIORITY, 0,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) device_manager_main,
                    (_Vx_usr_arg_t) 1, (_Vx_usr_arg_t) argv,
                    0, 0, 0, 0, 0, 0, 0, 0 ) == TASK_ID_ERROR)
@@ -56,9 +56,9 @@ void deviceCloudManagerDelay (void)
 void deviceCloudManagerStart (void)
     {
     if (taskSpawn ("tManagerDelay",
-                   DEVICE_CLOUD_PRIORITY,
+                   DEVICE_CLOUD_AGENT_PRIORITY,
                    0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) deviceCloudManagerDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {

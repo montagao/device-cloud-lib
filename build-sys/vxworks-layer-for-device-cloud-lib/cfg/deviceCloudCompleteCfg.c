@@ -34,8 +34,8 @@ void deviceCloudCompleteDelay (void)
     (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
     if (taskSpawn ("tComplete",
-                   DEVICE_CLOUD_PRIORITY, 0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_PRIORITY, 0,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) app_complete_main,
                    (_Vx_usr_arg_t) 1, (_Vx_usr_arg_t) argv,
                    0, 0, 0, 0, 0, 0, 0, 0 ) == TASK_ID_ERROR)
@@ -56,9 +56,9 @@ void deviceCloudCompleteDelay (void)
 void deviceCloudCompleteStart (void)
     {
     if (taskSpawn ("tCompleteDelay",
-                   DEVICE_CLOUD_PRIORITY,
+                   DEVICE_CLOUD_AGENT_PRIORITY,
                    0,
-                   DEVICE_CLOUD_STACK_SIZE,
+                   DEVICE_CLOUD_AGENT_STACK_SIZE,
                    (FUNCPTR) deviceCloudCompleteDelay,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == TASK_ID_ERROR)
         {
