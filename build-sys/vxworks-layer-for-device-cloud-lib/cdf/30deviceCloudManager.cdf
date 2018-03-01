@@ -24,7 +24,7 @@ Component INCLUDE_DEVICE_CLOUD_MANAGER_KERNEL {
         INIT_RTN        deviceCloudManagerStart();
         _INIT_ORDER     usrRoot
         INIT_AFTER      usrAppInit
-        REQUIRES        INCLUDE_DEVICE_CLOUD
+        REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
 
 Component INCLUDE_DEVICE_CLOUD_MANAGER_RTP {
@@ -36,5 +36,5 @@ Component INCLUDE_DEVICE_CLOUD_MANAGER_RTP {
         INIT_RTN        deviceCloudManagerRtp();
         _INIT_ORDER     usrRoot
         INIT_AFTER      usrRtpAppInit
-        REQUIRES        INCLUDE_DEVICE_CLOUD
+        REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
