@@ -526,6 +526,10 @@ iot_status_t iot_mqtt_connect_impl(
 					os_thread_condition_wait(
 						&mqtt->notification_signal,
 						&mqtt->notification_mutex );
+#if defined(__VXWORKS__)
+				mqtt->is_connected = IOT_TRUE;
+				mqtt->time_stamp_changed = iot_timestamp_now();
+#endif /* __VXWORKS__ */
 			}
 #else /* ifdef IOT_THREAD_SUPPORT */
 			if ( reconnect == IOT_FALSE )
