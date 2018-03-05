@@ -29,7 +29,7 @@
 #	include <unistd.h>   /* for sleep */
 #	include <errno.h>    /* for errno */
 #endif
-#if defined(__VXWORKS__)
+#if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
 #include <published/UNIX/unistd.h>     /* for readlink */
 #endif /* __VXWORKS__ */
 
