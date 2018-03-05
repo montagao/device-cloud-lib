@@ -27,6 +27,9 @@
 #	include <unistd.h>   /* for readlink */
 #	include <errno.h>    /* for errno */
 #endif
+#if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
+#include <published/UNIX/unistd.h>     /* for readlink */
+#endif /* __VXWORKS__ */
 
 /** @brief time in milliseconds to wait in main loop */
 #define POLL_INTERVAL_MSEC 2000u
