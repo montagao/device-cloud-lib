@@ -29,6 +29,9 @@
 #	include <unistd.h>   /* for sleep */
 #	include <errno.h>    /* for errno */
 #endif
+#if defined(__VXWORKS__)
+#include <published/UNIX/unistd.h>     /* for readlink */
+#endif /* __VXWORKS__ */
 
 #ifdef _WRS_KERNEL
 #ifndef M_PI
