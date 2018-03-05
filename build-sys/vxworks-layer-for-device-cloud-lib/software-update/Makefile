@@ -17,7 +17,7 @@
 # 05oct17,yat  created
 
 ifeq ($(SPACE), user)
-EXE = iot-update
+#EXE = iot-update
 ADDED_LIBS += -liot -losal -lnet -larchive -lHASH -lOPENSSL -lmosquitto -ljson -lzlib -lcurl -lunix
 else
 LIB_BASE_NAME = deviceCloudUpdate
