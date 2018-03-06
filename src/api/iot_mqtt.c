@@ -515,7 +515,7 @@ iot_status_t iot_mqtt_connect_impl(
 			if ( mosq_res == MOSQ_ERR_SUCCESS )
 			{
 				mosquitto_loop_start( mqtt->mosq );
-
+#if !defined(__VXWORKS__)
 				/* wait here until connected or timed out! */
 				if ( max_time_out > 0u )
 					os_thread_condition_timed_wait(
@@ -526,7 +526,7 @@ iot_status_t iot_mqtt_connect_impl(
 					os_thread_condition_wait(
 						&mqtt->notification_signal,
 						&mqtt->notification_mutex );
-#if defined(__VXWORKS__)
+#else
 				mqtt->is_connected = IOT_TRUE;
 				mqtt->time_stamp_changed = iot_timestamp_now();
 #endif /* __VXWORKS__ */
