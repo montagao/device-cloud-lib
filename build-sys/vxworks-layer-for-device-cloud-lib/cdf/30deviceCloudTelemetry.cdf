@@ -28,6 +28,7 @@ Component INCLUDE_DEVICE_CLOUD_TELEMETRY_KERNEL {
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
 
+#if 0
 Component INCLUDE_DEVICE_CLOUD_TELEMETRY_RTP {
         NAME            Device Cloud telemetry RTP
         SYNOPSIS        This component invokes the Device Cloud telemetry application as an RTP
@@ -40,3 +41,4 @@ Component INCLUDE_DEVICE_CLOUD_TELEMETRY_RTP {
         INIT_BEFORE     INCLUDE_USER_APPL
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
+#endif

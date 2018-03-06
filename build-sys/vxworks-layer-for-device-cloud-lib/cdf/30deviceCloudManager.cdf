@@ -27,6 +27,7 @@ Component INCLUDE_DEVICE_CLOUD_MANAGER_KERNEL {
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
 
+#if 0
 Component INCLUDE_DEVICE_CLOUD_MANAGER_RTP {
         NAME            Device Cloud manager RTP
         SYNOPSIS        This component invokes the Device Cloud manager application as an RTP
@@ -38,3 +39,4 @@ Component INCLUDE_DEVICE_CLOUD_MANAGER_RTP {
         INIT_AFTER      usrRtpAppInit
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
+#endif

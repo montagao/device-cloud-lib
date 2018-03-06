@@ -29,6 +29,7 @@ Component INCLUDE_DEVICE_CLOUD_COMPLETE_KERNEL {
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
 
+#if 0
 Component INCLUDE_DEVICE_CLOUD_COMPLETE_RTP {
         NAME            Device Cloud complete RTP
         SYNOPSIS        This component invokes the Device Cloud complete application as an RTP
@@ -41,3 +42,4 @@ Component INCLUDE_DEVICE_CLOUD_COMPLETE_RTP {
         INIT_BEFORE     INCLUDE_USER_APPL
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
+#endif
