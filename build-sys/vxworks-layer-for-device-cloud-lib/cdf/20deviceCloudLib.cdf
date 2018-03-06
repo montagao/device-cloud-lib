@@ -36,7 +36,7 @@ Component INCLUDE_DEVICE_CLOUD_AGENT {
                     DEVICE_CLOUD_AGENT_APP_DELAY
     CONFIGLETTES    deviceCloudCfg.c
     ARCHIVE         libiot.a libosal.a
-    LINK_SYMS       iot_initialize iot_terminate os_system_run
+    LINK_SYMS       iot_initialize iot_terminate os_system_run control_main
 }
 
 Parameter DEVICE_CLOUD_AGENT_CONFIG_DIR {
