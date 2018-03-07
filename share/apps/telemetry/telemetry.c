@@ -347,6 +347,7 @@ void do_sleep( unsigned int delay )
 
 int main( int argc, char *argv[] )
 {
+	iot_t *iot_lib;
 #if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
 	int result;
 	const char *config_dir = NULL;
@@ -378,7 +379,7 @@ int main( int argc, char *argv[] )
 	(void)argc;
 	(void)argv;
 #endif /* __VXWORKS__ */
-	iot_t *iot_lib = initialize();
+	iot_lib = initialize();
 	if ( iot_lib )
 	{
 		int count = 0;
