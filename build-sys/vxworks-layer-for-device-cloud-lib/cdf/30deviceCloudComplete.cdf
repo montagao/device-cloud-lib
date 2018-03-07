@@ -18,7 +18,6 @@ Component INCLUDE_DEVICE_CLOUD_COMPLETE_KERNEL {
         NAME            Device Cloud complete kernel task
         SYNOPSIS        This component invokes the Device Cloud complete application as a kernel task
         _CHILDREN       SELECT_DEVICE_CLOUD_AGENT_APP
-        _DEFAULTS       SELECT_DEVICE_CLOUD_AGENT_APP
         ARCHIVE         libdeviceCloudComplete.a
         CONFIGLETTES    deviceCloudCompleteCfg.c
         PROTOTYPE       void deviceCloudCompleteStart(void);
