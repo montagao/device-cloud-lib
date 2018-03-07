@@ -28,6 +28,7 @@ Component INCLUDE_DEVICE_CLOUD_ACTION_KERNEL {
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
 
+#if 0
 Component INCLUDE_DEVICE_CLOUD_ACTION_RTP {
         NAME            Device Cloud actions RTP
         SYNOPSIS        This component invokes the Device Cloud actions application as an RTP
@@ -40,3 +41,4 @@ Component INCLUDE_DEVICE_CLOUD_ACTION_RTP {
         INIT_BEFORE     INCLUDE_USER_APPL
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
+#endif

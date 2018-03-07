@@ -11,7 +11,7 @@
 # 05oct17,yat  created
 
 ifeq ($(SPACE), user)
-EXE = iot-control
+#EXE = iot-control
 ADDED_LIBS += -liot -losal -lnet -larchive -lHASH -lOPENSSL -lmosquitto -ljson -lzlib -lcurl -lunix
 else
 LIB_BASE_NAME = deviceCloudControl
@@ -25,7 +25,6 @@ SRC_DIRS = \
         $(DEVICE_CLOUD_LIB_DIR)/src/control
 
 SRC_FILES = \
-        $(DEVICE_CLOUD_LIB_DIR)/src/control/control.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/control/control_config.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/control/iot-connect.schema.json.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/control/control_main.c
