@@ -1234,16 +1234,16 @@ int device_manager_main( int argc, char *argv[] )
 #endif /* __VXWORKS__ */
 	const char *config_file = NULL;
 	struct app_arg args[] = {
-#if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
-		{ 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
-		{ 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
-		{ 'r', "rtp_dir", 0, "path", &rtp_dir, "RTP directory", 0u },
-		{ 'p', "priority", 0, "priority", &priority, "priority", 0u },
-		{ 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
-#endif /* __VXWORKS__ */
 		{ 'c', "configure", 0, "file", &config_file,
 			"configuration file", 0u },
 		{ 'h', "help", 0, NULL, NULL, "display help menu", 0u },
+#if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
+                { 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
+                { 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
+                { 'r', "rtp_dir", 0, "path", &rtp_dir, "RTP directory", 0u },
+                { 'p', "priority", 0, "priority", &priority, "priority", 0u },
+                { 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
+#endif /* __VXWORKS__ */
 #if !defined(__VXWORKS__)
 		{ 's', "service", 0, NULL, NULL, "run as a service", 0u },
 #endif /* __VXWORKS__ */
