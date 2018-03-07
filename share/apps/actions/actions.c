@@ -174,11 +174,12 @@ static iot_t* initialize( void )
 #if defined( _WIN32 )
 		GetModuleFileNameA( NULL, script_path, PATH_MAX );
 #elif defined(__VXWORKS__)
-                strncpy(script_path, deviceCloudBinDirGet(), PATH_MAX);
+		snprintf(script_path, PATH_MAX, "%s/%s", deviceCloudBinDirGet(), TEST_SCRIPT);
 #else
 		if ( readlink("/proc/self/exe", script_path, PATH_MAX) < IOT_STATUS_SUCCESS )
 			IOT_LOG( iot_lib, IOT_LOG_ERROR, "Failed to readlink. Reason: %s", strerror(errno) );
 #endif
+#if !defined(__VXWORKS__)
 		script_path[ PATH_MAX - 1u ] = '\0';
 		if ( (script_name_location = strrchr( script_path, DIR_SEP )) != NULL )
 		{
@@ -187,6 +188,7 @@ static iot_t* initialize( void )
 				(size_t)(PATH_MAX - ( script_name_location - script_path ) - 1u) );
 		}
 		script_path[PATH_MAX - 1u] = '\0';
+#endif /* __VXWORKS__ */
 
 		/* Allocate actions */
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "Registering action: %s",
