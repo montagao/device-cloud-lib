@@ -369,14 +369,14 @@ int main( int argc, char *argv[] )
 	int result;
 	const char *config_dir = NULL;
 	const char *runtime_dir = NULL;
-	const char *rtp_dir = NULL;
+	const char *bin_dir = NULL;
 	const char *priority = NULL;
 	const char *stack_size = NULL;
 	struct app_arg args[] = {
 		{ 'h', "help", 0u, NULL, NULL, "display help menu", 0u },
 		{ 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
 		{ 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
-		{ 'r', "rtp_dir", 0, "path", &rtp_dir, "RTP directory", 0u },
+		{ 'b', "bin_dir", 0, "path", &bin_dir, "bin directory", 0u },
 		{ 'p', "priority", 0, "priority", &priority, "priority", 0u },
 		{ 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
 		{ 0, NULL, 0, NULL, NULL, NULL, 0u }
@@ -389,7 +389,7 @@ int main( int argc, char *argv[] )
 	}
 	deviceCloudConfigDirSet(config_dir);
 	deviceCloudRuntimeDirSet(runtime_dir);
-	deviceCloudRtpDirSet(rtp_dir);
+	deviceCloudBinDirSet(bin_dir);
 	deviceCloudPrioritySet(priority);
 	deviceCloudStackSizeSet(stack_size);
 #else

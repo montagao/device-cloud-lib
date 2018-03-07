@@ -175,7 +175,7 @@ extern const char *deviceCloudRuntimeDirGet ( void );
 /** @brief Default delay in seconds before rebooting */
 #define IOT_REBOOT_DELAY               5
 
-extern const char *deviceCloudRtpDirGet (void);
+extern const char *deviceCloudBinDirGet (void);
 extern unsigned int deviceCloudPriorityGet (void);
 extern unsigned int deviceCloudStackSizeGet (void);
 

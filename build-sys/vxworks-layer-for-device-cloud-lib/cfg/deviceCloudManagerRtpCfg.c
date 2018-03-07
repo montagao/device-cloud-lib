@@ -38,9 +38,9 @@ static void deviceCloudManagerRtpDelay (void)
 
     (void)sleep (DEVICE_CLOUD_AGENT_APP_DELAY);
 
-    if (chdir (DEVICE_CLOUD_AGENT_RTP_DIR) != OK)
+    if (chdir (DEVICE_CLOUD_AGENT_BIN_DIR) != OK)
         {
-        (void)fprintf (stderr, "RTP directory %s chdir failed.\n", DEVICE_CLOUD_AGENT_RTP_DIR);
+        (void)fprintf (stderr, "bin directory %s chdir failed.\n", DEVICE_CLOUD_AGENT_BIN_DIR);
         return;
         }
 
@@ -60,7 +60,7 @@ static void deviceCloudManagerRtpDelay (void)
     args[3] = "-u";
     args[4] = DEVICE_CLOUD_AGENT_RUNTIME_DIR;
     args[5] = "-r";
-    args[6] = DEVICE_CLOUD_AGENT_RTP_DIR;
+    args[6] = DEVICE_CLOUD_AGENT_BIN_DIR;
     args[7] = "-p";
     args[8] = priorityStr;
     args[9] = "-t";

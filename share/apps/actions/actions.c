@@ -28,7 +28,6 @@
 #	include <errno.h>    /* for errno */
 #endif
 #if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
-#include <published/UNIX/unistd.h>     /* for readlink */
 #include "utilities/app_arg.h"
 #endif /* __VXWORKS__ */
 
@@ -174,6 +173,8 @@ static iot_t* initialize( void )
 		 * Script will be found in the same directory as the binary */
 #if defined( _WIN32 )
 		GetModuleFileNameA( NULL, script_path, PATH_MAX );
+#elif defined(__VXWORKS__)
+                strncpy(script_path, deviceCloudBinDirGet(), PATH_MAX);
 #else
 		if ( readlink("/proc/self/exe", script_path, PATH_MAX) < IOT_STATUS_SUCCESS )
 			IOT_LOG( iot_lib, IOT_LOG_ERROR, "Failed to readlink. Reason: %s", strerror(errno) );
@@ -501,14 +502,14 @@ int main( int argc, char *argv[] )
 	int result;
 	const char *config_dir = NULL;
 	const char *runtime_dir = NULL;
-	const char *rtp_dir = NULL;
+	const char *bin_dir = NULL;
 	const char *priority = NULL;
 	const char *stack_size = NULL;
 	struct app_arg args[] = {
 		{ 'h', "help", 0u, NULL, NULL, "display help menu", 0u },
 		{ 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
 		{ 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
-		{ 'r', "rtp_dir", 0, "path", &rtp_dir, "RTP directory", 0u },
+		{ 'b', "bin_dir", 0, "path", &bin_dir, "bin directory", 0u },
 		{ 'p', "priority", 0, "priority", &priority, "priority", 0u },
 		{ 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
 		{ 0, NULL, 0, NULL, NULL, NULL, 0u }
@@ -521,7 +522,7 @@ int main( int argc, char *argv[] )
 	}
 	deviceCloudConfigDirSet(config_dir);
 	deviceCloudRuntimeDirSet(runtime_dir);
-	deviceCloudRtpDirSet(rtp_dir);
+	deviceCloudBinDirSet(bin_dir);
 	deviceCloudPrioritySet(priority);
 	deviceCloudStackSizeSet(stack_size);
 #else

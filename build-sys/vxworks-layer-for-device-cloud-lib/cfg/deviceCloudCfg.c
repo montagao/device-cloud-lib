@@ -24,9 +24,9 @@ const char *deviceCloudRuntimeDirGet (void)
     return DEVICE_CLOUD_AGENT_RUNTIME_DIR;
     }
 
-const char *deviceCloudRtpDirGet (void)
+const char *deviceCloudBinDirGet (void)
     {
-    return DEVICE_CLOUD_AGENT_RTP_DIR;
+    return DEVICE_CLOUD_AGENT_BIN_DIR;
     }
 
 unsigned int deviceCloudPriorityGet (void)
