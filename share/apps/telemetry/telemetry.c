@@ -348,38 +348,37 @@ void do_sleep( unsigned int delay )
 int main( int argc, char *argv[] )
 {
 #if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
-        int result;
-        const char *config_dir = NULL;
-        const char *runtime_dir = NULL;
-        const char *rtp_dir = NULL;
-        const char *priority = NULL;
-        const char *stack_size = NULL;
-        struct app_arg args[] = {
-                { 'h', "help", 0u, NULL, NULL, "display help menu", 0u },
-                { 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
-                { 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
-                { 'r', "rtp_dir", 0, "path", &rtp_dir, "RTP directory", 0u },
-                { 'p', "priority", 0, "priority", &priority, "priority", 0u },
-                { 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
-                { 0, NULL, 0, NULL, NULL, NULL, 0u }
-        };
-        result = app_arg_parse( args, argc, argv, NULL );
-        if ( result == EXIT_FAILURE || app_arg_count( args, 'h', NULL ) )
-        {
-                app_arg_usage( args, 36u, argv[0], "telemetry", NULL, NULL );
-                return result;
-        }
-        deviceCloudConfigDirSet(config_dir);
-        deviceCloudRuntimeDirSet(runtime_dir);
-        deviceCloudRtpDirSet(rtp_dir);
-        deviceCloudPrioritySet(priority);
-        deviceCloudStackSizeSet(stack_size);
-        iot_t *iot_lib = initialize();
+	int result;
+	const char *config_dir = NULL;
+	const char *runtime_dir = NULL;
+	const char *rtp_dir = NULL;
+	const char *priority = NULL;
+	const char *stack_size = NULL;
+	struct app_arg args[] = {
+		{ 'h', "help", 0u, NULL, NULL, "display help menu", 0u },
+		{ 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
+		{ 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
+		{ 'r', "rtp_dir", 0, "path", &rtp_dir, "RTP directory", 0u },
+		{ 'p', "priority", 0, "priority", &priority, "priority", 0u },
+		{ 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
+		{ 0, NULL, 0, NULL, NULL, NULL, 0u }
+	};
+	result = app_arg_parse( args, argc, argv, NULL );
+	if ( result == EXIT_FAILURE || app_arg_count( args, 'h', NULL ) )
+	{
+		app_arg_usage( args, 36u, argv[0], "telemetry", NULL, NULL );
+		return result;
+	}
+	deviceCloudConfigDirSet(config_dir);
+	deviceCloudRuntimeDirSet(runtime_dir);
+	deviceCloudRtpDirSet(rtp_dir);
+	deviceCloudPrioritySet(priority);
+	deviceCloudStackSizeSet(stack_size);
 #else
-	iot_t *iot_lib = initialize();
 	(void)argc;
 	(void)argv;
 #endif /* __VXWORKS__ */
+	iot_t *iot_lib = initialize();
 	if ( iot_lib )
 	{
 		int count = 0;
