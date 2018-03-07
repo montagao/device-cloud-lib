@@ -598,16 +598,8 @@ iot_status_t device_manager_actions_register(
 				action->ptr, &on_action_device_shutdown,
 				(void*)device_manager, NULL, 0u );
 #else
-#	if !defined(__VXWORKS__)
-			result = device_manager_make_control_command( command_path,
-				PATH_MAX, device_manager, " --shutdown" );
-			if ( result == IOT_STATUS_SUCCESS )
-				result = iot_action_register_command(
-					action->ptr, command_path, NULL, 0u );
-#	else
 			result = iot_action_register_command( action->ptr,
 				"shutdown", NULL, 0u );
-#	endif /* __VXWORKS__ */
 #endif
 			if ( result != IOT_STATUS_SUCCESS )
 			{
@@ -634,16 +626,8 @@ iot_status_t device_manager_actions_register(
 					&on_action_agent_decommission,
 					(void*)device_manager, NULL, 0u );
 #else
-#	if !defined(__VXWORKS__)
-			result = device_manager_make_control_command( command_path,
-					PATH_MAX, device_manager, " --decommission" );
-			if ( result == IOT_STATUS_SUCCESS )
-				result = iot_action_register_command(
-					action->ptr, command_path, NULL, 0u );
-#	else
 			result = iot_action_register_command( action->ptr,
 				"decommission", NULL, 0u );
-#	endif /* __VXWORKS__ */
 #endif
 			if ( result != IOT_STATUS_SUCCESS )
 			{
@@ -771,16 +755,8 @@ iot_status_t device_manager_actions_register(
 				action->ptr, &on_action_agent_reboot,
 				(void*)device_manager, NULL, 0u );
 #else
-#	if !defined(__VXWORKS__)
-			result = device_manager_make_control_command( command_path,
-				PATH_MAX, device_manager, " --reboot" );
-			if ( result == IOT_STATUS_SUCCESS )
-				result = iot_action_register_command(
-					action->ptr, command_path, NULL, 0u );
-#	else
 			result = iot_action_register_command( action->ptr,
 				"reboot", NULL, 0u );
-#	endif /* __VXWORKS__ */
 #endif
 			if ( result != IOT_STATUS_SUCCESS )
 			{
