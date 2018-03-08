@@ -30,7 +30,7 @@ Component INCLUDE_DEVICE_CLOUD_AGENT {
                     INCLUDE_WEBCLI_CURL
     CFG_PARAMS      DEVICE_CLOUD_AGENT_CONFIG_DIR \
                     DEVICE_CLOUD_AGENT_RUNTIME_DIR \
-                    DEVICE_CLOUD_AGENT_RTP_DIR \
+                    DEVICE_CLOUD_AGENT_BIN_DIR \
                     DEVICE_CLOUD_AGENT_PRIORITY \
                     DEVICE_CLOUD_AGENT_STACK_SIZE \
                     DEVICE_CLOUD_AGENT_APP_DELAY
@@ -55,9 +55,9 @@ Parameter DEVICE_CLOUD_AGENT_RUNTIME_DIR {
     DEFAULT         "/bd0:1/var/lib/iot"
 }
 
-Parameter DEVICE_CLOUD_AGENT_RTP_DIR {
-    NAME            Device Cloud agent RTP directory
-    SYNOPSIS        The directory for the Device Cloud agent RTP applications.
+Parameter DEVICE_CLOUD_AGENT_BIN_DIR {
+    NAME            Device Cloud agent bin directory
+    SYNOPSIS        The directory for the Device Cloud agent applications and scripts.
     TYPE            string
     DEFAULT         "/bd0:1/bin"
 }

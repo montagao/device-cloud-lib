@@ -14,11 +14,11 @@ modification history
 05oct17,yat  created
 */
 
+#if 0
 Component INCLUDE_DEVICE_CLOUD_COMPLETE_KERNEL {
         NAME            Device Cloud complete kernel task
         SYNOPSIS        This component invokes the Device Cloud complete application as a kernel task
         _CHILDREN       SELECT_DEVICE_CLOUD_AGENT_APP
-        _DEFAULTS       SELECT_DEVICE_CLOUD_AGENT_APP
         ARCHIVE         libdeviceCloudComplete.a
         CONFIGLETTES    deviceCloudCompleteCfg.c
         PROTOTYPE       void deviceCloudCompleteStart(void);
@@ -29,7 +29,6 @@ Component INCLUDE_DEVICE_CLOUD_COMPLETE_KERNEL {
         REQUIRES        INCLUDE_DEVICE_CLOUD_AGENT
 }
 
-#if 0
 Component INCLUDE_DEVICE_CLOUD_COMPLETE_RTP {
         NAME            Device Cloud complete RTP
         SYNOPSIS        This component invokes the Device Cloud complete application as an RTP

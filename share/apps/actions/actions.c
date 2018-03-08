@@ -28,7 +28,7 @@
 #	include <errno.h>    /* for errno */
 #endif
 #if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
-#include <published/UNIX/unistd.h>     /* for readlink */
+#include "utilities/app_arg.h"
 #endif /* __VXWORKS__ */
 
 /** @brief time in milliseconds to wait in main loop */
@@ -173,10 +173,19 @@ static iot_t* initialize( void )
 		 * Script will be found in the same directory as the binary */
 #if defined( _WIN32 )
 		GetModuleFileNameA( NULL, script_path, PATH_MAX );
+#elif defined(__VXWORKS__)
+		const char * path = deviceCloudBinDirGet();
+		size_t path_len = os_strlen( path );
+		if ( path_len > PATH_MAX - strlen(TEST_SCRIPT) - 2u)
+			path_len = PATH_MAX - strlen(TEST_SCRIPT) - 2u;
+		strncpy(script_path, path, path_len);
+		script_path[path_len] = '/';
+		strncpy(&script_path[path_len + 1u], TEST_SCRIPT, strlen(TEST_SCRIPT));
 #else
 		if ( readlink("/proc/self/exe", script_path, PATH_MAX) < IOT_STATUS_SUCCESS )
 			IOT_LOG( iot_lib, IOT_LOG_ERROR, "Failed to readlink. Reason: %s", strerror(errno) );
 #endif
+#if !defined(__VXWORKS__)
 		script_path[ PATH_MAX - 1u ] = '\0';
 		if ( (script_name_location = strrchr( script_path, DIR_SEP )) != NULL )
 		{
@@ -185,6 +194,7 @@ static iot_t* initialize( void )
 				(size_t)(PATH_MAX - ( script_name_location - script_path ) - 1u) );
 		}
 		script_path[PATH_MAX - 1u] = '\0';
+#endif /* __VXWORKS__ */
 
 		/* Allocate actions */
 		IOT_LOG( iot_lib, IOT_LOG_INFO, "Registering action: %s",
@@ -495,10 +505,39 @@ iot_status_t on_action_file_upload(
 
 int main( int argc, char *argv[] )
 {
-	iot_t *iot_lib = initialize();
+	iot_t *iot_lib;
+#if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
+	int result;
+	const char *config_dir = NULL;
+	const char *runtime_dir = NULL;
+	const char *bin_dir = NULL;
+	const char *priority = NULL;
+	const char *stack_size = NULL;
+	struct app_arg args[] = {
+		{ 'h', "help", 0u, NULL, NULL, "display help menu", 0u },
+		{ 'd', "config_dir", 0, "path", &config_dir, "configuration directory", 0u },
+		{ 'u', "runtime_dir", 0, "path", &runtime_dir, "runtime directory", 0u },
+		{ 'b', "bin_dir", 0, "path", &bin_dir, "bin directory", 0u },
+		{ 'p', "priority", 0, "priority", &priority, "priority", 0u },
+		{ 't', "stack_size", 0, "size", &stack_size, "stack size", 0u },
+		{ 0, NULL, 0, NULL, NULL, NULL, 0u }
+	};
+	result = app_arg_parse( args, argc, argv, NULL );
+	if ( result == EXIT_FAILURE || app_arg_count( args, 'h', NULL ) )
+	{
+		app_arg_usage( args, 36u, argv[0], "telemetry", NULL, NULL );
+		return result;
+	}
+	deviceCloudConfigDirSet(config_dir);
+	deviceCloudRuntimeDirSet(runtime_dir);
+	deviceCloudBinDirSet(bin_dir);
+	deviceCloudPrioritySet(priority);
+	deviceCloudStackSizeSet(stack_size);
+#else
 	(void)argc;
 	(void)argv;
-
+#endif /* __VXWORKS__ */
+	iot_lib = initialize();
 	if ( iot_lib )
 	{
 		iot_severity_t alarm_severity = 0;

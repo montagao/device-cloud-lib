@@ -11,7 +11,7 @@
 # 05oct17,yat  created
 
 ifeq ($(SPACE), user)
-EXE = iot-app-simple-actions
+#EXE = iot-app-simple-actions
 ADDED_LIBS += -liot -losal -lnet -larchive -lHASH -lOPENSSL -lmosquitto -ljson -lzlib -lcurl -lunix
 else
 LIB_BASE_NAME = deviceCloudAction
@@ -29,7 +29,8 @@ SRC_FILES = \
 
 OBJS = $(addsuffix .o, $(notdir $(basename $(SRC_FILES))))
 
-EXTRA_INCLUDE +=
+EXTRA_INCLUDE += -I$(DEVICE_CLOUD_LIB_DIR)/src \
+                 -I$(DEVICE_CLOUD_LIB_DIR)/src/utilities
 
 ADDED_CFLAGS += $(C_COMPILER_FLAGS_C99)
 
