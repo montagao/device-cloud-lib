@@ -48,7 +48,6 @@ SRC_FILES = \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/checksum/iot_checksum_crc32.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/api/plugin/tr50/tr50.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_arg.c \
-        $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_path.c \
         $(DEVICE_CLOUD_LIB_DIR)/src/utilities/app_log.c
 
 OBJS = $(addsuffix .o, $(notdir $(basename $(SRC_FILES))))
