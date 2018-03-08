@@ -11,10 +11,10 @@
 # 05oct17,yat  created
 
 ifeq ($(SPACE), user)
-EXE = iot-app-complete
+#EXE = iot-app-complete
 ADDED_LIBS += -liot -losal -lnet -larchive -lHASH -lOPENSSL -lmosquitto -ljson -lzlib -lcurl -lunix
 else
-LIB_BASE_NAME = deviceCloudComplete
+#LIB_BASE_NAME = deviceCloudComplete
 endif
 
 BUILD_ALL_OBJS = TRUE

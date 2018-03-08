@@ -27,12 +27,14 @@ KERNEL_PUBLIC_H_FILES = vxworks/iot_build.h \
                         api/public/iot_checksum.h \
                         api/public/iot_json.h \
                         api/public/iot_mqtt.h \
-                        api/public/iot_plugin.h
+                        api/public/iot_plugin.h \
+                        utilities/app_arg.h
 USER_PUBLIC_H_FILES =   vxworks/iot_build.h \
                         api/public/iot.h \
                         api/public/iot_checksum.h \
                         api/public/iot_json.h \
                         api/public/iot_mqtt.h \
-                        api/public/iot_plugin.h
+                        api/public/iot_plugin.h \
+                        utilities/app_arg.h
 
 include $(WIND_KRNL_MK)/rules.unix.ports.mk
