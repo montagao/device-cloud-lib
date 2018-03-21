@@ -13,7 +13,7 @@
 include $(WIND_KRNL_MK)/defs.ver.mk
 
 PKG_NAME := device_cloud_lib_repo
-PKG_URL = https://github.com/Wind-River/device-cloud-lib.git $(PKG_NAME); cd $(PKG_NAME) && git checkout vxworks_layer_test && git checkout -b vxworks && git reset HEAD --hard
+PKG_URL = https://github.com/Wind-River/device-cloud-lib.git $(PKG_NAME); cd $(PKG_NAME) && git checkout vxworks_layer && git checkout -b vxworks && git reset HEAD --hard
 PKG_FILE_TYPE = git
 
 PKG_BUILD_TARGETS := src
@@ -27,12 +27,14 @@ KERNEL_PUBLIC_H_FILES = vxworks/iot_build.h \
                         api/public/iot_checksum.h \
                         api/public/iot_json.h \
                         api/public/iot_mqtt.h \
-                        api/public/iot_plugin.h
+                        api/public/iot_plugin.h \
+                        utilities/app_arg.h
 USER_PUBLIC_H_FILES =   vxworks/iot_build.h \
                         api/public/iot.h \
                         api/public/iot_checksum.h \
                         api/public/iot_json.h \
                         api/public/iot_mqtt.h \
-                        api/public/iot_plugin.h
+                        api/public/iot_plugin.h \
+                        utilities/app_arg.h
 
 include $(WIND_KRNL_MK)/rules.unix.ports.mk

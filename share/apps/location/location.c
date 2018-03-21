@@ -27,7 +27,7 @@
 #	include <unistd.h>     /* for sleep */
 #endif
 #if defined(__VXWORKS__) && !defined(_WRS_KERNEL)
-#include "utilities/app_arg.h"
+#include "app_arg.h"
 #endif /* __VXWORKS__ */
 
 /** @brief Number of milliseconds in a second */
