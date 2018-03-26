@@ -7,7 +7,7 @@
 # of an applicable Wind River license agreement.
 #
 # modification history
-# -------------------- 
+# --------------------
 # 05oct17,yat  created
 
 PRE_BUILD_DIRS = lib
