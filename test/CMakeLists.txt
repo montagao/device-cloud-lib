@@ -16,9 +16,14 @@ if( MSVC )
 	add_definitions( "/D_CRT_SECURE_NO_WARNINGS" )
 endif( MSVC )
 
+set_compiler_flag_if_supported(
+	"-Wno-bad-function-cast"
+	"-Wno-disabled-macro-expansion"
+	"-Wno-unused-parameter" )
+
 # Generate test support functions
-set_compiler_flag_if_supported( "-Wno-bad-function-cast" "-Wno-unused-parameter" )
 include_directories( "test-support" )
 add_subdirectory( "test-support" )
+
 # Add unit tests
 add_subdirectory( "unit" )
