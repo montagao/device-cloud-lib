@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief unit testing for IoT library (base source file)
+ * @brief unit testing for base64 routines
  *
  * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
@@ -44,7 +44,8 @@ static void test_iot_base64_decode_bad_string( void **state )
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_decode( test_out, out_length, (const uint8_t *)test_in, strlen( test_in ) );
+	result = iot_base64_decode( test_out, out_length,
+		test_in, strlen( test_in ) );
 	assert_int_equal( result, -1 );
 	assert_string_equal( test_out, "" );
 
@@ -75,7 +76,8 @@ static void test_iot_base64_decode_in_null( void **state )
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_decode( test_out, out_length, NULL, strlen( test_in ) );
+	result = iot_base64_decode( test_out, out_length,
+		NULL, strlen( test_in ) );
 	assert_int_equal( result, -1 );
 	assert_string_equal( test_out, "" );
 
@@ -100,7 +102,8 @@ static void test_iot_base64_decode_invalid_char( void **state )
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_decode( test_out, out_length, (const uint8_t *)test_in, strlen( test_in ) );
+	result = iot_base64_decode( test_out, out_length,
+		test_in, strlen( test_in ) );
 	assert_int_equal( result, -1 );
 	assert_string_equal( test_out, "" );
 
@@ -131,7 +134,8 @@ static void test_iot_base64_decode_out_3X_length( void **state )
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_decode( test_out, out_length, (const uint8_t *)test_in, strlen( test_in ) );
+	result = iot_base64_decode( test_out, out_length,
+		test_in, strlen( test_in ) );
 	assert_int_equal( result, strlen( expect_out ) );
 	assert_string_equal( test_out, expect_out );
 
@@ -162,7 +166,8 @@ static void test_iot_base64_decode_out_3Xplus2_length( void **state )
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_decode( test_out, out_length, (const uint8_t *)test_in, strlen( test_in ) );
+	result = iot_base64_decode( test_out, out_length,
+		test_in, strlen( test_in ) );
 	assert_int_equal( result, strlen( expect_out ) );
 	assert_string_equal( test_out, expect_out );
 
@@ -219,14 +224,15 @@ static void test_iot_base64_encode( void **state )
 	    "vehemence of any carnal pleasure.";
 	size_t result;
 	size_t out_length;
-	uint8_t *test_out;
+	char *test_out;
 
 	out_length = strlen( expect_out );
 	test_out = malloc( out_length + 1 );
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_encode( test_out, out_length, (const uint8_t *)test_in, strlen( test_in ) );
+	result = iot_base64_encode( test_out, out_length,
+		(const uint8_t *)test_in, strlen( test_in ) );
 	assert_int_equal( result, out_length );
 	assert_string_equal( test_out, expect_out );
 
@@ -250,14 +256,15 @@ static void test_iot_base64_encode_in_zero_length( void **state )
 	    "vehemence of any carnal pleasure.";
 	size_t result;
 	size_t out_length;
-	uint8_t *test_out;
+	char *test_out;
 
 	out_length = strlen( expect_out );
 	test_out = malloc( out_length + 1 );
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_encode( test_out, out_length, (const uint8_t *)test_in, 0 );
+	result = iot_base64_encode( test_out, out_length,
+		(const uint8_t *)test_in, 0 );
 	assert_int_equal( result, 0 );
 	assert_string_equal( test_out, "" );
 
@@ -281,14 +288,15 @@ static void test_iot_base64_encode_in_null( void **state )
 	    "vehemence of any carnal pleasure.";
 	size_t result;
 	size_t out_length;
-	uint8_t *test_out;
+	char *test_out;
 
 	out_length = strlen( expect_out );
 	test_out = malloc( out_length + 1 );
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_encode( test_out, out_length, NULL, strlen( test_in ) );
+	result = iot_base64_encode( test_out, out_length,
+		NULL, strlen( test_in ) );
 	assert_int_equal( result, 0 );
 	assert_string_equal( test_out, "" );
 
@@ -312,14 +320,15 @@ static void test_iot_base64_encode_out_zero_length( void **state )
 	    "vehemence of any carnal pleasure.";
 	size_t result;
 	size_t out_length;
-	uint8_t *test_out;
+	char *test_out;
 
 	out_length = strlen( expect_out );
 	test_out = malloc( out_length + 1 );
 	assert_non_null( test_out );
 	memset( test_out, 0, out_length + 1 );
 
-	result = iot_base64_encode( test_out, 0, (const uint8_t *)test_in, strlen( test_in ) );
+	result = iot_base64_encode( test_out, 0,
+		(const uint8_t *)test_in, strlen( test_in ) );
 	assert_int_equal( result, 0 );
 	assert_string_equal( test_out, "" );
 

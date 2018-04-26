@@ -2,7 +2,7 @@
  * @file
  * @brief Contains implementations for handling base64 data
  *
- * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,9 @@ static const char base64_list[] =
  *
  * @returns -1 on error (illegal character) or the number of bytes decoded
  */
-IOT_SECTION ssize_t iot_base64_decode_block( unsigned char out[3], const unsigned char in[4] );
+IOT_SECTION static ssize_t iot_base64_decode_block(
+	uint8_t out[3],
+	const char in[4] );
 
 /**
  * @brief Encodes one block of data in base64
@@ -92,9 +94,16 @@ IOT_SECTION ssize_t iot_base64_decode_block( unsigned char out[3], const unsigne
  * @param[in]      in                  data to encode
  * @param[in]      len                 length of input data
  */
-IOT_SECTION static void iot_base64_encode_block( uint8_t out[4], const uint8_t in[3], size_t len );
+IOT_SECTION static void iot_base64_encode_block(
+	char out[4],
+	const uint8_t in[3],
+	size_t len );
 
-ssize_t iot_base64_decode( uint8_t *out, size_t out_len, const uint8_t *in, size_t in_len )
+ssize_t iot_base64_decode(
+	uint8_t *out,
+	size_t out_len,
+	const char *in,
+	size_t in_len )
 {
 	ssize_t num_bytes = -1;
 	if ( out && in )
@@ -105,7 +114,8 @@ ssize_t iot_base64_decode( uint8_t *out, size_t out_len, const uint8_t *in, size
 		while ( i < in_len && out_len > 0u && num_bytes >= 0 )
 		{
 			unsigned char out_temp[3];
-			ssize_t out_chars = iot_base64_decode_block( out_temp, (const unsigned char *)in );
+			ssize_t out_chars = iot_base64_decode_block(
+				out_temp, in );
 			if ( out_chars < 1 || out_chars > 3 )
 				num_bytes = -1;
 			else if ( out_chars > 0 && out_chars <= 3 )
@@ -126,7 +136,9 @@ ssize_t iot_base64_decode( uint8_t *out, size_t out_len, const uint8_t *in, size
 	return num_bytes;
 }
 
-ssize_t iot_base64_decode_block( unsigned char out[3], const unsigned char in[4] )
+ssize_t iot_base64_decode_block(
+	uint8_t out[3],
+	const char in[4] )
 {
 	ssize_t i, num_bytes = 3;
 	char tmp[4];
@@ -154,7 +166,8 @@ ssize_t iot_base64_decode_block( unsigned char out[3], const unsigned char in[4]
 	return num_bytes;
 }
 
-size_t iot_base64_decode_size( size_t in_bytes )
+size_t iot_base64_decode_size(
+	size_t in_bytes )
 {
 	size_t result = 0u;
 	if ( in_bytes > 0u )
@@ -162,7 +175,11 @@ size_t iot_base64_decode_size( size_t in_bytes )
 	return result;
 }
 
-size_t iot_base64_encode( uint8_t *out, size_t out_len, const uint8_t *in, size_t in_len )
+size_t iot_base64_encode(
+	char *out,
+	size_t out_len,
+	const uint8_t *in,
+	size_t in_len )
 {
 	size_t result = 0u;
 	if ( out && out_len > 0u )
@@ -186,25 +203,29 @@ size_t iot_base64_encode( uint8_t *out, size_t out_len, const uint8_t *in, size_
 	return result;
 }
 
-void iot_base64_encode_block( uint8_t out[4], const uint8_t in[3], size_t len )
+void iot_base64_encode_block(
+	char out[4],
+	const uint8_t in[3],
+	size_t len )
 {
-	out[0] = (uint8_t)base64_list[in[0] >> 2];
-	out[1] = (uint8_t)base64_list[( in[0] & 0x03 ) << 4];
+	out[0] = base64_list[in[0] >> 2];
+	out[1] = base64_list[( in[0] & 0x03 ) << 4];
 	out[2] = '=';
 	out[3] = '=';
 	if ( len > 1u )
 	{
-		out[1] = (uint8_t)base64_list[( ( in[0] & 0x03 ) << 4 ) | ( ( in[1] & 0xf0 ) >> 4 )];
-		out[2] = (uint8_t)base64_list[( in[1] & 0x0f ) << 2];
+		out[1] = base64_list[( ( in[0] & 0x03 ) << 4 ) | ( ( in[1] & 0xf0 ) >> 4 )];
+		out[2] = base64_list[( in[1] & 0x0f ) << 2];
 		if ( len > 2u )
 		{
-			out[2] = (uint8_t)base64_list[( ( in[1] & 0x0f ) << 2 ) | ( ( in[2] & 0xc0 ) >> 6 )];
-			out[3] = (uint8_t)base64_list[in[2] & 0x3f];
+			out[2] = base64_list[( ( in[1] & 0x0f ) << 2 ) | ( ( in[2] & 0xc0 ) >> 6 )];
+			out[3] = base64_list[in[2] & 0x3f];
 		}
 	}
 }
 
-size_t iot_base64_encode_size( size_t in_bytes )
+size_t iot_base64_encode_size(
+	size_t in_bytes )
 {
 	size_t result = 0u;
 	if ( in_bytes > 0u )
