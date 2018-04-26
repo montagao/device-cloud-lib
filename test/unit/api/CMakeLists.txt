@@ -45,7 +45,7 @@ list( REMOVE_ITEM MOCK_API_PART
 set( TEST_IOT_ACTION_MOCK ${MOCK_API_PART} ${MOCK_OSAL_FUNC} )
 set( TEST_IOT_ACTION_SRCS ${MOCK_API_SRCS} ${MOCK_OSAL_SRCS} "iot_action_test.c" )
 set( TEST_IOT_ACTION_LIBS ${MOCK_API_LIBS} ${MOCK_OSAL_LIBS} )
-set( TEST_IOT_ACTION_UNIT "iot_action.c" "iot_common.c" )
+set( TEST_IOT_ACTION_UNIT "iot_action.c" "iot_base64.c" "iot_common.c" )
 
 # iot_alarm.c
 set( MOCK_API_PART ${MOCK_API_FUNC} )
@@ -72,7 +72,7 @@ list( REMOVE_ITEM MOCK_API_PART
 set( TEST_IOT_BASE_MOCK ${MOCK_API_PART} ${MOCK_OSAL_FUNC} )
 set( TEST_IOT_BASE_SRCS ${MOCK_API_SRCS} ${MOCK_OSAL_SRCS} "iot_base_test.c" )
 set( TEST_IOT_BASE_LIBS ${MOCK_API_LIBS} ${MOCK_OSAL_LIBS} )
-set( TEST_IOT_BASE_UNIT "iot_base.c" "iot_common.c" "iot_option.c" )
+set( TEST_IOT_BASE_UNIT "iot_base.c" "iot_base64.c" "iot_common.c" "iot_option.c" )
 
 # iot_base64.c
 set( TEST_IOT_BASE64_MOCK )
@@ -84,7 +84,7 @@ set( TEST_IOT_BASE64_UNIT "iot_base64.c" )
 set( TEST_IOT_COMMON_MOCK ${MOCK_API_FUNC} ${MOCK_OSAL_FUNC} )
 set( TEST_IOT_COMMON_SRCS ${MOCK_API_SRCS} ${MOCK_OSAL_SRCS} "iot_common_test.c" )
 set( TEST_IOT_COMMON_LIBS ${MOCK_API_LIBS} ${MOCK_OSAL_LIBS} )
-set( TEST_IOT_COMMON_UNIT "iot_common.c" )
+set( TEST_IOT_COMMON_UNIT "iot_common.c" "iot_base64.c" )
 
 # json/iot_json_decode.c
 set( MOCK_API_PART ${MOCK_API_FUNC} )
@@ -153,7 +153,7 @@ list( REMOVE_ITEM MOCK_API_PART
 set( TEST_IOT_TELEMETRY_MOCK ${MOCK_API_PART} ${MOCK_OSAL_FUNC} )
 set( TEST_IOT_TELEMETRY_SRCS ${MOCK_API_SRCS} ${MOCK_OSAL_SRCS} "iot_telemetry_test.c" )
 set( TEST_IOT_TELEMETRY_LIBS ${MOCK_API_LIBS} ${MOCK_OSAL_LIBS} )
-set( TEST_IOT_TELEMETRY_UNIT "iot_telemetry.c" "iot_common.c" )
+set( TEST_IOT_TELEMETRY_UNIT "iot_telemetry.c" "iot_base64.c" "iot_common.c" )
 
 include( TestSupport )
 add_tests( ${TARGET} ${TESTS} )

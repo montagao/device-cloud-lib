@@ -2,7 +2,7 @@
  * @file
  * @brief Contains definitions for handling base64 data
  *
- * @copyright Copyright (C) 2017 Wind River Systems, Inc. All Rights Reserved.
+ * @copyright Copyright (C) 2017-2018 Wind River Systems, Inc. All Rights Reserved.
  *
  * @license Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,16 @@ extern "C" {
  * result in the memory area pointed to by \c out. The result will \e not be
  * null-terminated.
  *
- * @param[out]     out                 pointer to destination
+ * @param[out]     out                 pointer to destination (as raw data)
  * @param[out]     out_len             size of destination buffer
- * @param[in]      in                  pointer to source
+ * @param[in]      in                  pointer to source in base64
  * @param[in]      in_len              length of source data
  *
  * @returns -1 on error (illegal character) or the number of bytes decoded
  */
 IOT_API IOT_SECTION ssize_t iot_base64_decode( uint8_t *out,
                                                size_t out_len,
-                                               const uint8_t *in,
+                                               const char *in,
                                                size_t in_len );
 
 /**
@@ -63,14 +63,14 @@ IOT_API IOT_SECTION size_t iot_base64_decode_size( size_t in_bytes );
  * result in the memory area pointed to by \c out. The result will \e not be
  * null-terminated.
  *
- * @param[out]     out                 pointer to destination
+ * @param[out]     out                 pointer to destination (stored as base64)
  * @param[out]     out_len             size of destination buffer
- * @param[in]      in                  pointer to source
+ * @param[in]      in                  pointer to raw data
  * @param[in]      in_len              length of source data
  *
  * @return Number of characters outputted
  */
-IOT_API IOT_SECTION size_t iot_base64_encode( uint8_t *out,
+IOT_API IOT_SECTION size_t iot_base64_encode( char *out,
                                               size_t out_len,
                                               const uint8_t *in,
                                               size_t in_len );

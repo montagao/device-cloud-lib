@@ -924,7 +924,7 @@ void tr50_append_value_raw(
 		heap = os_malloc( sizeof(uint8_t) * req_len + 1u );
 		if ( heap )
 		{
-			iot_base64_encode( heap, req_len, value, len );
+			iot_base64_encode( (char*)heap, req_len, value, len );
 			heap[req_len] = '\0';
 			value = heap;
 		}

@@ -17,6 +17,8 @@
 
 #include "iot_common.h"
 
+#include "shared/iot_base64.h"
+
 #include <float.h>      /* for FLT_MIN, DBL_MIN */
 #include <math.h>       /* for fabs */
 
@@ -1162,7 +1164,7 @@ iot_status_t iot_common_data_copy( struct iot_data *to,
  *
  * @retval IOT_TRUE                    always
  */
-#define IOT_CONVERT( to, type, from ) { (to) = (type)(from); result = IOT_TRUE; }
+#define IOT_CONVERT( to, type, from ) { type tmp = (type)(from); (to) = tmp; result = IOT_TRUE; }
 
 iot_bool_t iot_common_data_convert(
 	iot_conversion_type_t conversion,
@@ -1402,10 +1404,35 @@ iot_bool_t iot_common_data_convert(
 					  iot_common_data_no_decimal( (double)obj->value.float64 ) )
 					IOT_CONVERT( obj->value.uint64, iot_uint64_t, obj->value.float64 )
 				break;
+			case IOT_TYPE_RAW:
+				if ( obj->type == IOT_TYPE_STRING &&
+					obj->value.string == obj->heap_storage )
+				{
+					const size_t str_len =
+						os_strlen( obj->value.string );
+
+					/** @todo we should use a temporary
+					 * buffer here, instead of decoding
+					 * inline */
+
+					/* decode object */
+					const ssize_t len = iot_base64_decode(
+						obj->heap_storage, str_len,
+						obj->value.string, str_len );
+
+					if ( len >= 0 )
+					{
+						obj->value.raw.length =
+							(size_t)len;
+						obj->value.raw.ptr =
+							obj->heap_storage;
+						result = IOT_TRUE;
+					}
+				}
+				break;
 			case IOT_TYPE_BOOL:
 			case IOT_TYPE_LOCATION:
 			case IOT_TYPE_NULL:
-			case IOT_TYPE_RAW:
 			case IOT_TYPE_STRING:
 			default: /* all non-convertible types */
 				break;
@@ -1599,10 +1626,38 @@ iot_bool_t iot_common_data_convert_check(
 				     ( from->type == IOT_TYPE_FLOAT64 && from->value.float64 <= ULONG_MAX && iot_common_data_no_decimal( (double)from->value.float64 ) ) )
 					result = IOT_TRUE;
 				break;
+			case IOT_TYPE_RAW:
+				/* if string is base64 encoded we can convert
+				 * it to raw, with no loss of data */
+				if ( from->type == IOT_TYPE_STRING &&
+					from->value.string == from->heap_storage )
+				{
+					unsigned int i = 0u;
+					size_t str_len = 0u;
+					const char *v = from->value.string;
+
+					/* check string only for valid
+					 * base64 characters */
+					while ( v && *v && ( ( *v >= 'A' && *v <= 'Z' )
+					           || ( *v >= 'a' && *v <= 'z' )
+					           || *v == '+' || *v == '/' ) )
+					{
+						++v;
+						++str_len;
+					}
+
+					/* match up to 2 trailing equals */
+					for ( ; v && *v && *v == '=' && i < 2u;
+						++v, ++str_len );
+
+					/* if divisible by 3, valid base64 */
+					if ( v && *v == '\0' && str_len % 3u == 0u )
+						result = IOT_TRUE;
+				}
+				break;
 			case IOT_TYPE_BOOL:
 			case IOT_TYPE_LOCATION:
 			case IOT_TYPE_NULL:
-			case IOT_TYPE_RAW:
 			case IOT_TYPE_STRING:
 			default: /* all non-convertible types */
 				break;

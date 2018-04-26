@@ -602,7 +602,7 @@ iot_status_t iot_action_execute_command(
 						if ( space_left > min_size )
 						{
 							iot_base64_encode(
-								(uint8_t*)param_pos,
+								param_pos,
 								space_left,
 								(const uint8_t*)p->data.value.raw.ptr,
 								p->data.value.raw.length );
