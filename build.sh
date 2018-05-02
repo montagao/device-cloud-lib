@@ -65,7 +65,7 @@ cd ..
 rm -rf libwebsockets
 
 # operating system abstraction layer
-git clone https://github.com/Wind-River/device-cloud-osal.git device-cloud-osal
+git clone -b vxworks_layer https://github.com/Wind-River/device-cloud-osal.git device-cloud-osal
 cd device-cloud-osal
 cmake -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH="$DEPS_DIR" -DOSAL_THREAD_SUPPORT:BOOL=$THREAD_SUPPORT -DOSAL_WRAP:BOOL=ON .
 make
