@@ -15,21 +15,21 @@
  * OR CONDITIONS OF ANY KIND, either express or implied."
  */
 
-#include "../public/app_json.h"
+#include "app_json.h"
 
 #include "app_json_base.h"
 
 #include <os.h>
 
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 /**
  * @brief Maximum supportable json depth
  */
 #define JSON_MAX_DEPTH                10u
 
-#if defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JSONC )
 typedef struct json_object json_t;
-#endif /* ifdefined( APP_JSON_JSONC ) */
+#endif /* ifdefined( IOT_JSON_JSONC ) */
 
 /**
  * @brief object encapsulating the encode and decode functions
@@ -54,7 +54,7 @@ static IOT_SECTION iot_status_t app_json_encode_key(
 	const char *key,
 	json_t *obj );
 
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 /** @brief Maximum output depth */
 typedef unsigned long app_json_encode_struct_t;
 
@@ -174,9 +174,9 @@ static iot_status_t app_json_encode_struct_start(
 	app_json_encoder_t *encoder,
 	const char *key,
 	app_json_type_t s );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 iot_status_t app_json_encode_key(
 	app_json_encoder_t *encoder,
 	const char *key,
@@ -185,9 +185,9 @@ iot_status_t app_json_encode_key(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( encoder && obj )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		json_type parent_type = JSON_NULL;
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		json_type parent_type = json_type_null;
 #endif
 		json_t *j_parent = NULL;
@@ -195,17 +195,17 @@ iot_status_t app_json_encode_key(
 		if ( encoder->depth > 0u )
 		{
 			j_parent = encoder->j_cur[encoder->depth - 1u];
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 			parent_type = json_typeof( j_parent );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 			parent_type = json_object_get_type( j_parent );
 #endif
 		}
 		else if ( !key &&
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 			( json_typeof( obj ) != JSON_ARRAY &&
 			  json_typeof( obj ) != JSON_OBJECT )
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 			( json_object_is_type( obj, json_type_array ) == FALSE &&
 			  json_object_is_type( obj, json_type_object ) == FALSE )
 #endif
@@ -222,13 +222,13 @@ iot_status_t app_json_encode_key(
 			unsigned int items_to_add = 0u;
 			json_t **ptr = encoder->j_cur;
 
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 			if ( ( key && parent_type != JSON_OBJECT ) || !encoder->j_cur )
 				++items_to_add;
 
 			if ( json_is_array( obj ) || json_is_object( obj ) )
 				++items_to_add;
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 			if ( ( key && parent_type != json_type_object ) || !encoder->j_cur )
 				++items_to_add;
 
@@ -246,14 +246,14 @@ iot_status_t app_json_encode_key(
 				if ( ptr )
 				{
 					encoder->j_cur = ptr;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 					if ( key && parent_type != JSON_OBJECT )
 					{
 						json_t *new_parent = json_object();
 						if ( parent_type == JSON_ARRAY )
 							json_array_append_new(
 								j_parent, new_parent );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 					if ( key && parent_type != json_type_object )
 					{
 						struct json_object *new_parent = json_object_new_object();
@@ -278,7 +278,7 @@ iot_status_t app_json_encode_key(
 
 			if ( result == IOT_STATUS_SUCCESS )
 			{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 				if ( json_is_object( j_parent ) )
 				{
 					if ( !key )
@@ -287,7 +287,7 @@ iot_status_t app_json_encode_key(
 				}
 				else if ( json_is_array( j_parent ) )
 					json_array_append_new( j_parent, obj );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 				if ( json_object_is_type( j_parent, json_type_object ) != FALSE )
 				{
 					if ( !key )
@@ -303,30 +303,30 @@ iot_status_t app_json_encode_key(
 
 	if ( result != IOT_STATUS_SUCCESS )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		json_decref( obj );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		json_object_put( obj );
-#endif /* if defined( APP_JSON_JSONC ) */
+#endif /* if defined( IOT_JSON_JSONC ) */
 	}
 	return result;
 }
-#endif /* if defined( APP_JSON_JANSSON ) */
+#endif /* if defined( IOT_JSON_JANSSON ) */
 
 iot_status_t app_json_encode_array_end(
 	app_json_encoder_t *encoder )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( encoder->depth > 0u )
 		{
 			json_t *const j_obj = encoder->j_cur[encoder->depth - 1u];
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 			if ( json_typeof( j_obj ) == JSON_ARRAY )
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 			if ( json_object_is_type( j_obj, json_type_array ) != FALSE )
 #endif
 			{
@@ -335,9 +335,9 @@ iot_status_t app_json_encode_array_end(
 			}
 		}
 	}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	result = app_json_encode_struct_end( encoder, APP_JSON_TYPE_ARRAY );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -346,13 +346,13 @@ iot_status_t app_json_encode_array_start(
 	const char *key )
 {
 	iot_status_t result;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	result = app_json_encode_key( encoder, key, json_array() );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	result = app_json_encode_key( encoder, key, json_object_new_array() );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	result = app_json_encode_struct_start( encoder, key, APP_JSON_TYPE_ARRAY );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -362,11 +362,11 @@ iot_status_t app_json_encode_bool(
 	iot_bool_t value )
 {
 	iot_status_t result;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	result = app_json_encode_key( encoder, key, json_boolean( value ) );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	result = app_json_encode_key( encoder, key, json_object_new_boolean( value ) );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	/* can't add boolean as root element */
 	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
@@ -388,11 +388,11 @@ iot_status_t app_json_encode_bool(
 					APP_JSON_TYPE_OBJECT << 1u );
 		}
 	}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
-#if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC )
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 unsigned int app_json_encode_depth( const app_json_encoder_t *encoder )
 {
 	unsigned int i = 0u;
@@ -404,13 +404,13 @@ unsigned int app_json_encode_depth( const app_json_encoder_t *encoder )
 	}
 	return i;
 }
-#endif /* !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC ) */
+#endif /* !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 
 const char *app_json_encode_dump(
 	app_json_encoder_t *encoder )
 {
 	const char *result = NULL;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	/* setup jansson flags */
 	size_t flags = JSON_PRESERVE_ORDER;
 	if ( encoder && !( encoder->flags & APP_JSON_FLAG_EXPAND ) )
@@ -436,7 +436,7 @@ const char *app_json_encode_dump(
 
 	if ( encoder && encoder->j_cur )
 		result = encoder->output = json_dumps( encoder->j_cur[0u], flags );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	if ( encoder )
 	{
 		int flags = JSON_C_TO_STRING_PLAIN;
@@ -468,7 +468,7 @@ const char *app_json_encode_dump(
 			}
 		}
 	}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	if ( encoder && encoder->buf && *encoder->buf != '\0' )
 	{
 		/* complete any open objects in the output string */
@@ -515,7 +515,7 @@ const char *app_json_encode_dump(
 			result = encoder->buf;
 		}
 	}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -526,11 +526,11 @@ app_json_encoder_t *app_json_encode_initialize(
 {
 	struct app_json_encoder *encoder = NULL;
 
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 	size_t extra_space = 0u;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	size_t extra_space = 1u; /* for '\0' */
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 
 #ifndef IOT_STACK_ONLY
 	if ( !buf )
@@ -550,35 +550,35 @@ app_json_encoder_t *app_json_encode_initialize(
 				NULL, sizeof(struct app_json_encoder) + extra_space );
 			if ( encoder )
 			{
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 				os_memzero( encoder, sizeof( struct app_json_encoder ) );
-#else /* defined ( APP_JSON_JSMN ) */
+#else /* defined ( IOT_JSON_JSMN ) */
 				encoder->buf = NULL;
 				encoder->cur = NULL;
 				encoder->len = 0u;
-#endif /* defined (APP_JSON_JSMN ) */
+#endif /* defined (IOT_JSON_JSMN ) */
 			}
 		}
 		else
 		{
 #endif /* ifndef IOT_STACK_ONLY */
 			encoder = (struct app_json_encoder*)(buf);
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 			os_memzero( encoder, sizeof( struct app_json_encoder ) );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 			encoder->buf = (char*)buf + sizeof(struct app_json_encoder);
 			encoder->cur = NULL;
 			encoder->len = len - sizeof(struct app_json_encoder);
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 #ifndef IOT_STACK_ONLY
 		}
 
 		if ( encoder )
 		{
 #endif /* ifndef IOT_STACK_ONLY */
-#if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC )
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 			encoder->structs = 0u;
-#endif /* if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC ) */
+#endif /* if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 			encoder->flags = flags;
 #ifndef IOT_STACK_ONLY
 		}
@@ -593,11 +593,11 @@ iot_status_t app_json_encode_integer(
 	iot_int64_t value )
 {
 	iot_status_t result;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	result = app_json_encode_key( encoder, key, json_integer( value ) );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	result = app_json_encode_key( encoder, key, json_object_new_int64( value ) );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	/* can't add boolean as root element */
 	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
@@ -641,11 +641,11 @@ iot_status_t app_json_encode_integer(
 					APP_JSON_TYPE_OBJECT << 1u );
 		}
 	}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
-#if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC )
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 size_t app_json_encode_intlen( iot_uint64_t i, iot_bool_t neg )
 {
 	size_t len = 0u;
@@ -801,7 +801,7 @@ iot_status_t app_json_encode_key(
 	}
 	return result;
 }
-#endif /* if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC ) */
+#endif /* if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 
 iot_status_t app_json_encode_object_cancel(
 	app_json_encoder_t *encoder )
@@ -810,7 +810,7 @@ iot_status_t app_json_encode_object_cancel(
 	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		if ( encoder->depth >= 1u )
 		{
 			json_type parent_type;
@@ -853,7 +853,7 @@ iot_status_t app_json_encode_object_cancel(
 				--encoder->depth;
 			}
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		if ( encoder->depth >= 1u )
 		{
 			struct json_object *const j_parent =
@@ -892,7 +892,7 @@ iot_status_t app_json_encode_object_cancel(
 				--encoder->depth;
 			}
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		if ( encoder->structs >> 1 ) /* inside an object */
 		{
 			char *new_pos = encoder->cur - 1;
@@ -937,7 +937,7 @@ iot_status_t app_json_encode_object_cancel(
 				*encoder->buf = '\0';
 			result = IOT_STATUS_SUCCESS;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -949,7 +949,7 @@ iot_status_t app_json_encode_object_clear(
 	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		if ( encoder->depth > 0u )
 		{
 			json_t *j_parent;
@@ -962,7 +962,7 @@ iot_status_t app_json_encode_object_clear(
 				result = IOT_STATUS_SUCCESS;
 			}
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		if ( encoder->depth > 0u )
 		{
 			struct json_object *j_parent;
@@ -986,7 +986,7 @@ iot_status_t app_json_encode_object_clear(
 				result = IOT_STATUS_SUCCESS;
 			}
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		if ( encoder->structs >> 1 ) /* inside an object */
 		{
 			char *new_pos = encoder->cur - 1;
@@ -1005,7 +1005,7 @@ iot_status_t app_json_encode_object_clear(
 			encoder->cur = new_pos;
 			result = IOT_STATUS_SUCCESS;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -1014,16 +1014,16 @@ iot_status_t app_json_encode_object_end(
 	app_json_encoder_t *encoder )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-#if defined( APP_JSON_JANSSON ) || defined( APP_JSON_JSONC )
+#if defined( IOT_JSON_JANSSON ) || defined( IOT_JSON_JSONC )
 	if ( encoder )
 	{
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( encoder->depth > 0u )
 		{
 			json_t *const j_obj = encoder->j_cur[encoder->depth - 1u];
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 			if ( json_typeof( j_obj ) == JSON_OBJECT )
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 			if ( json_object_is_type( j_obj, json_type_object ) != FALSE )
 #endif
 			{
@@ -1032,11 +1032,11 @@ iot_status_t app_json_encode_object_end(
 			}
 		}
 	}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	(void)encoder;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	result = app_json_encode_struct_end( encoder, APP_JSON_TYPE_OBJECT );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -1045,13 +1045,13 @@ iot_status_t app_json_encode_object_start(
 	const char *key )
 {
 	iot_status_t result;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	result = app_json_encode_key( encoder, key, json_object() );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	result = app_json_encode_key( encoder, key, json_object_new_object() );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	result = app_json_encode_struct_start( encoder, key, APP_JSON_TYPE_OBJECT );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -1067,11 +1067,11 @@ iot_status_t app_json_encode_real(
 	iot_float64_t value )
 {
 	iot_status_t result;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	result = app_json_encode_key( encoder, key, json_real( (double)value ) );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	result = app_json_encode_key( encoder, key, json_object_new_double( (double)value ) );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	/* can't add boolean as root element */
 	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
@@ -1132,7 +1132,7 @@ iot_status_t app_json_encode_real(
 					APP_JSON_TYPE_OBJECT << 1u );
 		}
 	}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -1142,14 +1142,14 @@ iot_status_t app_json_encode_string(
 	const char *value )
 {
 	iot_status_t result;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	result = app_json_encode_key( encoder, key, json_string( value ) );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	struct json_object *v = NULL;
 	if ( value )
 		v = json_object_new_string( value );
 	result = app_json_encode_key( encoder, key, v );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	/* can't add boolean as root element */
 	if ( !key && ( encoder && encoder->structs == 0u ) )
 		result = IOT_STATUS_BAD_REQUEST;
@@ -1175,11 +1175,11 @@ iot_status_t app_json_encode_string(
 					APP_JSON_TYPE_OBJECT << 1u );
 		}
 	}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
-#if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC )
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 size_t app_json_encode_strlen(
 	const char* str )
 {
@@ -1373,12 +1373,12 @@ iot_status_t app_json_encode_struct_start(
 	}
 	return result;
 }
-#endif /* if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC ) */
+#endif /* if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 
 void app_json_encode_terminate(
 	app_json_encoder_t *encoder )
 {
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	if ( encoder )
 	{
 		if ( encoder->output )
@@ -1394,7 +1394,7 @@ void app_json_encode_terminate(
 			json_decref( encoder->j_cur[0] );
 		app_json_free( encoder->j_cur );
 	}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	if ( encoder )
 	{
 		if ( encoder->output )
@@ -1403,17 +1403,17 @@ void app_json_encode_terminate(
 			json_object_put( encoder->j_cur[0] );
 		app_json_free( encoder->j_cur );
 	}
-#endif /* if defined( APP_JSON_JANSSON ) */
+#endif /* if defined( IOT_JSON_JANSSON ) */
 
 #ifdef IOT_STACK_ONLY
 	(void)encoder;
 #else /* ifdef IOT_STACK_ONLY */
 	if ( encoder && ( encoder->flags & APP_JSON_FLAG_DYNAMIC ) )
 	{
-#if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC )
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 		if ( encoder->buf )
 			app_json_free( encoder->buf );
-#endif /* if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC ) */
+#endif /* if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 		app_json_free( encoder );
 	}
 #endif /* else IOT_STACK_ONLY */

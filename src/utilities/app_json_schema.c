@@ -953,10 +953,10 @@ app_json_schema_t *app_json_schema_initialize(
 		buf = (char*)buf + sizeof( struct app_json_schema );
 		len -= sizeof( struct app_json_schema );
 
-#if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC )
+#if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC )
 		len = len * sizeof( jsmntok_t ) /
 			sizeof( struct app_json_schema_item );
-#endif /* if !defined( APP_JSON_JANSSON ) && !defined( APP_JSON_JSONC ) */
+#endif /* if !defined( IOT_JSON_JANSSON ) && !defined( IOT_JSON_JSONC ) */
 	}
 
 	if ( result )

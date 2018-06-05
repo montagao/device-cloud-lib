@@ -14,8 +14,8 @@
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
  * OR CONDITIONS OF ANY KIND, either express or implied."
  */
-#ifndef JSON_BASE_H
-#define JSON_BASE_H
+#ifndef IOT_JSON_BASE_H
+#define IOT_JSON_BASE_H
 
 #if defined( IOT_JSON_JANSSON )
 #include <jansson.h>

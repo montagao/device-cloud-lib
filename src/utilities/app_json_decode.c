@@ -15,15 +15,14 @@
  * OR CONDITIONS OF ANY KIND, either express or implied."
  */
 
-#include "../public/app_json.h"
-
+#include "app_json.h"
 #include "app_json_base.h"
 
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 #	include <os.h> /* for os_memzero, os_snprintf  */
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 #	include <os.h> /* for os_snprintf */
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 /**
  * @brief helper function for decoding real numbers with JSMN
  *
@@ -141,7 +140,7 @@ iot_status_t iot_jsmn_decode_number(
 		*is_integer = is_int;
 	return result;
 }
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 
 iot_status_t app_json_decode_array_at(
 	const app_json_decoder_t *decoder,
@@ -153,7 +152,7 @@ iot_status_t app_json_decode_array_at(
 	const app_json_item_t *obj = NULL;
 	if ( decoder && item && out )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t*)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( json_is_array( j ) )
@@ -163,7 +162,7 @@ iot_status_t app_json_decode_array_at(
 			if ( obj )
 				result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		result = IOT_STATUS_BAD_REQUEST;
@@ -174,7 +173,7 @@ iot_status_t app_json_decode_array_at(
 			if ( obj )
 				result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined ( APP_JSON_JSMN ) */
+#else /* defined ( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = (const jsmntok_t*)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( cur && cur->type == JSMN_ARRAY )
@@ -206,7 +205,7 @@ iot_status_t app_json_decode_array_at(
 			if ( obj )
 				result = IOT_STATUS_SUCCESS;
 		}
-#endif /* defined ( APP_JSON_JSMN ) */
+#endif /* defined ( IOT_JSON_JSMN ) */
 	}
 
 	if ( out )
@@ -221,19 +220,19 @@ const app_json_array_iterator_t *app_json_decode_array_iterator(
 	const app_json_array_iterator_t *iter = NULL;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		if ( json_array_size( (const json_t*)item ) > 0u )
 			iter = (struct app_json_array_iterator *)1u;
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		if ( json_object_array_length( j ) > 0 )
 			iter = (struct app_json_array_iterator *)1u;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = (const jsmntok_t *)item;
 		if ( cur && cur->type == JSMN_ARRAY && cur->size > 0 )
 			iter = cur + 1;
-#endif /* defined ( APP_JSON_JSMN ) */
+#endif /* defined ( IOT_JSON_JSMN ) */
 	}
 	return iter;
 }
@@ -248,20 +247,20 @@ iot_status_t app_json_decode_array_iterator_value(
 	const app_json_item_t *v = NULL;
 	if ( json && item && iter && out )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const size_t i = (const size_t)iter;
 		v = json_array_get( (const json_t*)item, i - 1u );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		const size_t i = (const size_t)iter;
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		v = json_object_array_get_idx( j, i - 1u );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = iter;
 		v = cur;
 		if ( cur->type == JSMN_STRING && cur->size == 1 )
 			v = cur + 1u;
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 		result = IOT_STATUS_SUCCESS;
 	}
 	if ( out )
@@ -277,14 +276,14 @@ const app_json_array_iterator_t *app_json_decode_array_iterator_next(
 	const app_json_array_iterator_t *result = NULL;
 	if ( decoder && item && iter )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		size_t i = (size_t)(iter);
 		if ( i < json_array_size( item ) )
 		{
 			++i;
 			result = (app_json_array_iterator_t*)i;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		size_t i = (size_t)(iter);
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
@@ -293,7 +292,7 @@ const app_json_array_iterator_t *app_json_decode_array_iterator_next(
 			++i;
 			result = (app_json_array_iterator_t*)i;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = (const jsmntok_t *)iter;
 		unsigned int idx;
 		const int obj_end_pos = ((const jsmntok_t*)item)->end;
@@ -323,7 +322,7 @@ const app_json_array_iterator_t *app_json_decode_array_iterator_next(
 		if ( idx >= decoder->objs ||
 			cur->start >= obj_end_pos )
 			result = NULL;
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -335,18 +334,18 @@ size_t app_json_decode_array_size(
 	size_t result = 0u;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		result = json_array_size( (const json_t*)item );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		if ( json_object_is_type( j, json_type_array ) != FALSE )
 			result = json_object_array_length( j );
-#else /* defined( APP_JSON_JSMN )*/
+#else /* defined( IOT_JSON_JSMN )*/
 		const jsmntok_t *cur = (const jsmntok_t*)item;
 		if ( cur->type == JSMN_ARRAY )
 			result = (size_t)cur->size;
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -360,7 +359,7 @@ iot_status_t app_json_decode_bool(
 	iot_bool_t v = IOT_FALSE;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( json_is_boolean( j ) )
@@ -369,7 +368,7 @@ iot_status_t app_json_decode_bool(
 				v = IOT_TRUE;
 			result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		result = IOT_STATUS_BAD_REQUEST;
@@ -380,7 +379,7 @@ iot_status_t app_json_decode_bool(
 				v = IOT_FALSE;
 			result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *const cur = (const jsmntok_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( cur->type == JSMN_PRIMITIVE )
@@ -394,7 +393,7 @@ iot_status_t app_json_decode_bool(
 			else if ( c == 'f' )
 				result = IOT_STATUS_SUCCESS;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	if ( value )
 		*value = v;
@@ -407,13 +406,13 @@ app_json_decoder_t *app_json_decode_initialize(
 	unsigned int flags )
 {
 	struct app_json_decoder *decoder = NULL;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	size_t additional_size = 0u;
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	size_t additional_size = 0u;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	size_t additional_size = sizeof( jsmntok_t );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 
 #ifndef IOT_STACK_ONLY
 	iot_bool_t on_heap = IOT_FALSE;
@@ -430,15 +429,15 @@ app_json_decoder_t *app_json_decode_initialize(
 
 	if ( buf && len >= ( sizeof( struct app_json_decoder ) + additional_size ) )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		decoder = (struct app_json_decoder *)buf;
 		decoder->flags = flags;
 		decoder->j_root = NULL;
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		decoder = (struct app_json_decoder *)buf;
 		decoder->flags = flags;
 		decoder->j_root = NULL;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const size_t max_objs =
 			(len - sizeof(struct app_json_decoder)) /
 				sizeof(jsmntok_t);
@@ -471,7 +470,7 @@ app_json_decoder_t *app_json_decode_initialize(
 				}
 			}
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 #ifndef IOT_STACK_ONLY
 	else if ( buf && on_heap != IOT_FALSE )
@@ -489,7 +488,7 @@ iot_status_t app_json_decode_integer(
 	iot_int64_t v = 0;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( json_is_integer( j ) )
@@ -497,7 +496,7 @@ iot_status_t app_json_decode_integer(
 			v = (iot_int64_t)json_integer_value( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		result = IOT_STATUS_BAD_REQUEST;
@@ -506,7 +505,7 @@ iot_status_t app_json_decode_integer(
 			v = (iot_int64_t)json_object_get_int64( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *const cur = (const jsmntok_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( cur->type == JSMN_PRIMITIVE )
@@ -531,7 +530,7 @@ iot_status_t app_json_decode_integer(
 			else if ( is_neg )
 				v *= -1;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	if ( value )
 		*value = v;
@@ -547,7 +546,7 @@ iot_status_t app_json_decode_number(
 	iot_float64_t v = 0.0;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( json_is_number( j ) )
@@ -555,7 +554,7 @@ iot_status_t app_json_decode_number(
 			v = (iot_float64_t)json_number_value( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		result = IOT_STATUS_BAD_REQUEST;
@@ -568,9 +567,9 @@ iot_status_t app_json_decode_number(
 				v = (iot_float64_t)json_object_get_int64( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		result = iot_jsmn_decode_number( decoder, item, &v, NULL );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 
 	if ( value )
@@ -584,10 +583,10 @@ const app_json_item_t *app_json_decode_object_find(
 	const char *key )
 {
 	const app_json_item_t *result = NULL;
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 	if ( decoder && object && key )
 		result = json_object_get( object, key );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 	if ( decoder && object && key )
 	{
 		json_object *out;
@@ -596,9 +595,9 @@ const app_json_item_t *app_json_decode_object_find(
 		if ( json_object_object_get_ex( j_obj, key, &out ) == TRUE )
 			result = out;
 	}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 	result = app_json_decode_object_find_len( decoder, object, key, 0u );
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	return result;
 }
 
@@ -611,7 +610,7 @@ const app_json_item_t *app_json_decode_object_find_len(
 	const app_json_item_t *result = NULL;
 	if ( decoder && object && key )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		if ( key_len > 0u )
 		{
 			char *buf = NULL;
@@ -626,9 +625,9 @@ const app_json_item_t *app_json_decode_object_find_len(
 		}
 		else
 			result = json_object_get( object, key );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		(void)key_len;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = object;
 		if ( cur && cur->type == JSMN_OBJECT )
 		{
@@ -666,7 +665,7 @@ const app_json_item_t *app_json_decode_object_find_len(
 				++idx;
 			}
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -678,11 +677,11 @@ const app_json_object_iterator_t *app_json_decode_object_iterator(
 	const app_json_object_iterator_t *iter = NULL;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		json_t *j_obj;
 		os_memcpy( &j_obj, &item, sizeof( json_t *) );
 		iter = json_object_iter( j_obj );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		if ( json_object_is_type( j, json_type_object ) != FALSE )
@@ -694,11 +693,11 @@ const app_json_object_iterator_t *app_json_decode_object_iterator(
 			if ( !json_object_iter_equal( &i_begin, &i_end ) )
 				iter = i_begin.opaque_;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = (const jsmntok_t *)item;
 		if ( cur && cur->type == JSMN_OBJECT && cur->size > 0 )
 			iter = cur + 1u;
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return iter;
 }
@@ -715,7 +714,7 @@ iot_status_t app_json_decode_object_iterator_key(
 	size_t k_len = 0u;
 	if ( decoder && item && iter )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		void *j_iter;
 		os_memcpy( &j_iter, &iter, sizeof( void *) );
 		k = json_object_iter_key( j_iter );
@@ -725,7 +724,7 @@ iot_status_t app_json_decode_object_iterator_key(
 			k_len = os_strlen( k );
 			result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object_iterator i;
 		i.opaque_ = iter;
 		result = IOT_STATUS_NOT_INITIALIZED;
@@ -735,7 +734,7 @@ iot_status_t app_json_decode_object_iterator_key(
 			k_len = os_strlen( k );
 			result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = iter;
 		result = IOT_STATUS_NOT_INITIALIZED;
 		if ( cur->type == JSMN_STRING && cur->size == 1 )
@@ -744,7 +743,7 @@ iot_status_t app_json_decode_object_iterator_key(
 			k_len = (size_t)(cur->end - cur->start);
 			result = IOT_STATUS_SUCCESS;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	if ( key )
 		*key = k;
@@ -761,13 +760,13 @@ const app_json_object_iterator_t *app_json_decode_object_iterator_next(
 	const app_json_object_iterator_t *result = NULL;
 	if ( decoder && item && iter )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		json_t *j_item;
 		void *j_iter;
 		os_memcpy( &j_item, &item, sizeof( json_t* ) );
 		os_memcpy( &j_iter, &iter, sizeof( void* ) );
 		result = json_object_iter_next( j_item, j_iter );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object_iterator i;
 		struct json_object_iterator i_end;
 		struct json_object *j;
@@ -777,7 +776,7 @@ const app_json_object_iterator_t *app_json_decode_object_iterator_next(
 		i_end = json_object_iter_end( j );
 		if ( !json_object_iter_equal( &i, &i_end ) )
 			result = i.opaque_;
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = iter;
 		unsigned int idx;
 		const int obj_end_pos = ((const jsmntok_t*)item)->end;
@@ -807,7 +806,7 @@ const app_json_object_iterator_t *app_json_decode_object_iterator_next(
 		if ( idx >= decoder->objs ||
 			cur->start >= obj_end_pos )
 			result = NULL;
-#endif /* endif( APP_JSON_JSMN ) */
+#endif /* endif( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -822,21 +821,21 @@ iot_status_t app_json_decode_object_iterator_value(
 	const app_json_item_t *v = NULL;
 	if ( decoder && item && iter && out )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		void *j_iter;
 		os_memcpy( &j_iter, &iter, sizeof( void* ) );
 		v = json_object_iter_value( j_iter );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object_iterator i;
 		i.opaque_ = iter;
 		result = IOT_STATUS_NOT_INITIALIZED;
 		v = json_object_iter_peek_value( &i );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = iter;
 		v = cur;
 		if ( cur->type == JSMN_STRING && cur->size == 1 )
 			v = cur + 1u;
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 		result = IOT_STATUS_SUCCESS;
 	}
 	if ( out )
@@ -851,18 +850,18 @@ size_t app_json_decode_object_size(
 	size_t result = 0u;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		result = json_object_size( (const json_t*)item );
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		if ( json_object_is_type( j, json_type_object ) != FALSE )
 			result = json_object_object_length( j );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *cur = (const jsmntok_t *)item;
 		if ( cur->type == JSMN_OBJECT )
 			result = (size_t)cur->size;
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }
@@ -878,7 +877,7 @@ iot_status_t app_json_decode_parse(
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( decoder && root && js && len > 0u )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		json_error_t j_error;
 		decoder->j_root = json_loadb( js, len, 0u, &j_error );
 		result = IOT_STATUS_PARSE_ERROR;
@@ -893,7 +892,7 @@ iot_status_t app_json_decode_parse(
 				"%s (line: %d, column: %d)",
 				j_error.text, j_error.line, j_error.column );
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_tokener *tok = json_tokener_new();
 		enum json_tokener_error j_error;
 		do
@@ -914,7 +913,7 @@ iot_status_t app_json_decode_parse(
 		}
 		if ( tok )
 			json_tokener_free( tok );
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		jsmn_parser parser;
 		const char *error_text = NULL;
 		int i;
@@ -1024,7 +1023,7 @@ iot_status_t app_json_decode_parse(
 			if ( j <= error_len )
 				*error = '\0';
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	if ( result == IOT_STATUS_SUCCESS && error && error_len > 0u )
 		*error = '\0';
@@ -1040,7 +1039,7 @@ iot_status_t app_json_decode_real(
 	iot_float64_t v = 0.0;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( json_is_real( j ) )
@@ -1048,7 +1047,7 @@ iot_status_t app_json_decode_real(
 			v = (iot_float64_t)json_real_value( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		result = IOT_STATUS_BAD_REQUEST;
@@ -1057,7 +1056,7 @@ iot_status_t app_json_decode_real(
 			v = (iot_float64_t)json_object_get_double( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		iot_bool_t is_integer = IOT_TRUE;
 		result = iot_jsmn_decode_number(
 			decoder, item, &v, &is_integer );
@@ -1066,7 +1065,7 @@ iot_status_t app_json_decode_real(
 			result = IOT_STATUS_BAD_REQUEST;
 			v = 0.0;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	if ( value )
 		*value = v;
@@ -1084,7 +1083,7 @@ iot_status_t app_json_decode_string(
 	size_t v_len = 0u;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( json_is_string( j ) )
@@ -1098,7 +1097,7 @@ iot_status_t app_json_decode_string(
 #endif
 			result = IOT_STATUS_SUCCESS;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		result = IOT_STATUS_BAD_REQUEST;
@@ -1108,7 +1107,7 @@ iot_status_t app_json_decode_string(
 			v_len = json_object_get_string_len( j );
 			result = IOT_STATUS_SUCCESS;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *const cur = (const jsmntok_t *)item;
 		result = IOT_STATUS_BAD_REQUEST;
 		if ( cur->type == JSMN_STRING )
@@ -1117,7 +1116,7 @@ iot_status_t app_json_decode_string(
 			v_len = (size_t)(cur->end - cur->start);
 			result = IOT_STATUS_SUCCESS;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	if ( value )
 		*value = v;
@@ -1131,16 +1130,16 @@ void app_json_decode_terminate(
 {
 	if ( decoder )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		if ( decoder->j_root )
 			json_decref( decoder->j_root );
-#elif defined( APP_JSON_JSONC )
-#else /* defined( APP_JSON_JSMN ) */
+#elif defined( IOT_JSON_JSONC )
+#else /* defined( IOT_JSON_JSMN ) */
 #ifndef IOT_STACK_ONLY
 		if ( decoder->flags & APP_JSON_FLAG_DYNAMIC && decoder->tokens )
 			app_json_free( decoder->tokens );
 #endif /* ifndef IOT_STACK_ONLY */
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 
 #ifndef IOT_STACK_ONLY
 		/* free object from heap */
@@ -1157,7 +1156,7 @@ app_json_type_t app_json_decode_type(
 	app_json_type_t result = APP_JSON_TYPE_NULL;
 	if ( decoder && item )
 	{
-#if defined( APP_JSON_JANSSON )
+#if defined( IOT_JSON_JANSSON )
 		const json_t *j = (const json_t *)item;
 		switch( json_typeof( j ) )
 		{
@@ -1183,7 +1182,7 @@ app_json_type_t app_json_decode_type(
 			case JSON_NULL:
 				result = APP_JSON_TYPE_NULL;
 		}
-#elif defined( APP_JSON_JSONC )
+#elif defined( IOT_JSON_JSONC )
 		struct json_object *j;
 		os_memcpy( &j, &item, sizeof( struct json_object * ) );
 		switch ( json_object_get_type( j ) )
@@ -1209,7 +1208,7 @@ app_json_type_t app_json_decode_type(
 			case json_type_null:
 				result = APP_JSON_TYPE_NULL;
 		}
-#else /* defined( APP_JSON_JSMN ) */
+#else /* defined( IOT_JSON_JSMN ) */
 		const jsmntok_t *const cur = (const jsmntok_t *)item;
 		switch ( cur->type )
 		{
@@ -1242,7 +1241,7 @@ app_json_type_t app_json_decode_type(
 		default:
 			result = APP_JSON_TYPE_NULL;
 		}
-#endif /* defined( APP_JSON_JSMN ) */
+#endif /* defined( IOT_JSON_JSMN ) */
 	}
 	return result;
 }

@@ -15,8 +15,7 @@
  * OR CONDITIONS OF ANY KIND, either express or implied."
  */
 
-#include "../public/app_json.h"
-
+#include "app_json.h"
 #include "app_json_base.h"
 
 #include <os.h>
@@ -27,7 +26,7 @@ static app_json_free_t *JSON_FREE = NULL;
 /** @brief internal pointer to use for dynamically allocating memory */
 static app_json_realloc_t *JSON_REALLOC = NULL;
 
-#ifdef APP_JSON_JANSSON
+#ifdef IOT_JSON_JANSSON
 /**
  * @brief helper function to dynamically allocate memory for JSON
  *
@@ -58,7 +57,7 @@ static void app_jansson_free( void *p )
 	else
 		os_free( p );
 }
-#endif /* ifdef APP_JSON_JANSSON */
+#endif /* ifdef IOT_JSON_JANSSON */
 
 void app_json_allocation_get( app_json_realloc_t **mptr, app_json_free_t **fptr )
 {

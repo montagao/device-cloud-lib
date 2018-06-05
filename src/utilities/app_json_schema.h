@@ -17,7 +17,7 @@
 #ifndef APP_JSON_SCHEMA_H
 #define APP_JSON_SCHEMA_H
 
-#include <app_json.h>
+#include "app_json.h"
 
 #ifdef __cplusplus
 extern C {
