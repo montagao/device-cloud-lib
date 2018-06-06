@@ -19,12 +19,19 @@ set( IOT_HDRS_C ${IOT_HDRS_C}
 	"app_arg.h"
 	"app_log.h"
 	"app_path.h"
+	"app_json.h"
+	"app_json_base.h"
+	"app_json_schema.h"
 )
 
 set( IOT_SRCS_C ${IOT_SRCS_C}
 	"app_arg.c"
 	"app_log.c"
 	"app_path.c"
+	"app_json_base.c"
+	"app_json_decode.c"
+	"app_json_encode.c"
+	"app_json_schema.c"
 )
 
 add_definitions( ${IOT_DEFS} )
