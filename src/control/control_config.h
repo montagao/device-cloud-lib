@@ -16,7 +16,7 @@
  */
 #ifndef CONTROL_CONFIG_H
 
-#include "../api/json/iot_json_schema.h"
+#include "../utilities/app_json_schema.h"
 
 /**
  * @brief Generates a configuration file for the product by prompting for

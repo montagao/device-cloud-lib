@@ -24,7 +24,6 @@
 
 /* all logic is encapsulated in the JSON library */
 
-
 void iot_json_allocation_get( iot_json_realloc_t **mptr, iot_json_free_t **fptr )
 {
 	app_json_allocation_get( mptr, fptr );

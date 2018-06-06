@@ -36,6 +36,13 @@ set( IOT_SRCS_C ${IOT_SRCS_C}
 
 add_definitions( ${IOT_DEFS} )
 
+if( JSON_DEFINES )
+	foreach( JSON_DEFINE ${JSON_DEFINES} )
+		set( JSON_DEFINES_ "${JSON_DEFINES_} -D${JSON_DEFINE}=1" )
+	endforeach( JSON_DEFINE )
+	add_definitions( ${JSON_DEFINES_} )
+endif( JSON_DEFINES )
+
 option( IOT_LOG_TIMESTAMP "Option to add time stamps in the log" OFF )
 if( IOT_LOG_TIMESTAMP )
 	add_definitions( "-DIOT_LOG_TIMESTAMP" )

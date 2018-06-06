@@ -192,7 +192,7 @@ iot_status_t app_json_decode_array_at(
 				if ( cur->parent == (int)p_idx )
 					++array_idx;
 #else
-				/** @todo make this work without parent links */
+#error			/** @todo make this work without parent links */
 #endif /* ifdef JSMN_PARENT_LINKS */
 
 				if ( (size_t)array_idx == index )
