@@ -24,6 +24,7 @@ struct app_config
 	app_json_item_t *json_root;
 };
 
+
 /**
  * @brief Helper function to get the path to proxy configuration file
  *
@@ -310,7 +311,6 @@ iot_status_t app_config_read_integer( const struct app_config *config,
 }
 
 /*FIXME*/
-#if 0
 iot_status_t app_config_get_proxy_file_path(
 	char *path, size_t size )
 {
@@ -414,6 +414,7 @@ iot_status_t app_config_read_proxy_file(
 	return result;
 }
 
+/* TODO: Use json encoder instead of hardcoded proxy string */
 iot_status_t app_config_write_proxy_file(
 	const struct iot_proxy *proxy_info )
 {
@@ -421,7 +422,15 @@ iot_status_t app_config_write_proxy_file(
 	if ( proxy_info )
 	{
 		char file_path[ PATH_MAX + 1u ];
-
+		char buffer[ 1024u ];
+		app_json_encoder_t *json_enc;
+#ifdef IOT_STACK_ONLY
+		json_enc = app_json_encode_initialize(
+			buffer, 1024u, 0u );
+#else
+		json_enc = app_json_encode_initialize(
+			NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
+#endif
 		result = app_config_get_proxy_file_path(
 			file_path, sizeof( file_path ) );
 		if ( result == IOT_STATUS_SUCCESS )
@@ -429,6 +438,8 @@ iot_status_t app_config_write_proxy_file(
 			os_file_t proxy_file;
 			proxy_file = os_file_open( file_path,
 				OS_WRITE|OS_CREATE );
+
+	
 
 			if ( proxy_file )
 			{
@@ -443,4 +454,3 @@ iot_status_t app_config_write_proxy_file(
 	}
 	return result;
 }
-#endif

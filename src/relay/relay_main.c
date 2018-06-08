@@ -538,7 +538,7 @@ int relay_client( const char *url,
 
 	if ( result == EXIT_SUCCESS )
 	{
-		/*struct app_config* conf;*/
+		struct app_config* conf;
 #if !defined( IOT_WEBSOCKET_CIVETWEB )
 		char cert_path[ PATH_MAX + 1u ];
 		struct lws_context *context = NULL;
@@ -593,20 +593,18 @@ int relay_client( const char *url,
 			/* set ca certificate directory */
 			os_strncpy( cert_path, IOT_DEFAULT_CERT_PATH, PATH_MAX );
 			/*FIXME*/
-			/*conf = app_config_open( NULL, config_file );*/
-			/*if ( conf )*/
-			/*{*/
-			/*iot_bool_t ssl_validation = !insecure;*/
-			/*app_config_read_boolean( conf, NULL, "ssl_validation",*/
-			/*&ssl_validation );*/
-			/*insecure = !ssl_validation;*/
+			conf = app_config_open( NULL, config_file );
+			if ( conf )
+			{
+				iot_bool_t ssl_validation = !insecure;
+				app_config_read_boolean( conf, NULL, "ssl_validation",
+					&ssl_validation );
+				insecure = !ssl_validation;
 
-			/*app_config_read_string( conf, NULL, "cert_path",*/
-			/*cert_path, PATH_MAX );*/
-			/*}*/
-
-			/*if ( conf )*/
-			/*app_config_close( conf );*/
+				app_config_read_string( conf, NULL, "cert_path",
+					cert_path, PATH_MAX );
+			} else
+				app_config_close( conf );
 
 			/* context creation info */
 			os_memzero( &context_ci, sizeof( struct lws_context_creation_info ) );
@@ -616,7 +614,7 @@ int relay_client( const char *url,
 			context_ci.extensions = NULL;
 
 			/*FIXME*/
-			/*app_path_make_absolute( cert_path, PATH_MAX, IOT_TRUE );*/
+			app_path_make_absolute( cert_path, PATH_MAX, IOT_TRUE );
 			if ( verbose != IOT_FALSE && ( *cert_path ) )
 				relay_log( IOT_LOG_DEBUG,
 					"CA certificate path: %s",
@@ -634,62 +632,62 @@ int relay_client( const char *url,
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || \
 	( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 3 )
 			/* setup proxy connection, if defined */
-			/*os_memzero( &proxy_info, sizeof( struct iot_proxy ) );*/
+			os_memzero( &proxy_info, sizeof( struct iot_proxy ) );
 			/*FIXME*/
-			/*if ( app_config_read_proxy_file( &proxy_info ) ==*/
-			/*OS_STATUS_SUCCESS )*/
-			/*{*/
-			/*char address[ RELAY_MAX_ADDRESS_LEN + 1u ];*/
-			/*size_t address_len = 0;*/
-			/**address = '\0';*/
-			/*address[ RELAY_MAX_ADDRESS_LEN ] = '\0';*/
-			/*if ( *proxy_info.username != '\0' )*/
-			/*{*/
-			/*os_strncpy( address,*/
-			/*proxy_info.username,*/
-			/*RELAY_MAX_ADDRESS_LEN - address_len );*/
-			/*address_len = os_strlen( address );*/
-			/*if ( *proxy_info.password != '\0' )*/
-			/*{*/
-			/*os_snprintf( &address[address_len],*/
-			/*RELAY_MAX_ADDRESS_LEN - address_len,*/
-			/*":%s", proxy_info.password );*/
-			/*address_len = os_strlen( address );*/
-			/*}*/
-			/*os_strncpy( &address[address_len], "@",*/
-			/*RELAY_MAX_ADDRESS_LEN - address_len );*/
-			/*++address_len;*/
-			/*}*/
-			/*os_strncpy( &address[address_len],*/
-			/*proxy_info.host,*/
-			/*RELAY_MAX_ADDRESS_LEN - address_len );*/
+			if ( app_config_read_proxy_file( &proxy_info ) ==
+				OS_STATUS_SUCCESS )
+			{
+				char address[ RELAY_MAX_ADDRESS_LEN + 1u ];
+				size_t address_len = 0;
+				*address = '\0';
+				address[ RELAY_MAX_ADDRESS_LEN ] = '\0';
+				if ( *proxy_info.username != '\0' )
+				{
+					os_strncpy( address,
+					proxy_info.username,
+					RELAY_MAX_ADDRESS_LEN - address_len );
+					address_len = os_strlen( address );
+				if ( *proxy_info.password != '\0' )
+				{
+					os_snprintf( &address[address_len],
+					RELAY_MAX_ADDRESS_LEN - address_len,
+					":%s", proxy_info.password );
+					address_len = os_strlen( address );
+				}
+					os_strncpy( &address[address_len], "@",
+					RELAY_MAX_ADDRESS_LEN - address_len );
+					++address_len;
+				}
+					os_strncpy( &address[address_len],
+					proxy_info.host,
+					RELAY_MAX_ADDRESS_LEN - address_len );
 
-			/*if ( os_strncmp( proxy_info.type, "HTTP",*/
-			/*IOT_PROXY_TYPE_MAX_LEN ) == 0 )*/
-			/*{*/
-			/*context_ci.http_proxy_address = address;*/
-			/*context_ci.http_proxy_port = proxy_info.port;*/
-			/*}*/
-			/*#if LWS_LIBRARY_VERSION_MAJOR > 2 || ( LWS_LIBRARY_VERSION_MAJOR == 2 && LWS_LIBRARY_VERSION_MINOR > 2 )*/
-			/*else if ( os_strncmp( proxy_info.type, "SOCKS5",*/
-			/*IOT_PROXY_TYPE_MAX_LEN ) == 0 )*/
-			/*{*/
-			/*#if defined(LWS_WITH_SOCKS5)*/
-			/*context_ci.socks_proxy_address = address;*/
-			/*context_ci.socks_proxy_port = proxy_info.port;*/
-			/*#else*/
-			/*relay_log( IOT_LOG_WARNING,*/
-			/*"The libwebsockets doesn't have SOCKS5"*/
-			/*" proxy support built in" );*/
-			/*#endif *//* if defined(LWS_WITH_SOCKS5) */
-			/*}*/
-			/*#endif *//* libwebsockets > 2.2.0 */
+				if ( os_strncmp( proxy_info.type, "HTTP",
+					IOT_PROXY_TYPE_MAX_LEN ) == 0 )
+				{
+					context_ci.http_proxy_address = address;
+					context_ci.http_proxy_port = proxy_info.port;
+				}
+				#if LWS_LIBRARY_VERSION_MAJOR > 2 || ( LWS_LIBRARY_VERSION_MAJOR == 2 && LWS_LIBRARY_VERSION_MINOR > 2 )
+				else if ( os_strncmp( proxy_info.type, "SOCKS5",
+					IOT_PROXY_TYPE_MAX_LEN ) == 0 )
+				{
+					#if defined(LWS_WITH_SOCKS5)
+					context_ci.socks_proxy_address = address;
+					context_ci.socks_proxy_port = proxy_info.port;
+					#else
+					relay_log( IOT_LOG_WARNING,
+					"The libwebsockets doesn't have SOCKS5"
+					" proxy support built in" );
+					#endif /* if defined(LWS_WITH_SOCKS5) */
+				}
+				#endif /* libwebsockets > 2.2.0  */
 
-			/*if ( app_data->verbose != IOT_FALSE && *address != '\0' )*/
-			/*relay_log( IOT_LOG_DEBUG,*/
-			/*"Proxy set to: %s:%ld",*/
-			/*address, proxy_info.port );*/
-			/*}*/
+				if ( app_data->verbose != IOT_FALSE && *address != '\0' )
+					relay_log( IOT_LOG_DEBUG,
+						"Proxy set to: %s:%ld",
+						address, proxy_info.port );
+			}
 #endif /* libwebsockets >= 1.3.0 */
 
 			context = lws_create_context( &context_ci );
