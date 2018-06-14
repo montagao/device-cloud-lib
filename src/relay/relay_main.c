@@ -44,10 +44,11 @@
 
 #include "iot_build.h"                 /* for IOT_NAME_FULL */
 #include "iot.h"                       /* for iot_bool_t type */
+#include "iot_mqtt.h"
 #include "shared/iot_types.h"          /* for proxy struct */
-#include "app_arg.h"                   /* for struct app_arg & functions */
-/*#include "app-common/app_config.h"     *//* for proxy configuration */
-/*#include "app-common/app_path.h"       *//* for path support functions */
+#include "../utilities/app_arg.h"                   /* for struct app_arg & functions */
+#include "../utilities/app_config.h"     /* for proxy configuration */
+#include "../utilities/app_path.h"       /* for path support functions */
 
 #include <os.h>                        /* for os_* functions */
 
@@ -457,7 +458,7 @@ int relay_client( const char *url,
 	struct relay_data *const app_data = &APP_DATA;
 
 	/*FIXME*/
-	(void)config_file;
+	(void)config_file; /* TODO (FIND OUT DEFAULT LOCATION OF CONFIG FILE); */
 
 	/* print client configuration */
 	relay_log(IOT_LOG_INFO, "host:     %s", host );
@@ -546,7 +547,7 @@ int relay_client( const char *url,
 		struct lws_protocols protocols[ 2u ];
 #if LWS_LIBRARY_VERSION_MAJOR > 1 || \
 	( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 3 )
-		/*struct iot_proxy proxy_info;*/
+		struct iot_proxy proxy_info;
 #endif /* libwebsockets >= 1.3.0 */
 #endif /* if !defined( IOT_WEBSOCKET_CIVETWEB ) */
 		char web_url[ PATH_MAX + 1u ];
@@ -633,9 +634,8 @@ int relay_client( const char *url,
 	( LWS_LIBRARY_VERSION_MAJOR == 1 && LWS_LIBRARY_VERSION_MINOR >= 3 )
 			/* setup proxy connection, if defined */
 			os_memzero( &proxy_info, sizeof( struct iot_proxy ) );
-			/*FIXME*/
 			if ( app_config_read_proxy_file( &proxy_info ) ==
-				OS_STATUS_SUCCESS )
+				IOT_STATUS_SUCCESS )
 			{
 				char address[ RELAY_MAX_ADDRESS_LEN + 1u ];
 				size_t address_len = 0;
@@ -662,15 +662,13 @@ int relay_client( const char *url,
 					proxy_info.host,
 					RELAY_MAX_ADDRESS_LEN - address_len );
 
-				if ( os_strncmp( proxy_info.type, "HTTP",
-					IOT_PROXY_TYPE_MAX_LEN ) == 0 )
+				if ( proxy_info.type == IOT_PROXY_HTTP )
 				{
 					context_ci.http_proxy_address = address;
 					context_ci.http_proxy_port = proxy_info.port;
 				}
 				#if LWS_LIBRARY_VERSION_MAJOR > 2 || ( LWS_LIBRARY_VERSION_MAJOR == 2 && LWS_LIBRARY_VERSION_MINOR > 2 )
-				else if ( os_strncmp( proxy_info.type, "SOCKS5",
-					IOT_PROXY_TYPE_MAX_LEN ) == 0 )
+				else if ( proxy_info.type == IOT_PROXY_SOCKS5 )
 				{
 					#if defined(LWS_WITH_SOCKS5)
 					context_ci.socks_proxy_address = address;

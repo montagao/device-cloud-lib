@@ -15,10 +15,12 @@
 #define APP_CONFIG_H
 
 #include "../api/public/iot.h"            /* for iot_status_t */
-#include "../api/shared/iot_types.h"      /* for iot_proxy structure */
+#include "../api/public/iot_mqtt.h"      /* for iot_status_t */
+#include "../api/shared/iot_types.h"      /* for proxy structures */
 
-/** @brief max path length */
-#define PATH_MAX 512u
+/** @brief proxy config path */
+#define IOT_PROXY_CONFIG_FILE "iot-proxy.cfg" /*FIXME use build.yml definition */
+
 
 /** @brief structure containing configuration file information */
 struct app_config;
@@ -31,7 +33,8 @@ struct app_config;
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_SUCCESS          on success
  */
-iot_status_t IOT_SECTION app_config_close( struct app_config *config );
+
+IOT_SECTION iot_status_t app_config_close( struct app_config *config );
 
 /**
  * @brief opens a configuration file for reading
@@ -41,7 +44,7 @@ iot_status_t IOT_SECTION app_config_close( struct app_config *config );
  *
  * @return a configuration file object
  */
-struct app_config *IOT_SECTION app_config_open(
+IOT_SECTION struct app_config *app_config_open(
 	iot_t *iot_lib, const char *file_path );
 
 /**
@@ -56,7 +59,7 @@ struct app_config *IOT_SECTION app_config_open(
  * @retval IOT_STATUS_NOT_FOUND        field not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-iot_status_t app_config_read_boolean(
+IOT_SECTION iot_status_t app_config_read_boolean(
 	const struct app_config *config, const char *group,
 	const char *field, iot_bool_t *value );
 
@@ -67,15 +70,15 @@ iot_status_t app_config_read_boolean(
  * @param[in]      group               group containing field (optional)
  * @param[in]      field               field to search for
  * @param[out]     value               output destination
- * @param[in]      max                 output destination maximum size
+ * @param[in]      str_len             length of read string
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_NOT_FOUND        field not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-iot_status_t IOT_SECTION app_config_read_string(
+IOT_SECTION iot_status_t app_config_read_string(
 	const struct app_config *config, const char *group, const char *field,
-	char *value, size_t max );
+	const char **value, size_t* str_len );
 
 /**
  * @brief reads an array of strings from a configuration file
@@ -91,7 +94,7 @@ iot_status_t IOT_SECTION app_config_read_string(
  * @retval IOT_STATUS_NOT_FOUND        field not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-iot_status_t app_config_read_string_array( const struct app_config *config,
+IOT_SECTION iot_status_t app_config_read_string_array( const struct app_config *config,
 	const char *group, const char *field, char token, char *value,
 	size_t max );
 
@@ -107,8 +110,8 @@ iot_status_t app_config_read_string_array( const struct app_config *config,
  * @retval IOT_STATUS_NOT_FOUND        field not found
  * @retval IOT_STATUS_SUCCESS          on success
  */
-iot_status_t IOT_SECTION app_config_read_integer( const struct app_config *config,
-	const char *group, const char *field, iot_float64_t *value );
+IOT_SECTION iot_status_t app_config_read_integer( const struct app_config *config,
+	const char *group, const char *field, iot_int64_t *value );
 
 /**
  * @brief reads proxy configuration file
@@ -120,9 +123,8 @@ iot_status_t IOT_SECTION app_config_read_integer( const struct app_config *confi
  * @retval IOT_STATUS_FAILURE          on failure
  * @retval IOT_STATUS_SUCCESS          on success
  */
-/*FIXME*/
-/*iot_status_t app_config_read_proxy_file(*/
-/*struct iot_proxy *proxy_info );*/
+IOT_SECTION iot_status_t app_config_read_proxy_file(
+	struct iot_proxy *proxy_info );
 
 /**
  * @brief writes network settings to connection configuration file

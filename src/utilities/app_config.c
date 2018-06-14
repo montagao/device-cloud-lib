@@ -13,17 +13,33 @@
 
 #include "app_config.h"
 
-#include "os.h"				/* for os_* functions */
+#include <os.h>				/* for os_* functions */
 #include "app_path.h"		/* for app_path_* functions */
 #include "app_json.h"		/* for app_json_* functions */
+#include "../public/iot_json.h"		/* for iot_json_* types */
+#include "../api/shared/iot_types.h"	/* for os_* functions */
 
 /** @brief Structure containing configuration information */
 struct app_config
 {
-	app_json_decoder_t json;          /** @brief json interface object for parsing */
-	app_json_item_t *json_root;
+	app_json_decoder_t *json;          /** @brief json interface object for parsing */
+	const app_json_item_t *json_root;
 };
 
+/** @brief Structure containing information about proxy server uesd*/
+typedef struct iot_proxy
+{
+	/** @brief Proxy to use */
+	char *host;
+	/** @brief Port number the proxy server listens to */
+	iot_int64_t port;
+	/** @brief Proxy protocol type to use */
+	iot_proxy_type_t type;
+	/** @brief User name to use for proxy authentication */
+	char *username;
+	/** @brief Password to use with proxy authentication */
+	char *password;
+} iot_proxy_t;
 
 /**
  * @brief Helper function to get the path to proxy configuration file
@@ -35,16 +51,15 @@ struct app_config
  * @retval IOT_STATUS_FAILURE          on failure
  * @retval IOT_STATUS_SUCCESS          on success
  */
-/*FIXME*/
-/*static iot_status_t app_config_get_proxy_file_path(*/
-/*char *file_path, size_t len );*/
+static iot_status_t app_config_get_proxy_file_path(
+char *file_path, size_t len );
 
 iot_status_t app_config_close( struct app_config *config )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( config )
 	{
-		app_json_decode_terminate( &config->json );
+		app_json_decode_terminate( config->json );
 		os_free( (void *)config );
 		result = IOT_STATUS_SUCCESS;
 	}
@@ -68,9 +83,11 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 	/* required json init variables */
 	app_json_decoder_t *json = NULL; 
 	char *json_string = NULL;
-	size_t json_size = NULL;
-	app_json_item_t *json_root = NULL; /* root json object */
+	size_t json_size = 0;
+	const app_json_item_t *json_root = NULL; /* root json object */
 	char err_msg[1024u];
+	size_t err_len = 1024u ;
+	os_file_t fd;
 
 	/* locate the config file */
 	config_file[0] = '\0';
@@ -103,12 +120,12 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 			if ( !file_path || *file_path == '\0' )
 			{
 				os_make_path( config_file, PATH_MAX,
-					path, IOT_CFG, NULL );
+					path, IOT_DEFAULT_FILE_DEVICE_MANAGER, NULL );
 			}
 			else
 				os_strncpy( config_file, path,
 					PATH_MAX + 1u );
-			os_env_expand( config_file, PATH_MAX );
+			os_env_expand( config_file, PATH_MAX, PATH_MAX ); /* TODO : Verify correctness */
 		}
 
 		if ( *config_file != '\0' )
@@ -118,7 +135,6 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 
 			if ( os_file_exists( config_file ) )
 			{
-				os_file_t fd;
 				fd = os_file_open( config_file, OS_READ );
 				if ( fd == NULL )
 					IOT_LOG( iot_lib, IOT_LOG_ERROR,
@@ -138,23 +154,24 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 	
 #ifdef IOT_STACK_ONLY
 		/* initialize json decoder */
-		json = iot_json_decode_intialize( 
+		char buffer[1024u];
+		json = app_json_decode_initialize( 
 			buffer, 1024u, 0u );
 #else
-		json = iot_json_decode_intialize( NULL, 0u,
+		json = app_json_decode_initialize( NULL, 0u,
 			IOT_JSON_FLAG_DYNAMIC );
 #endif
 		result = os_malloc(
 				sizeof( struct app_config ) );
-		json_size = (size_t)os_file_get_size_handle( fd );
-		if ( result && json && json_size < max_size )
+		json_size = (size_t)os_file_size( config_file );
+		if ( result && json && json_size )
 		{
 			iot_status_t status = IOT_STATUS_FAILURE;
 			os_memzero( result,
 				sizeof( struct app_config ) );
 			status = app_json_decode_parse( json,
 				json_string,
-				json_size, &json_root, err_msg )
+				json_size, &json_root, err_msg, err_len  );
 
 			if ( status != IOT_STATUS_SUCCESS )
 			{
@@ -187,20 +204,20 @@ iot_status_t app_config_read_boolean( const struct app_config *config,
 	if ( config && config->json && config->json_root && field && value )
 	{
 		app_json_decoder_t * json = config->json;
-		app_json_item_t *json_root = config->json_root;
-		app_json_item_t *json_bool = NULL;
+		const app_json_item_t *json_root = config->json_root;
+		const app_json_item_t *json_bool = NULL;
 		if ( group ) 
 		{
-			app_json_item_t *json_group = NULL;
+			const app_json_item_t *json_group = NULL;
 			json_group = app_json_decode_object_find( json,
 				json_root, group );
 			json_bool = app_json_decode_object_find( json,
 				json_group, field );
 		}
 		else
-			json_bool = app_json_decode_object_find( json, json_group, field );
+			json_bool = app_json_decode_object_find( json, json_root, field );
 
-		if (json_bool_object )
+		if ( json_bool )
 			result = app_json_decode_bool( json, json_bool, value );
 	}
 	return result;
@@ -208,24 +225,24 @@ iot_status_t app_config_read_boolean( const struct app_config *config,
 
 /* str_len is out */
 iot_status_t app_config_read_string( const struct app_config *config,
-	const char *group, const char *field, char *value, size_t *str_len )
+	const char *group, const char *field, const char **value, size_t* str_len )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( config && config->json && config->json_root && field && value )
 	{
 		app_json_decoder_t * json = config->json;
-		app_json_item_t *json_root = config->json_root;
-		app_json_item_t *json_str = NULL;
+		const app_json_item_t *json_root = config->json_root;
+		const app_json_item_t *json_str = NULL;
 		if ( group ) 
 		{
-			app_json_item_t *json_group = NULL;
+			const app_json_item_t *json_group = NULL;
 			json_group = app_json_decode_object_find( json,
 				json_root, group );
 			json_str = app_json_decode_object_find( json,
 				json_group, field );
 		}
 		else
-			json_str = app_json_decode_object_find( json, json_group, field );
+			json_str = app_json_decode_object_find( json, json_root, field );
 
 		if (json_str )
 			result = app_json_decode_string( json, json_str, value, str_len );
@@ -291,26 +308,25 @@ iot_status_t app_config_read_integer( const struct app_config *config,
 	if ( config && config->json && config->json_root && field && value )
 	{
 		app_json_decoder_t * json = config->json;
-		app_json_item_t *json_root = config->json_root;
-		app_json_item_t *json_int = NULL;
+		const app_json_item_t *json_root = config->json_root;
+		const app_json_item_t *json_int = NULL;
 		if ( group ) 
 		{
-			app_json_item_t *json_group = NULL;
+			const app_json_item_t *json_group = NULL;
 			json_group = app_json_decode_object_find( json,
 				json_root, group );
 			json_int = app_json_decode_object_find( json,
 				json_group, field );
 		}
 		else
-			json_int = app_json_decode_object_find( json, json_group, field );
+			json_int = app_json_decode_object_find( json, json_root, field );
 
 		if (json_int )
-			result = app_json_decode_string( json, json_int, value, str_len );
+			result = app_json_decode_integer( json, json_int, value );
 	}
 	return result;
 }
 
-/*FIXME*/
 iot_status_t app_config_get_proxy_file_path(
 	char *path, size_t size )
 {
@@ -321,8 +337,7 @@ iot_status_t app_config_get_proxy_file_path(
 		os_memzero( path, size );
 		result = app_path_config_directory_get( config_dir, PATH_MAX );
 		if ( result == IOT_STATUS_SUCCESS )
-			os_make_path( path, size,
-				config_dir, IOT_PROXY_CONFIG_FILE, NULL );
+			os_make_path( path, size, config_dir, IOT_PROXY_CONFIG_FILE, NULL );
 	}
 	return result;
 }
@@ -347,11 +362,12 @@ iot_status_t app_config_read_proxy_file(
 			result = IOT_STATUS_NOT_FOUND;
 			if ( config )
 			{
-				char temp_string[PATH_MAX + 1u];
-				unsigned int temp_value = 0u;
+				const char *temp_string = NULL;
+				size_t temp_string_len;
+				iot_int64_t temp_value = 0u;
 
 				result = app_config_read_string( config,
-					proxy_group, "host", temp_string, PATH_MAX );
+					proxy_group, "host", &temp_string, &temp_string_len );
 				if ( result == IOT_STATUS_SUCCESS &&
 					temp_string[0] != '\0' )
 				{
@@ -359,7 +375,7 @@ iot_status_t app_config_read_proxy_file(
 						temp_string, IOT_HOST_MAX_LEN );
 					if ( result == IOT_STATUS_SUCCESS )
 					{
-						result = app_config_read_uint(
+						result = app_config_read_integer(
 							config, proxy_group,
 							"port", &temp_value );
 						if ( result == IOT_STATUS_SUCCESS )
@@ -371,13 +387,15 @@ iot_status_t app_config_read_proxy_file(
 				{
 					result = app_config_read_string(
 						config, proxy_group, "type",
-						temp_string, PATH_MAX );
+						&temp_string, &temp_string_len );
 					if ( result == IOT_STATUS_SUCCESS &&
 						temp_string[0] != '\0' )
 					{
+						/* FIXME
 						os_strncpy( proxy_info->type,
 							temp_string,
 							IOT_PROXY_TYPE_MAX_LEN );
+						*/
 					}
 				}
 
@@ -386,7 +404,7 @@ iot_status_t app_config_read_proxy_file(
 					iot_status_t result2;
 					result2 = app_config_read_string(
 						config, proxy_group,
-						"username", temp_string, PATH_MAX );
+						"username", &temp_string, &temp_string_len );
 					if ( result2 == IOT_STATUS_SUCCESS &&
 						temp_string[0] != '\0' )
 					{
@@ -395,7 +413,7 @@ iot_status_t app_config_read_proxy_file(
 
 						result2 = app_config_read_string(
 							config, proxy_group,
-							"password", temp_string, PATH_MAX );
+							"password", &temp_string, &temp_string_len );
 						if ( result2 == IOT_STATUS_SUCCESS
 							&& temp_string[0] != '\0' )
 						{
@@ -415,6 +433,7 @@ iot_status_t app_config_read_proxy_file(
 }
 
 /* TODO: Use json encoder instead of hardcoded proxy string */
+/*
 iot_status_t app_config_write_proxy_file(
 	const struct iot_proxy *proxy_info )
 {
@@ -454,3 +473,4 @@ iot_status_t app_config_write_proxy_file(
 	}
 	return result;
 }
+*/
