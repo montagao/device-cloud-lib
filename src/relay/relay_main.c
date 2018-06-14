@@ -593,8 +593,8 @@ int relay_client( const char *url,
 
 			/* set ca certificate directory */
 			os_strncpy( cert_path, IOT_DEFAULT_CERT_PATH, PATH_MAX );
-			/*FIXME*/
-			conf = app_config_open( NULL, config_file );
+			/*FIXED*/
+			conf = app_config_open( config_file );
 			if ( conf )
 			{
 				iot_bool_t ssl_validation = !insecure;
@@ -603,7 +603,7 @@ int relay_client( const char *url,
 				insecure = !ssl_validation;
 
 				app_config_read_string( conf, NULL, "cert_path",
-					cert_path, PATH_MAX );
+					(const char**)cert_path, NULL );
 			} else
 				app_config_close( conf );
 
@@ -614,7 +614,6 @@ int relay_client( const char *url,
 			context_ci.protocols = &protocols[0];
 			context_ci.extensions = NULL;
 
-			/*FIXME*/
 			app_path_make_absolute( cert_path, PATH_MAX, IOT_TRUE );
 			if ( verbose != IOT_FALSE && ( *cert_path ) )
 				relay_log( IOT_LOG_DEBUG,

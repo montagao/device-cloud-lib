@@ -36,12 +36,26 @@ typedef enum iot_mqtt_version
 	IOT_MQTT_VERSION_3_1_1 = 4,
 } iot_mqtt_version_t;
 
+/**
+ * @brief Possible types for iot proxy
+ */
+typedef enum iot_proxy_type
+{
+	/** @brief UNKNOWN proxy type */
+	IOT_PROXY_UNKNOWN,
+	/** @brief SOCKS5 proxy type */
+	IOT_PROXY_SOCKS5,
+	/** @brief HTTP proxy type */
+	IOT_PROXY_HTTP,
+} iot_proxy_type_t;
+
+/** @brief Structure containing information about proxy server used */
 typedef struct iot_proxy
 {
 	/** @brief Proxy to use */
 	const char *host;
 	/** @brief Port number the proxy server listens to */
-	const iot_int64_t port;
+	iot_int64_t port;
 	/** @brief Proxy protocol type to use */
 	iot_proxy_type_t type;
 	/** @brief User name to use for proxy authentication */

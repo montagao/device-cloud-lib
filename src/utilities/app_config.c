@@ -26,21 +26,6 @@ struct app_config
 	const app_json_item_t *json_root;
 };
 
-/** @brief Structure containing information about proxy server uesd*/
-typedef struct iot_proxy
-{
-	/** @brief Proxy to use */
-	char *host;
-	/** @brief Port number the proxy server listens to */
-	iot_int64_t port;
-	/** @brief Proxy protocol type to use */
-	iot_proxy_type_t type;
-	/** @brief User name to use for proxy authentication */
-	char *username;
-	/** @brief Password to use with proxy authentication */
-	char *password;
-} iot_proxy_t;
-
 /**
  * @brief Helper function to get the path to proxy configuration file
  *
@@ -66,7 +51,7 @@ iot_status_t app_config_close( struct app_config *config )
 	return result;
 }
 
-struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
+struct app_config *app_config_open(/* iot_t *iot_lib,*/ const char *file_path )
 {
 	// TODO: We only use iot_lib for logging purposes. 
 	// should we remove it to reduce dependencies?
@@ -76,7 +61,7 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 	const char *paths[] = { file_path, NULL, NULL, NULL };
 	struct app_config *result = NULL;
 	char config_dir[ PATH_MAX + 1u ];
-	char runtime_dir[ PATH_MAX + 1u ];
+	/* char runtime_dir[ PATH_MAX + 1u ]; */
 	char current_dir[ PATH_MAX + 1u ];
 	char exe_dir[ PATH_MAX + 1u ];
 
@@ -99,9 +84,9 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 		if ( app_path_config_directory_get( config_dir, PATH_MAX )
 			== IOT_STATUS_SUCCESS && config_dir[0] != '\0' )
 			paths[0u] = config_dir;
-		if ( app_path_runtime_directory_get( runtime_dir, PATH_MAX )
-			== IOT_STATUS_SUCCESS && runtime_dir[0] != '\0' )
-			paths[1u] = runtime_dir;
+		/* if ( app_path_runtime_directory_get( runtime_dir, PATH_MAX ) */ /*FIXME*/
+		/* 	== IOT_STATUS_SUCCESS && runtime_dir[0] != '\0' ) */
+			/* paths[1u] = runtime_dir; */
 		if ( os_directory_current( current_dir, PATH_MAX )
 			== OS_STATUS_SUCCESS && current_dir[0] != '\0' )
 			paths[2u] = current_dir;
@@ -130,16 +115,17 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 
 		if ( *config_file != '\0' )
 		{
-			IOT_LOG( iot_lib, IOT_LOG_INFO,
-				"Looking for configuration file: %s", config_file );
+			/* IOT_LOG( iot_lib, IOT_LOG_INFO, */
+			/* 	"Looking for configuration file: %s", config_file ); */
 
 			if ( os_file_exists( config_file ) )
 			{
 				fd = os_file_open( config_file, OS_READ );
 				if ( fd == NULL )
-					IOT_LOG( iot_lib, IOT_LOG_ERROR,
-						"Cannot read configuration: %s",
-						config_file );
+					file_found = IOT_FALSE; /* for compiler warnings */
+					/* IOT_LOG( iot_lib, IOT_LOG_ERROR, */
+					/* 	"Cannot read configuration: %s", */
+						/* config_file ); */
 				else
 					file_found = IOT_TRUE;
 				os_file_close ( fd );
@@ -149,8 +135,8 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 
 	if ( file_found != IOT_FALSE )
 	{
-		IOT_LOG( iot_lib, IOT_LOG_INFO,
-			"Configuration file found: %s", config_file );
+		/* IOT_LOG( iot_lib, IOT_LOG_INFO, */
+		/* 	"Configuration file found: %s", config_file ); */
 	
 #ifdef IOT_STACK_ONLY
 		/* initialize json decoder */
@@ -175,10 +161,10 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 
 			if ( status != IOT_STATUS_SUCCESS )
 			{
-				IOT_LOG( iot_lib, IOT_LOG_ERROR,
-					"Error loading configuration file %s; "
-					"app_json_decode_parse failed : %d",
-					config_file, status );
+				/* IOT_LOG( iot_lib, IOT_LOG_ERROR, */
+				/* 	"Error loading configuration file %s; " */
+					/* "app_json_decode_parse failed : %d", */
+					/* config_file, status ); */
 				os_free( (void *)result );
 				result = NULL;
 			}
@@ -188,11 +174,11 @@ struct app_config *app_config_open( iot_t *iot_lib, const char *file_path )
 				result->json_root = json_root;
 			}
 		}
-		else
-			IOT_LOG( iot_lib, IOT_LOG_ERROR,
-				"Error loading configuration file %s; "
-				"Unable to allocate sufficient memory",
-				config_file );
+		/* else */
+			/* IOT_LOG( iot_lib, IOT_LOG_ERROR, */
+			/* 	"Error loading configuration file %s; " */
+			/* 	"Unable to allocate sufficient memory", */
+				/* config_file ); */
 	}
 	return result;
 }
@@ -337,7 +323,7 @@ iot_status_t app_config_get_proxy_file_path(
 		os_memzero( path, size );
 		result = app_path_config_directory_get( config_dir, PATH_MAX );
 		if ( result == IOT_STATUS_SUCCESS )
-			os_make_path( path, size, config_dir, IOT_PROXY_CONFIG_FILE, NULL );
+			os_make_path( path, size, config_dir, IOT_DEFAULT_FILE_PROXY, NULL );
 	}
 	return result;
 }
@@ -358,21 +344,29 @@ iot_status_t app_config_read_proxy_file(
 		{
 			const char *const proxy_group = "proxy";
 			struct app_config *const config =
-				app_config_open( NULL, file_path );
+				app_config_open( file_path );
 			result = IOT_STATUS_NOT_FOUND;
 			if ( config )
 			{
+				char *host= NULL;
+				char *username = NULL ;
+				char *password = NULL;
+
 				const char *temp_string = NULL;
 				size_t temp_string_len;
 				iot_int64_t temp_value = 0u;
 
 				result = app_config_read_string( config,
 					proxy_group, "host", &temp_string, &temp_string_len );
+
+
 				if ( result == IOT_STATUS_SUCCESS &&
 					temp_string[0] != '\0' )
 				{
-					os_strncpy( proxy_info->host,
-						temp_string, IOT_HOST_MAX_LEN );
+					host = os_malloc( temp_string_len + 1 );
+					os_strncpy( host, temp_string, temp_string_len );
+					host[temp_string_len] = '\0';
+					proxy_info->host = host;
 					if ( result == IOT_STATUS_SUCCESS )
 					{
 						result = app_config_read_integer(
@@ -388,15 +382,13 @@ iot_status_t app_config_read_proxy_file(
 					result = app_config_read_string(
 						config, proxy_group, "type",
 						&temp_string, &temp_string_len );
-					if ( result == IOT_STATUS_SUCCESS &&
-						temp_string[0] != '\0' )
-					{
-						/* FIXME
-						os_strncpy( proxy_info->type,
-							temp_string,
-							IOT_PROXY_TYPE_MAX_LEN );
-						*/
-					}
+
+					if ( os_strcmp( temp_string, "HTTP" ) == 0 )
+						proxy_info->type = IOT_PROXY_HTTP;
+					else if ( os_strcmp( temp_string, "SOCKS5" ) )
+						proxy_info->type = IOT_PROXY_SOCKS5;
+					else
+						proxy_info->type = IOT_PROXY_UNKNOWN;
 				}
 
 				if ( result == IOT_STATUS_SUCCESS )
@@ -408,8 +400,10 @@ iot_status_t app_config_read_proxy_file(
 					if ( result2 == IOT_STATUS_SUCCESS &&
 						temp_string[0] != '\0' )
 					{
-						os_strncpy( proxy_info->username,
-							temp_string, IOT_USERNAME_MAX_LEN );
+						username = os_malloc( temp_string_len + 1 );
+						os_strncpy( username, temp_string, temp_string_len );
+						username[temp_string_len] = '\0';
+						proxy_info->username = username;
 
 						result2 = app_config_read_string(
 							config, proxy_group,
@@ -417,14 +411,13 @@ iot_status_t app_config_read_proxy_file(
 						if ( result2 == IOT_STATUS_SUCCESS
 							&& temp_string[0] != '\0' )
 						{
-							os_strncpy(
-								proxy_info->password,
-								temp_string,
-								IOT_PASSWORD_MAX_LEN );
+							password = os_malloc( temp_string_len + 1 );
+							os_strncpy( password, temp_string, temp_string_len );
+							password[temp_string_len] = '\0';
+							proxy_info->password = password;
 						}
 					}
 				}
-
 				app_config_close( config );
 			}
 		}

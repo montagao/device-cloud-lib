@@ -19,7 +19,6 @@
 #include "../api/shared/iot_types.h"      /* for proxy structures */
 
 /** @brief proxy config path */
-#define IOT_PROXY_CONFIG_FILE "iot-proxy.cfg" /*FIXME use build.yml definition */
 
 
 /** @brief structure containing configuration file information */
@@ -45,7 +44,7 @@ IOT_SECTION iot_status_t app_config_close( struct app_config *config );
  * @return a configuration file object
  */
 IOT_SECTION struct app_config *app_config_open(
-	iot_t *iot_lib, const char *file_path );
+	/* iot_t *iot_lib, */ const char *file_path );
 
 /**
  * @brief reads a boolean from a configuration file
@@ -70,7 +69,7 @@ IOT_SECTION iot_status_t app_config_read_boolean(
  * @param[in]      group               group containing field (optional)
  * @param[in]      field               field to search for
  * @param[out]     value               output destination
- * @param[in]      str_len             length of read string
+ * @param[out]     str_len             length of read string
  *
  * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter passed to the function
  * @retval IOT_STATUS_NOT_FOUND        field not found

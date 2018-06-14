@@ -65,6 +65,29 @@ iot_status_t app_path_create(
 	return result;
 }
 
+iot_status_t app_path_config_directory_get(
+	char *buf,
+	size_t buf_len )
+{
+	/* by default this is /etc/iot/ */ 
+
+	iot_status_t status = IOT_STATUS_FAILURE;
+	const char* dir = NULL;
+	size_t dir_len = 0u;
+
+	dir = IOT_DEFAULT_DIR_CONFIG;
+	dir_len = os_strlen( dir );
+	if( buf && buf_len > dir_len )
+	{
+		/*TODO expand environment variables */
+		os_strncpy( buf, dir, dir_len );
+		buf[ buf_len - 1 ] = '\0';
+		status = IOT_STATUS_SUCCESS;
+	}
+	
+	return status;
+}
+
 size_t app_path_make_absolute( char *path, size_t path_max,
 	iot_bool_t relative_to_install )
 {

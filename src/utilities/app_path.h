@@ -55,9 +55,6 @@ IOT_SECTION iot_status_t app_path_config_directory_get(
  * @param[out]     path                buffer to put path to executable's directory
  * @param[in]      size                size of the buffer
  *
- * @retval IOT_STATUS_BAD_PARAMETER    invalid parameter
- * @retval IOT_STATUS_FAILURE          on failure
- * @retval IOT_STATUS_SUCCESS          on success
  */
 IOT_SECTION iot_status_t app_path_executable_directory_get(
 	char *path, const size_t size );
