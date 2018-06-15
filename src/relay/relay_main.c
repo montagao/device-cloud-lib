@@ -457,8 +457,7 @@ int relay_client( const char *url,
 #endif /* if civetweb > 1.10 || libwebsockets >= 1.4 */
 	struct relay_data *const app_data = &APP_DATA;
 
-	/*FIXME*/
-	(void)config_file; /* TODO (FIND OUT DEFAULT LOCATION OF CONFIG FILE); */
+	(void)config_file;
 
 	/* print client configuration */
 	relay_log(IOT_LOG_INFO, "host:     %s", host );
@@ -593,7 +592,8 @@ int relay_client( const char *url,
 
 			/* set ca certificate directory */
 			os_strncpy( cert_path, IOT_DEFAULT_CERT_PATH, PATH_MAX );
-			/*FIXED*/
+			
+			/*FIXME USE A DEFAULT PATH*/
 			conf = app_config_open( config_file );
 			if ( conf )
 			{

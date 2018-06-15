@@ -24,6 +24,9 @@ struct app_config
 {
 	app_json_decoder_t *json;          /** @brief json interface object for parsing */
 	const app_json_item_t *json_root;
+	const app_json_item_t *json_array;
+	const app_json_item_t *json_array_object;
+	const app_json_array_iterator_t *json_iterator;
 };
 
 /**
@@ -110,7 +113,7 @@ struct app_config *app_config_open(/* iot_t *iot_lib,*/ const char *file_path )
 			else
 				os_strncpy( config_file, path,
 					PATH_MAX + 1u );
-			os_env_expand( config_file, PATH_MAX, PATH_MAX ); /* TODO : Verify correctness */
+			os_env_expand( config_file, 0u, PATH_MAX ); /* TODO : Verify correctness */
 		}
 
 		if ( *config_file != '\0' )
@@ -128,7 +131,6 @@ struct app_config *app_config_open(/* iot_t *iot_lib,*/ const char *file_path )
 						/* config_file ); */
 				else
 					file_found = IOT_TRUE;
-				os_file_close ( fd );
 			}
 		}
 	}
@@ -152,12 +154,22 @@ struct app_config *app_config_open(/* iot_t *iot_lib,*/ const char *file_path )
 		json_size = (size_t)os_file_size( config_file );
 		if ( result && json && json_size )
 		{
-			iot_status_t status = IOT_STATUS_FAILURE;
+			iot_status_t status = IOT_STATUS_NO_MEMORY ;
 			os_memzero( result,
 				sizeof( struct app_config ) );
-			status = app_json_decode_parse( json,
-				json_string,
-				json_size, &json_root, err_msg, err_len  );
+			json_string = (char *)os_malloc( json_size + 1 ); 
+			if ( json_string ) 
+			{
+				json_size = os_file_read( json_string, 1,
+					json_size, fd );
+				json_string[json_size] = '\0';
+				if ( json_size > 0 )
+				{
+					status = app_json_decode_parse( json,
+						json_string,
+						json_size, &json_root, err_msg, err_len  );
+				}
+			}
 
 			if ( status != IOT_STATUS_SUCCESS )
 			{
@@ -179,18 +191,20 @@ struct app_config *app_config_open(/* iot_t *iot_lib,*/ const char *file_path )
 			/* 	"Error loading configuration file %s; " */
 			/* 	"Unable to allocate sufficient memory", */
 				/* config_file ); */
+		os_file_close ( fd );
 	}
 	return result;
 }
 
-iot_status_t app_config_read_boolean( const struct app_config *config,
+iot_status_t app_config_read_boolean( struct app_config *config,
 	const char *group, const char *field, iot_bool_t *value )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( config && config->json && config->json_root && field && value )
 	{
 		app_json_decoder_t * json = config->json;
-		const app_json_item_t *json_root = config->json_root;
+		const app_json_item_t *json_root = config->json_array_object ?
+			config->json_array_object : config->json_root;
 		const app_json_item_t *json_bool = NULL;
 		if ( group ) 
 		{
@@ -210,14 +224,16 @@ iot_status_t app_config_read_boolean( const struct app_config *config,
 }
 
 /* str_len is out */
-iot_status_t app_config_read_string( const struct app_config *config,
+iot_status_t app_config_read_string( struct app_config *config,
 	const char *group, const char *field, const char **value, size_t* str_len )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( config && config->json && config->json_root && field && value )
 	{
 		app_json_decoder_t * json = config->json;
-		const app_json_item_t *json_root = config->json_root;
+		/* check if we're in array context */
+		const app_json_item_t *json_root = config->json_array_object ?
+			config->json_array_object : config->json_root;
 		const app_json_item_t *json_str = NULL;
 		if ( group ) 
 		{
@@ -232,6 +248,76 @@ iot_status_t app_config_read_string( const struct app_config *config,
 
 		if (json_str )
 			result = app_json_decode_string( json, json_str, value, str_len );
+	}
+	return result;
+}
+
+iot_status_t app_config_read_json_array_start( struct app_config *config,
+	const char *field )
+{
+	iot_status_t result = IOT_STATUS_FAILURE;
+	if ( field && config && config->json && config->json_root )
+	{
+		const app_json_array_iterator_t *j_itr;
+		app_json_decoder_t * json = config->json;
+		/* check if we're in array context */
+		const app_json_item_t *json_root = config->json_array_object ? 
+			config->json_array_object : config->json_root;
+		const app_json_item_t *json_array =  NULL;
+
+		/* get json array object */
+		json_array = app_json_decode_object_find( json, json_root, field );
+		if ( json_array )
+		{
+			j_itr = app_json_decode_array_iterator( json, json_array );
+			if( j_itr )
+			{
+				config->json_iterator = j_itr;
+				config->json_array = json_array;
+				result = IOT_STATUS_SUCCESS;
+			}
+		}
+	}
+	return result;
+}
+
+iot_status_t app_config_read_json_array_end( struct app_config *config )
+{
+	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
+	if ( config && config->json && config->json_root )
+	{
+		config->json_iterator = NULL;
+		config->json_array = NULL;
+		result = IOT_STATUS_SUCCESS;
+	}
+	return result;
+}
+
+iot_status_t app_config_read_json_array_next( struct app_config *config )
+{
+	iot_status_t result = IOT_STATUS_FAILURE;
+	if ( config && config->json && config->json_iterator && config->json_array )
+	{
+		const app_json_array_iterator_t *j_itr;
+		j_itr = app_json_decode_array_iterator_next( config->json,
+			config->json_array, config->json_iterator );
+
+		/* check if array is finished */
+		/* if its not finished, we return success */
+		/* otherwise, we switch the context and return failure */
+		if ( j_itr )
+		{
+			app_json_decode_array_iterator_value( config->json,
+				config->json_array, j_itr, &config->json_array_object );
+			result = IOT_STATUS_SUCCESS;
+			config->json_iterator = j_itr;
+		} 
+		else 
+		{
+			config->json_iterator = NULL;
+			config->json_array = NULL;
+		}
+
 	}
 	return result;
 }
@@ -287,14 +373,15 @@ iot_status_t app_config_read_string( const struct app_config *config,
 /* 	return result; */
 /* } */
 
-iot_status_t app_config_read_integer( const struct app_config *config,
+iot_status_t app_config_read_integer( struct app_config *config,
 	const char *group, const char *field, iot_int64_t *value )
 {
 	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
 	if ( config && config->json && config->json_root && field && value )
 	{
 		app_json_decoder_t * json = config->json;
-		const app_json_item_t *json_root = config->json_root;
+		const app_json_item_t *json_root = config->json_array_object ? 
+			config->json_array_object : config->json_root;
 		const app_json_item_t *json_int = NULL;
 		if ( group ) 
 		{
@@ -425,45 +512,3 @@ iot_status_t app_config_read_proxy_file(
 	return result;
 }
 
-/* TODO: Use json encoder instead of hardcoded proxy string */
-/*
-iot_status_t app_config_write_proxy_file(
-	const struct iot_proxy *proxy_info )
-{
-	iot_status_t result = IOT_STATUS_BAD_PARAMETER;
-	if ( proxy_info )
-	{
-		char file_path[ PATH_MAX + 1u ];
-		char buffer[ 1024u ];
-		app_json_encoder_t *json_enc;
-#ifdef IOT_STACK_ONLY
-		json_enc = app_json_encode_initialize(
-			buffer, 1024u, 0u );
-#else
-		json_enc = app_json_encode_initialize(
-			NULL, 0u, IOT_JSON_FLAG_DYNAMIC );
-#endif
-		result = app_config_get_proxy_file_path(
-			file_path, sizeof( file_path ) );
-		if ( result == IOT_STATUS_SUCCESS )
-		{
-			os_file_t proxy_file;
-			proxy_file = os_file_open( file_path,
-				OS_WRITE|OS_CREATE );
-
-	
-
-			if ( proxy_file )
-			{
-				os_fprintf( proxy_file, PROXY_JSON,
-						proxy_info->host, proxy_info->port,
-						proxy_info->type, proxy_info->username,
-						proxy_info->password );
-				os_file_close( proxy_file );
-				os_file_chown( file_path, IOT_USER );
-			}
-		}
-	}
-	return result;
-}
-*/
